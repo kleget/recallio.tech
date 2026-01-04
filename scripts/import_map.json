@@ -1,0 +1,77 @@
+{
+  "Agronomandagricult": {
+    "name": "Agronomy and Agriculture",
+    "source_lang": "en",
+    "target_lang": "ru"
+  },
+  "Biologicalsciences": {
+    "name": "Biological Sciences",
+    "source_lang": "en",
+    "target_lang": "ru"
+  },
+  "Chemicalsciences": {
+    "name": "Chemical Sciences",
+    "source_lang": "en",
+    "target_lang": "ru"
+  },
+  "Economicsciences": {
+    "name": "Economic Sciences",
+    "source_lang": "en",
+    "target_lang": "ru"
+  },
+  "Engineeringsciences": {
+    "name": "Engineering Sciences",
+    "source_lang": "en",
+    "target_lang": "ru"
+  },
+  "geosciences": {
+    "name": "Geosciences",
+    "source_lang": "en",
+    "target_lang": "ru"
+  },
+  "Humanities": {
+    "name": "Humanities",
+    "source_lang": "en",
+    "target_lang": "ru"
+  },
+  "IT": {
+    "name": "IT",
+    "source_lang": "en",
+    "target_lang": "ru"
+  },
+  "Mathematicalscience": {
+    "name": "Mathematical Science",
+    "source_lang": "en",
+    "target_lang": "ru"
+  },
+  "Medicalbiomedical": {
+    "name": "Medical and Biomedical",
+    "source_lang": "en",
+    "target_lang": "ru"
+  },
+  "nonscientificEnglish": {
+    "name": "Non-Scientific English",
+    "source_lang": "en",
+    "target_lang": "ru"
+  },
+  "nonscientificRussian": {
+    "name": "Non-Scientific Russian",
+    "source_lang": "ru",
+    "target_lang": "en"
+  },
+  "Physicalsciences": {
+    "name": "Physical Sciences",
+    "source_lang": "en",
+    "target_lang": "ru"
+  },
+  "Psychologyandcognitive": {
+    "name": "Psychology and Cognitive",
+    "source_lang": "en",
+    "target_lang": "ru"
+  },
+  "Socialsciences": {
+    "name": "Social Sciences",
+    "source_lang": "en",
+    "target_lang": "ru"
+  }
+}
