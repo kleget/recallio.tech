@@ -1022,6 +1022,37 @@ button[disabled] {
   }
 }
 
+@media (max-width: 720px) {
+  .site-nav-inner {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "brand toggle"
+      "links links";
+    row-gap: 10px;
+  }
+
+  .nav-actions {
+    display: contents;
+  }
+
+  .nav-brand {
+    grid-area: brand;
+  }
+
+  .nav-links {
+    grid-area: links;
+    justify-content: center;
+    padding-bottom: 2px;
+  }
+
+  .theme-toggle {
+    grid-area: toggle;
+    justify-self: end;
+    margin-left: 0;
+  }
+}
+
 @media (max-width: 600px) {
   main {
     padding: 36px 16px 60px;
