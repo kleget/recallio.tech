@@ -1891,6 +1891,26 @@ button[disabled] {
   gap: 10px;
 }
 
+.community-card-compact .social-list {
+  gap: 8px;
+}
+
+.community-card-compact .social-item {
+  padding: 10px 12px;
+}
+
+.community-card-tight {
+  gap: 8px;
+}
+
+.community-card-tight .panel-title {
+  margin-bottom: 6px;
+}
+
+.community-card-tight .community-inline {
+  gap: 8px;
+}
+
 .community-inline {
   display: flex;
   gap: 10px;

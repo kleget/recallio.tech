@@ -97,11 +97,8 @@ const TEXT = {
       addTitle: "\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u0432 \u0434\u0440\u0443\u0437\u044c\u044f",
       handlePlaceholder: "\u041d\u0438\u043a",
       addAction: "\u041e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c",
-      requests: "\u0417\u0430\u044f\u0432\u043a\u0438",
-      incoming: "\u0412\u0445\u043e\u0434\u044f\u0449\u0438\u0435 \u0437\u0430\u044f\u0432\u043a\u0438",
-      outgoing: "\u0418\u0441\u0445\u043e\u0434\u044f\u0449\u0438\u0435 \u0437\u0430\u044f\u0432\u043a\u0438",
-      emptyIncoming: "\u041d\u0435\u0442 \u0432\u0445\u043e\u0434\u044f\u0449\u0438\u0445 \u0437\u0430\u044f\u0432\u043e\u043a.",
-      emptyOutgoing: "\u041d\u0435\u0442 \u0438\u0441\u0445\u043e\u0434\u044f\u0449\u0438\u0445 \u0437\u0430\u044f\u0432\u043e\u043a.",
+      requests: "\u0412\u0445\u043e\u0434\u044f\u0449\u0438\u0435 \u0438 \u0438\u0441\u0445\u043e\u0434\u044f\u0449\u0438\u0435 \u0437\u0430\u044f\u0432\u043a\u0438",
+      emptyRequests: "\u041d\u0435\u0442 \u0437\u0430\u044f\u0432\u043e\u043a.",
       list: "\u041c\u043e\u0438 \u0434\u0440\u0443\u0437\u044c\u044f",
       emptyFriends: "\u041f\u043e\u043a\u0430 \u043d\u0435\u0442 \u0434\u0440\u0443\u0437\u0435\u0439.",
       accept: "\u041f\u0440\u0438\u043d\u044f\u0442\u044c",
@@ -237,11 +234,8 @@ const TEXT = {
       addTitle: "Add a friend",
       handlePlaceholder: "Handle",
       addAction: "Send",
-      requests: "Requests",
-      incoming: "Incoming requests",
-      outgoing: "Outgoing requests",
-      emptyIncoming: "No incoming requests.",
-      emptyOutgoing: "No outgoing requests.",
+      requests: "Incoming and outgoing requests",
+      emptyRequests: "No requests.",
       list: "My friends",
       emptyFriends: "No friends yet.",
       accept: "Accept",
@@ -388,6 +382,7 @@ export default function CommunityPage() {
   const [friendHandle, setFriendHandle] = useState("");
   const [friendStatus, setFriendStatus] = useState("");
   const [friendError, setFriendError] = useState("");
+  const hasRequests = incomingRequests.length > 0 || outgoingRequests.length > 0;
 
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState("");
@@ -900,7 +895,7 @@ export default function CommunityPage() {
             <div className="panel" data-tour="community-friends">
               <div className="panel-title">{t.friends.title}</div>
               <div className="community-grid">
-                <div className="community-card community-card-compact">
+                <div className="community-card community-card-compact community-card-tight">
                   <div className="panel-title">{t.friends.addTitle}</div>
                   <div className="community-inline">
                     <input
@@ -915,57 +910,43 @@ export default function CommunityPage() {
                   {friendStatus ? <p className="success">{friendStatus}</p> : null}
                   {friendError ? <p className="error">{friendError}</p> : null}
                 </div>
-                <div className="community-card">
+                <div className="community-card community-card-compact">
                   <div className="panel-title">{t.friends.requests}</div>
-                  <div className="community-requests">
-                    <div className="community-requests-section">
-                      <div className="community-requests-title">{t.friends.incoming}</div>
-                      {incomingRequests.length === 0 ? (
-                        <p className="muted">{t.friends.emptyIncoming}</p>
-                      ) : (
-                        <div className="social-list">
-                          {incomingRequests.map((item) => (
-                            <div key={item.id} className="social-item">
-                              <div>
-                                <strong>@{item.handle}</strong>
-                                <div className="social-meta">{item.display_name || "-"}</div>
-                              </div>
-                              <div className="community-inline">
-                                <button type="button" onClick={() => acceptFriendRequest(item.id)}>
-                                  {t.friends.accept}
-                                </button>
-                                <button
-                                  type="button"
-                                  className="button-secondary"
-                                  onClick={() => declineFriendRequest(item.id)}
-                                >
-                                  {t.friends.decline}
-                                </button>
-                              </div>
-                            </div>
-                          ))}
+                  {hasRequests ? (
+                    <div className="social-list">
+                      {incomingRequests.map((item) => (
+                        <div key={`incoming-${item.id}`} className="social-item">
+                          <div>
+                            <strong>@{item.handle}</strong>
+                            <div className="social-meta">{item.display_name || "-"}</div>
+                          </div>
+                          <div className="community-inline">
+                            <button type="button" onClick={() => acceptFriendRequest(item.id)}>
+                              {t.friends.accept}
+                            </button>
+                            <button
+                              type="button"
+                              className="button-secondary"
+                              onClick={() => declineFriendRequest(item.id)}
+                            >
+                              {t.friends.decline}
+                            </button>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                    <div className="community-requests-section">
-                      <div className="community-requests-title">{t.friends.outgoing}</div>
-                      {outgoingRequests.length === 0 ? (
-                        <p className="muted">{t.friends.emptyOutgoing}</p>
-                      ) : (
-                        <div className="social-list">
-                          {outgoingRequests.map((item) => (
-                            <div key={item.id} className="social-item">
-                              <div>
-                                <strong>@{item.handle}</strong>
-                                <div className="social-meta">{item.display_name || "-"}</div>
-                              </div>
-                              <span className="status-pill warn">{t.friends.pending}</span>
-                            </div>
-                          ))}
+                      ))}
+                      {outgoingRequests.map((item) => (
+                        <div key={`outgoing-${item.id}`} className="social-item">
+                          <div>
+                            <strong>@{item.handle}</strong>
+                            <div className="social-meta">{item.display_name || "-"}</div>
+                          </div>
+                          <span className="status-pill warn">{t.friends.pending}</span>
                         </div>
-                      )}
+                      ))}
                     </div>
-                  </div>
+                  ) : (
+                    <p className="muted">{t.friends.emptyRequests}</p>
+                  )}
                 </div>
               </div>
               <div className="panel-title">{t.friends.list}</div>
