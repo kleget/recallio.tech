@@ -669,6 +669,10 @@ button[disabled] {
   margin-bottom: 16px;
 }
 
+.card-list.card-grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .card {
   background: var(--panel);
   border: 1px solid var(--border);

@@ -434,7 +434,7 @@ export default function Home() {
 
           <div className="panel" data-tour="sections">
             <div className="panel-title">{t.sections.title}</div>
-            <div className="card-list">
+            <div className="card-list card-grid-2">
               {sections.map((item) => (
                 <a key={item.href} className="card card-link" href={item.href}>
                   <div className="card-title">{item.title}</div>
