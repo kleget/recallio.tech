@@ -1068,6 +1068,21 @@ button[disabled] {
     padding: 36px 16px 60px;
   }
 
+  .nav-links {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    justify-content: stretch;
+    overflow-x: visible;
+  }
+
+  .nav-link {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+
   .input-row {
     grid-template-columns: 1fr;
   }
