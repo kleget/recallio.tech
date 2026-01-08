@@ -82,9 +82,28 @@ export default function TourOverlay({
 
     const updatePosition = () => {
       const margin = 16;
+      const isCompact = window.innerWidth <= 720 || window.innerHeight <= 640;
+
+      if (isCompact) {
+        setCardStyle({
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: "calc(100% - 32px)",
+          maxWidth: "360px",
+          maxHeight: "70vh"
+        });
+        return;
+      }
+
       const element = highlightRef.current;
       if (!element) {
-        setCardStyle({ top: "20%", left: "50%", transform: "translateX(-50%)" });
+        setCardStyle({
+          top: "20%",
+          left: "50%",
+          transform: "translateX(-50%)",
+          maxWidth: "360px"
+        });
         return;
       }
       const rect = element.getBoundingClientRect();
@@ -131,8 +150,13 @@ export default function TourOverlay({
       return;
     }
     const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const shouldLock = window.innerWidth > 720 && window.innerHeight > 640;
+    document.body.classList.add("tour-active");
+    if (shouldLock) {
+      document.body.style.overflow = "hidden";
+    }
     return () => {
+      document.body.classList.remove("tour-active");
       document.body.style.overflow = previousOverflow;
     };
   }, [active]);

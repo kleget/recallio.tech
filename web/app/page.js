@@ -50,7 +50,7 @@ const TEXT = {
       back: "Назад",
       next: "Далее",
       done: "К сообществу",
-      skip: "Закрыть",
+      skip: "Завершить",
       steps: [
         {
           key: "stats",
@@ -116,7 +116,7 @@ const TEXT = {
       back: "Back",
       next: "Next",
       done: "To community",
-      skip: "Close",
+      skip: "End tour",
       steps: [
         {
           key: "stats",

@@ -1566,6 +1566,8 @@ button[disabled] {
   box-shadow: var(--shadow-md);
   display: grid;
   gap: 8px;
+  max-height: 70vh;
+  overflow: auto;
 }
 
 .tour-step {
@@ -1605,6 +1607,7 @@ button[disabled] {
   outline: 2px solid var(--accent);
   box-shadow: 0 0 0 6px var(--accent-soft), 0 18px 50px rgba(15, 23, 42, 0.25);
   border-radius: var(--radius-md);
+  pointer-events: none;
 }
 
 .modal-card {

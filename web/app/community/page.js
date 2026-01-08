@@ -28,7 +28,7 @@ const TEXT = {
       back: "\u041d\u0430\u0437\u0430\u0434",
       next: "\u0414\u0430\u043b\u0435\u0435",
       done: "\u0413\u043e\u0442\u043e\u0432\u043e",
-      skip: "\u0417\u0430\u043a\u0440\u044b\u0442\u044c",
+      skip: "\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044c",
       steps: [
         {
           key: "community-feed",
@@ -167,7 +167,7 @@ const TEXT = {
       back: "Back",
       next: "Next",
       done: "Done",
-      skip: "Close",
+      skip: "End tour",
       steps: [
         {
           key: "community-feed",
