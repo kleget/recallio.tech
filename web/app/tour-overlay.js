@@ -86,12 +86,13 @@ export default function TourOverlay({
 
       if (isCompact) {
         setCardStyle({
-          top: "50%",
+          top: "auto",
+          bottom: "16px",
           left: "50%",
-          transform: "translate(-50%, -50%)",
+          transform: "translateX(-50%)",
           width: "calc(100% - 32px)",
           maxWidth: "360px",
-          maxHeight: "70vh"
+          maxHeight: "60vh"
         });
         return;
       }
@@ -122,8 +123,9 @@ export default function TourOverlay({
     };
 
     const applyHighlight = () => {
+      const isCompact = window.innerWidth <= 720 || window.innerHeight <= 640;
       const element = document.querySelector(`[data-tour="${current.key}"]`);
-      if (element) {
+      if (element && !isCompact) {
         element.classList.add("tour-highlight");
         element.scrollIntoView({ behavior: "smooth", block: "center" });
         highlightRef.current = element;
@@ -150,11 +152,8 @@ export default function TourOverlay({
       return;
     }
     const previousOverflow = document.body.style.overflow;
-    const shouldLock = window.innerWidth > 720 && window.innerHeight > 640;
     document.body.classList.add("tour-active");
-    if (shouldLock) {
-      document.body.style.overflow = "hidden";
-    }
+    document.body.style.overflow = "hidden";
     return () => {
       document.body.classList.remove("tour-active");
       document.body.style.overflow = previousOverflow;

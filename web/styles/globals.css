@@ -1568,6 +1568,7 @@ button[disabled] {
   gap: 8px;
   max-height: 70vh;
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tour-step {
