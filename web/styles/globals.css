@@ -1915,6 +1915,25 @@ button[disabled] {
   gap: 8px;
 }
 
+.community-requests {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.community-requests-section {
+  display: grid;
+  gap: 8px;
+}
+
+.community-requests-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .social-list {
   display: grid;
   gap: 12px;
