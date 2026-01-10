@@ -1555,6 +1555,26 @@ button[disabled] {
   color: var(--muted);
 }
 
+.limit-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.limit-preset {
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 999px;
+  min-height: 32px;
+}
+
+.limit-preset.is-active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
 .onboarding-actions {
   display: flex;
   gap: 12px;

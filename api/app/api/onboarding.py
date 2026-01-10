@@ -282,8 +282,11 @@ async def apply_onboarding(
 
     await db.execute(delete(UserCorpus).where(UserCorpus.profile_id == learning_profile.id))
     for item in data.corpora:
-        if item.target_word_limit < 0:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid target_word_limit")
+        if item.target_word_limit <= 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="target_word_limit must be at least 1",
+            )
         db.add(
             UserCorpus(
                 profile_id=learning_profile.id,

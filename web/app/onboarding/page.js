@@ -98,7 +98,8 @@ const TEXT = {
       badge: "Выбрано",
       words: "слов",
       limit: "Лимит слов",
-      limitHint: "0 = все доступные слова"
+      limitHint: "Выберите количество слов для этой сферы.",
+      all: "Все слова"
     },
     actions: {
       save: "Сохранить настройки",
@@ -151,7 +152,8 @@ const TEXT = {
       badge: "Selected",
       words: "words",
       limit: "Word limit",
-      limitHint: "0 = all available words"
+      limitHint: "Choose how many words to take from this corpus.",
+      all: "All words"
     },
     actions: {
       save: "Save settings",
@@ -239,6 +241,52 @@ function getCorpusLabel(corpus, uiLang) {
 function clampNumber(value, minValue, maxValue) {
   const safe = Math.round(value);
   return Math.min(maxValue, Math.max(minValue, safe));
+}
+
+const DEFAULT_CORPUS_LIMIT = 300;
+
+function getDefaultCorpusLimit(total) {
+  if (!Number.isFinite(total) || total <= 0) {
+    return DEFAULT_CORPUS_LIMIT;
+  }
+  return Math.min(total, DEFAULT_CORPUS_LIMIT);
+}
+
+function normalizeLimit(value, total) {
+  if (!Number.isFinite(value) || value <= 0) {
+    return getDefaultCorpusLimit(total);
+  }
+  let safe = Math.round(value);
+  if (Number.isFinite(total) && total > 0) {
+    safe = Math.min(safe, total);
+  }
+  return Math.max(1, safe);
+}
+
+function buildLimitPresets(total, t) {
+  const presets = [];
+  const seen = new Set();
+  const safeTotal = Number.isFinite(total) && total > 0 ? total : null;
+  [100, 300, 500, 1000].forEach((value) => {
+    const limit = safeTotal ? Math.min(value, safeTotal) : value;
+    if (!limit || seen.has(limit)) {
+      return;
+    }
+    seen.add(limit);
+    presets.push({ value: limit, label: String(limit) });
+  });
+  if (safeTotal) {
+    if (seen.has(safeTotal)) {
+      presets.forEach((item) => {
+        if (item.value === safeTotal) {
+          item.label = t.corpora.all;
+        }
+      });
+    } else {
+      presets.push({ value: safeTotal, label: t.corpora.all });
+    }
+  }
+  return presets;
 }
 
 export default function OnboardingPage() {
@@ -343,6 +391,28 @@ export default function OnboardingPage() {
   }, [token, nativeLang, targetLang, t.errorLoad]);
 
   useEffect(() => {
+    if (!corpora.length) {
+      return;
+    }
+    setSelected((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      corpora.forEach((corpus) => {
+        const current = next[corpus.id];
+        if (!current) {
+          return;
+        }
+        const normalized = normalizeLimit(current.target_word_limit, corpus.words_total);
+        if (current.target_word_limit !== normalized) {
+          next[corpus.id] = { ...current, target_word_limit: normalized };
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [corpora]);
+
+  useEffect(() => {
     setSaveStatus("");
     setSaveError("");
   }, [nativeLang, targetLang, dailyNew, dailyReview, learnBatch, selected]);
@@ -384,14 +454,16 @@ export default function OnboardingPage() {
     setSelected({});
   };
 
-  const toggleCorpus = (corpusId) => {
+  const toggleCorpus = (corpus) => {
+    const corpusId = corpus.id;
+    const defaultLimit = getDefaultCorpusLimit(corpus.words_total);
     setSelected((prev) => {
       const next = { ...prev };
       if (next[corpusId]) {
         delete next[corpusId];
         return next;
       }
-      next[corpusId] = { target_word_limit: 0, enabled: true };
+      next[corpusId] = { target_word_limit: defaultLimit, enabled: true };
       return next;
     });
   };
@@ -401,10 +473,7 @@ export default function OnboardingPage() {
     if (Number.isNaN(parsed)) {
       return;
     }
-    let nextValue = Math.max(0, Math.round(parsed));
-    if (maxValue && nextValue > maxValue) {
-      nextValue = maxValue;
-    }
+    const nextValue = normalizeLimit(parsed, maxValue);
     setSelected((prev) => ({
       ...prev,
       [corpusId]: { ...(prev[corpusId] || { enabled: true }), target_word_limit: nextValue }
@@ -419,11 +488,17 @@ export default function OnboardingPage() {
       return;
     }
     const wasOnboarded = onboardingDone;
-    const corporaPayload = Object.entries(selected).map(([id, item]) => ({
-      corpus_id: Number(id),
-      target_word_limit: item.target_word_limit || 0,
-      enabled: item.enabled !== false
-    }));
+    const corporaMap = new Map(corpora.map((item) => [item.id, item]));
+    const corporaPayload = Object.entries(selected).map(([id, item]) => {
+      const corpusId = Number(id);
+      const corpus = corporaMap.get(corpusId);
+      const total = corpus?.words_total ?? 0;
+      return {
+        corpus_id: corpusId,
+        target_word_limit: normalizeLimit(item.target_word_limit, total),
+        enabled: item.enabled !== false
+      };
+    });
     if (!corporaPayload.length) {
       setSaveError(t.actions.corporaRequired);
       return;
@@ -689,13 +764,17 @@ export default function OnboardingPage() {
                 <div className="corpora-grid">
                   {corpora.map((corpus) => {
                     const isSelected = Boolean(selected[corpus.id]);
-                    const limitValue = selected[corpus.id]?.target_word_limit ?? 0;
+                    const rawLimit = selected[corpus.id]?.target_word_limit;
+                    const limitValue = isSelected
+                      ? normalizeLimit(rawLimit, corpus.words_total)
+                      : 0;
                     const corpusLabel = getCorpusLabel(corpus, uiLang);
+                    const presets = buildLimitPresets(corpus.words_total, t);
                     return (
                       <div
                         key={corpus.id}
                         className={`corpus-card ${isSelected ? "is-selected" : ""}`}
-                        onClick={() => toggleCorpus(corpus.id)}
+                        onClick={() => toggleCorpus(corpus)}
                       >
                         <div className="corpus-header">
                           <div className="corpus-title">{corpusLabel}</div>
@@ -731,13 +810,29 @@ export default function OnboardingPage() {
                             <label>{t.corpora.limit}</label>
                             <input
                               type="number"
-                              min="0"
+                              min="1"
                               max={corpus.words_total}
                               value={limitValue}
                               onChange={(event) =>
                                 updateLimit(corpus.id, event.target.value, corpus.words_total)
                               }
                             />
+                            <div className="limit-presets">
+                              {presets.map((preset) => (
+                                <button
+                                  key={`${corpus.id}-${preset.value}`}
+                                  type="button"
+                                  className={`button-secondary limit-preset${
+                                    limitValue === preset.value ? " is-active" : ""
+                                  }`}
+                                  onClick={() =>
+                                    updateLimit(corpus.id, preset.value, corpus.words_total)
+                                  }
+                                >
+                                  {preset.label}
+                                </button>
+                              ))}
+                            </div>
                             <small>{t.corpora.limitHint}</small>
                           </div>
                         ) : null}
