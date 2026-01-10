@@ -1083,6 +1083,21 @@ button[disabled] {
     justify-content: center;
   }
 
+  .community-tabs .segmented {
+    border-radius: var(--radius-md);
+    padding: 10px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .community-tabs .segmented button {
+    border-radius: var(--radius-sm);
+    width: 100%;
+    justify-content: center;
+  }
+
   .input-row {
     grid-template-columns: 1fr;
   }
