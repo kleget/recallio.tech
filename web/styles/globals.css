@@ -1180,6 +1180,19 @@ button[disabled] {
   .leaderboard-stats {
     text-align: left;
   }
+
+  .admin-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-word-actions {
+    width: 100%;
+  }
+
+  .admin-translation-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .series {
@@ -2132,6 +2145,108 @@ button[disabled] {
   align-items: center;
 }
 
+.admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.admin-field {
+  display: grid;
+  gap: 6px;
+  min-width: 160px;
+  flex: 1;
+}
+
+.admin-field-wide {
+  flex: 2;
+  min-width: 240px;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.admin-word-list {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-word-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  display: grid;
+  gap: 12px;
+}
+
+.admin-word-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-word-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.admin-word-meta {
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-word-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-word-edit {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-translation-list {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-translation-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.admin-pagination-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .social-meta {
   font-size: 12px;
   color: var(--muted);
@@ -2323,7 +2438,8 @@ form,
 .import-card,
 .language-card,
 .setting-card,
-.corpus-card {
+.corpus-card,
+.admin-word-card {
   background: var(--surface);
   border-color: var(--border);
 }

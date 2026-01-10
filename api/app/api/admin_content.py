@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy import delete, exists, select, update
+from sqlalchemy import delete, exists, func, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
@@ -12,6 +12,7 @@ from app.core.config import ADMIN_EMAILS
 from app.db.session import get_db
 from app.models import (
     ContentReport,
+    Corpus,
     CorpusWordStat,
     ReviewEvent,
     Translation,
@@ -26,6 +27,12 @@ from app.schemas.admin_content import (
     AdminWordOut,
     AdminWordUpdate,
 )
+from app.schemas.admin_corpora import (
+    AdminCorpusOut,
+    AdminCorpusTranslationOut,
+    AdminCorpusWordOut,
+    AdminCorpusWordsOut,
+)
 
 router = APIRouter(prefix="/admin/content", tags=["admin"])
 
@@ -33,6 +40,150 @@ router = APIRouter(prefix="/admin/content", tags=["admin"])
 def ensure_admin(user: User) -> None:
     if user.email.strip().lower() not in ADMIN_EMAILS:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+
+
+@router.get("/corpora", response_model=list[AdminCorpusOut])
+async def list_corpora(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[AdminCorpusOut]:
+    ensure_admin(user)
+    stmt = (
+        select(
+            Corpus.id,
+            Corpus.slug,
+            Corpus.name,
+            Corpus.source_lang,
+            Corpus.target_lang,
+            func.count(CorpusWordStat.word_id).label("words_total"),
+        )
+        .select_from(Corpus)
+        .join(CorpusWordStat, CorpusWordStat.corpus_id == Corpus.id, isouter=True)
+        .group_by(Corpus.id, Corpus.slug, Corpus.name, Corpus.source_lang, Corpus.target_lang)
+        .order_by(Corpus.name)
+    )
+    result = await db.execute(stmt)
+    return [
+        AdminCorpusOut(
+            id=row.id,
+            slug=row.slug,
+            name=row.name,
+            source_lang=row.source_lang,
+            target_lang=row.target_lang,
+            words_total=row.words_total,
+        )
+        for row in result.fetchall()
+    ]
+
+
+@router.get("/corpora/{corpus_id}/words", response_model=AdminCorpusWordsOut)
+async def list_corpus_words(
+    corpus_id: int,
+    query: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+    sort: str = "rank",
+    order: str | None = None,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> AdminCorpusWordsOut:
+    ensure_admin(user)
+    if limit < 1 or limit > 200:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid limit")
+    if offset < 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid offset")
+
+    corpus_result = await db.execute(
+        select(Corpus.id, Corpus.source_lang, Corpus.target_lang).where(Corpus.id == corpus_id)
+    )
+    corpus = corpus_result.first()
+    if not corpus:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Corpus not found")
+
+    stmt = (
+        select(
+            Word.id.label("word_id"),
+            Word.lemma,
+            Word.lang,
+            CorpusWordStat.count,
+            CorpusWordStat.rank,
+        )
+        .select_from(CorpusWordStat)
+        .join(Word, Word.id == CorpusWordStat.word_id)
+        .where(CorpusWordStat.corpus_id == corpus_id)
+    )
+
+    if query and query.strip():
+        like = f"%{query.strip()}%"
+        translation_match = exists(
+            select(1).where(
+                Translation.word_id == Word.id,
+                Translation.target_lang == corpus.target_lang,
+                Translation.translation.ilike(like),
+            )
+        )
+        stmt = stmt.where(or_(Word.lemma.ilike(like), translation_match))
+
+    if sort not in {"rank", "count", "lemma"}:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid sort")
+    order_dir = (order or ("desc" if sort == "count" else "asc")).lower()
+    if order_dir not in {"asc", "desc"}:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid order")
+
+    if sort == "count":
+        sort_col = CorpusWordStat.count
+    elif sort == "lemma":
+        sort_col = Word.lemma
+    else:
+        sort_col = CorpusWordStat.rank
+
+    order_expr = sort_col.desc() if order_dir == "desc" else sort_col.asc()
+    if sort == "rank":
+        order_expr = order_expr.nulls_last()
+
+    stmt = stmt.order_by(order_expr, CorpusWordStat.count.desc(), Word.lemma.asc())
+
+    total_result = await db.execute(select(func.count()).select_from(stmt.subquery()))
+    total_count = int(total_result.scalar_one() or 0)
+
+    rows = await db.execute(stmt.limit(limit).offset(offset))
+    items = rows.fetchall()
+    word_ids = [row.word_id for row in items]
+    if not word_ids:
+        return AdminCorpusWordsOut(total=total_count, items=[])
+
+    translations_result = await db.execute(
+        select(Translation.id, Translation.word_id, Translation.translation, Translation.target_lang)
+        .where(
+            Translation.word_id.in_(word_ids),
+            Translation.target_lang == corpus.target_lang,
+        )
+        .order_by(Translation.translation.asc())
+    )
+    translation_map: dict[int, list[dict]] = {}
+    for row in translations_result.fetchall():
+        translation_map.setdefault(row.word_id, []).append(
+            {
+                "id": row.id,
+                "translation": row.translation,
+                "target_lang": row.target_lang,
+            }
+        )
+
+    payload = [
+        AdminCorpusWordOut(
+            word_id=row.word_id,
+            lemma=row.lemma,
+            lang=row.lang,
+            count=row.count,
+            rank=row.rank,
+            translations=[
+                AdminCorpusTranslationOut(**item) for item in translation_map.get(row.word_id, [])
+            ],
+        )
+        for row in items
+    ]
+    return AdminCorpusWordsOut(total=total_count, items=payload)
 
 
 STATUS_PRIORITY = {"known": 3, "learned": 2, "new": 1}
