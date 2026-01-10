@@ -638,13 +638,13 @@ button[disabled] {
   box-shadow: var(--shadow-sm);
 }
 
-.stat-label {
-  font-size: 12px;
-  color: var(--muted);
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
+  .stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
 
 .stat-value {
   font-size: 26px;
@@ -1109,6 +1109,11 @@ button[disabled] {
 
   .stat-card {
     padding: 14px;
+  }
+
+  .stat-label {
+    min-height: 30px;
+    line-height: 1.2;
   }
 
   .stat-value {
