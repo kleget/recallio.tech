@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.auth import get_active_learning_profile, get_current_user
@@ -131,6 +131,7 @@ async def resolve_translation(
     target_lang: str | None,
     db: AsyncSession,
 ) -> Translation | None:
+    normalized = " ".join(translation_text.strip().lower().split())
     stmt = select(Translation).where(
         Translation.word_id == word_id,
         Translation.translation == translation_text,
@@ -141,6 +142,17 @@ async def resolve_translation(
     translation = result.scalar_one_or_none()
     if translation:
         return translation
+    if normalized:
+        stmt = select(Translation).where(
+            Translation.word_id == word_id,
+            func.lower(Translation.translation) == normalized,
+        )
+        if target_lang:
+            stmt = stmt.where(Translation.target_lang == target_lang)
+        result = await db.execute(stmt)
+        translation = result.scalar_one_or_none()
+        if translation:
+            return translation
     if target_lang:
         fallback = await db.execute(
             select(Translation).where(

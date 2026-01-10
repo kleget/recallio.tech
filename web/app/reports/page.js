@@ -292,7 +292,10 @@ export default function ReportsPage() {
     }
     setSaving(true);
     try {
-      const wordId = Number(form.word_id);
+      const wordIdRaw = form.word_id ? String(form.word_id).trim() : "";
+      const translationIdRaw = form.translation_id ? String(form.translation_id).trim() : "";
+      const wordId = Number(wordIdRaw);
+      const translationId = Number(translationIdRaw);
       const payload = {
         issue_type: form.issue_type,
         word_text: form.word_text.trim(),
@@ -300,10 +303,11 @@ export default function ReportsPage() {
         message: form.message.trim() || null,
         corpus_id: form.corpus_id ? Number(form.corpus_id) : null,
         source: form.source || "other",
-        word_id: Number.isFinite(wordId) ? wordId : null,
-        translation_id: Number.isFinite(Number(form.translation_id))
-          ? Number(form.translation_id)
-          : null
+        word_id: wordIdRaw && Number.isFinite(wordId) && wordId > 0 ? wordId : null,
+        translation_id:
+          translationIdRaw && Number.isFinite(translationId) && translationId > 0
+            ? translationId
+            : null
       };
       const data = await postJson("/reports", payload, token);
       setReports((prev) => [data, ...prev]);
