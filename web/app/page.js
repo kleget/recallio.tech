@@ -170,6 +170,7 @@ export default function Home() {
   const interfaceLang = lang || "ru";
   const t = TEXT[interfaceLang] || TEXT.ru;
   const locale = interfaceLang === "en" ? "en-US" : "ru-RU";
+  const wordsLabel = interfaceLang === "en" ? "words" : "слов";
 
   const goLearn = () => {
     window.location.href = "/learn";
@@ -422,12 +423,18 @@ export default function Home() {
 
           <div className="panel" data-tour="today">
             <div className="panel-title">{t.today}</div>
-            <div className="actions">
-              <button type="button" onClick={goLearn}>
-                {t.learnButton} ({dashboard.learn_today})
+            <div className="today-actions">
+              <button type="button" className="today-action" onClick={goLearn}>
+                <span className="today-action-label">{t.stats.learnToday}</span>
+                <span className="today-action-count">
+                  {dashboard.learn_today} {wordsLabel}
+                </span>
               </button>
-              <button type="button" onClick={goReview}>
-                {t.reviewButton} ({dashboard.review_today})
+              <button type="button" className="today-action" onClick={goReview}>
+                <span className="today-action-label">{t.stats.reviewToday}</span>
+                <span className="today-action-count">
+                  {dashboard.review_today} {wordsLabel}
+                </span>
               </button>
             </div>
           </div>

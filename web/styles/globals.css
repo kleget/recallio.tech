@@ -663,6 +663,28 @@ button[disabled] {
   flex-wrap: wrap;
 }
 
+.today-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.today-action {
+  width: 100%;
+  justify-content: space-between;
+  text-align: left;
+  gap: 12px;
+}
+
+.today-action-count {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
 .card-list {
   display: grid;
   gap: 14px;
