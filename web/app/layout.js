@@ -11,6 +11,11 @@ export const metadata = {
   description: "Recallio"
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1
+};
+
 export default function RootLayout({ children }) {
   const cookieStore = cookies();
   const langCookie = cookieStore.get("ui_lang")?.value;

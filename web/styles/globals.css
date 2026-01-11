@@ -1187,7 +1187,7 @@ button[disabled] {
 
 @media (max-width: 720px) {
   body {
-    padding-bottom: 72px;
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
   }
 
   .site-nav-inner {
@@ -1210,23 +1210,28 @@ button[disabled] {
     left: 0;
     right: 0;
     bottom: 0;
+    top: auto;
     z-index: 50;
-    justify-content: space-around;
+    justify-content: space-between;
     background: var(--panel);
     border-top: 1px solid var(--border);
-    padding: 10px 12px 12px;
+    padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
     box-shadow: 0 -12px 30px rgba(31, 87, 196, 0.12);
     backdrop-filter: blur(12px);
     overflow-x: visible;
+    flex-wrap: nowrap;
+    gap: 8px;
   }
 
   .nav-link {
     flex-direction: column;
     gap: 4px;
     font-size: 11px;
-    padding: 8px 10px;
+    padding: 8px 6px;
     border-radius: 14px;
     min-width: 56px;
+    flex: 1;
+    min-width: 0;
   }
 
   .nav-link.is-active {
