@@ -4,13 +4,15 @@ import random
 import re
 from datetime import date, datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import and_, case, func, or_, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 from app.api.auth import get_active_learning_profile, get_current_user
+from app.core.audit import log_audit_event
+from app.core.config import ADMIN_EMAILS
 from app.db.session import get_db
 from app.models import (
     ChatMessage,
@@ -59,6 +61,10 @@ router = APIRouter(prefix="/social", tags=["social"])
 KNOWN_STATUSES = ("known", "learned")
 HANDLE_RE = re.compile(r"^[a-z0-9_]{3,24}$")
 INVITE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+
+def is_admin_user(user: User) -> bool:
+    return user.email.strip().lower() in ADMIN_EMAILS
 
 CHALLENGES = {
     "streak_7": {
@@ -1198,6 +1204,39 @@ async def create_chat_message(
         created_at=chat.created_at,
         author=build_actor(user.id, public_profile, user_profile),
     )
+
+
+@router.delete("/chat/messages/{message_id}", response_model=OperationStatusOut)
+async def delete_chat_message(
+    message_id: int,
+    request: Request,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> OperationStatusOut:
+    chat = await db.get(ChatMessage, message_id)
+    if not chat:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
+
+    is_admin = is_admin_user(user)
+    if not is_admin and chat.user_id != user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed")
+
+    await db.delete(chat)
+    await db.commit()
+
+    await log_audit_event(
+        "social.chat.delete",
+        user_id=user.id,
+        request=request,
+        meta={
+            "message_id": message_id,
+            "target_user_id": str(chat.user_id),
+            "admin": is_admin,
+        },
+        db=db,
+    )
+
+    return OperationStatusOut(ok=True)
 
 
 @router.get("/group-challenges", response_model=list[GroupChallengeOut])

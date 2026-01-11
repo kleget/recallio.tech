@@ -156,7 +156,9 @@ const TEXT = {
       placeholder: "\u0421\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435",
       send: "\u041e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c",
       refresh: "\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c",
-      empty: "\u041f\u043e\u043a\u0430 \u043d\u0435\u0442 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0439."
+      empty: "\u041f\u043e\u043a\u0430 \u043d\u0435\u0442 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0439.",
+      delete: "\u0423\u0434\u0430\u043b\u0438\u0442\u044c",
+      confirmDelete: "\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435?"
     },
     groups: {
       title: "\u041e\u0431\u0449\u0438\u0435 \u0447\u0435\u043b\u043b\u0435\u043d\u0434\u0436\u0438",
@@ -310,7 +312,9 @@ const TEXT = {
       placeholder: "Message",
       send: "Send",
       refresh: "Refresh",
-      empty: "No messages yet."
+      empty: "No messages yet.",
+      delete: "Delete",
+      confirmDelete: "Delete this message?"
     },
     groups: {
       title: "Group challenges",
@@ -414,6 +418,7 @@ export default function CommunityPage() {
   const [token, setToken] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const [profile, setProfile] = useState(null);
   const [form, setForm] = useState({
@@ -466,6 +471,7 @@ export default function CommunityPage() {
     }
     setToken(tokenValue);
     Promise.all([
+      getJson("/auth/me", tokenValue),
       getJson("/social/profile/me", tokenValue),
       getJson("/social/leaderboard", tokenValue),
       getJson("/social/challenges", tokenValue),
@@ -481,6 +487,7 @@ export default function CommunityPage() {
     ])
       .then(
         ([
+          meData,
           profileData,
           leaderboardData,
           challengesData,
@@ -494,6 +501,7 @@ export default function CommunityPage() {
           chatData,
           groupData
         ]) => {
+        setIsAdmin(Boolean(meData?.is_admin));
         setProfile(profileData);
         setForm({
           handle: profileData.handle || "",
@@ -761,6 +769,23 @@ export default function CommunityPage() {
       setChatError(err.message || t.error);
     } finally {
       setChatSending(false);
+    }
+  };
+
+  const deleteChatMessage = async (messageId) => {
+    if (!token) {
+      window.location.href = "/auth";
+      return;
+    }
+    if (!window.confirm(t.chat.confirmDelete)) {
+      return;
+    }
+    setChatError("");
+    try {
+      await sendJson(`/social/chat/messages/${messageId}`, "DELETE", null, token);
+      await refreshChat();
+    } catch (err) {
+      setChatError(err.message || t.error);
     }
   };
 
@@ -1161,15 +1186,30 @@ export default function CommunityPage() {
                 {chatMessages.length === 0 ? (
                   <p className="muted">{t.chat.empty}</p>
                 ) : (
-                  chatMessages.map((item) => (
-                    <div key={item.id} className="chat-message">
-                      <div className="chat-meta">
-                        <strong>@{item.author.handle}</strong>
-                        <span>{formatTime(item.created_at)}</span>
+                  chatMessages.map((item) => {
+                    const canDelete =
+                      isAdmin || (profile?.handle && item.author?.handle === profile.handle);
+                    return (
+                      <div key={item.id} className="chat-message">
+                        <div className="chat-meta">
+                          <div className="chat-meta-left">
+                            <strong>@{item.author.handle}</strong>
+                            <span>{formatTime(item.created_at)}</span>
+                          </div>
+                          {canDelete ? (
+                            <button
+                              type="button"
+                              className="chat-delete"
+                              onClick={() => deleteChatMessage(item.id)}
+                            >
+                              {t.chat.delete}
+                            </button>
+                          ) : null}
+                        </div>
+                        <div className="chat-text">{item.message}</div>
                       </div>
-                      <div className="chat-text">{item.message}</div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
               <div className="chat-input">
