@@ -9,6 +9,7 @@ const TEXT = {
       "Изучение слов без перегруза: карточки, тесты и повторения по уму.",
     developer: "Разработчик: Kleget",
     contacts: "Контакты разработчика",
+    support: "Поддержка",
     server: "О сервере",
     github: "GitHub",
     telegram: "Telegram",
@@ -22,6 +23,7 @@ const TEXT = {
       "Learn words without overload: cards, recall tests, and smart reviews.",
     developer: "Developer: Kleget",
     contacts: "Developer contacts",
+    support: "Support",
     server: "Server info",
     github: "GitHub",
     telegram: "Telegram",
@@ -48,6 +50,7 @@ export default function Footer() {
         <div className="footer-links">
           <div className="footer-links-title">{t.contacts}</div>
           <div className="footer-links-list">
+            <a href="/support">{t.support}</a>
             <a href="/server">{t.server}</a>
             <a href="https://github.com/kleget/recallio.tech" target="_blank" rel="noopener noreferrer">
               {t.github}
