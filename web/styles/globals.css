@@ -655,6 +655,7 @@ button[disabled] {
   justify-content: center;
   gap: 8px;
   text-decoration: none;
+  padding: 9px 14px;
 }
 
 .button-secondary:hover {
@@ -2389,6 +2390,18 @@ button[disabled] {
   gap: 10px;
   flex-wrap: wrap;
   align-items: center;
+}
+
+.community-inline .button-secondary {
+  background: var(--panel-strong);
+  border-color: rgba(47, 124, 246, 0.35);
+  box-shadow: var(--shadow-sm);
+}
+
+.auth-panel .button-secondary {
+  background: var(--panel-strong);
+  border-color: rgba(47, 124, 246, 0.35);
+  box-shadow: var(--shadow-sm);
 }
 
 .community-stat {

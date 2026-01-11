@@ -277,7 +277,7 @@ async def get_public_profile(handle: str, db: AsyncSession = Depends(get_db)) ->
     handle = normalize_handle(handle)
     result = await db.execute(
         select(UserPublicProfile, UserProfile)
-        .join(UserProfile, UserProfile.user_id == UserPublicProfile.user_id)
+        .outerjoin(UserProfile, UserProfile.user_id == UserPublicProfile.user_id)
         .where(UserPublicProfile.handle == handle, UserPublicProfile.is_public.is_(True))
     )
     row = result.first()
@@ -295,7 +295,7 @@ async def get_public_profile(handle: str, db: AsyncSession = Depends(get_db)) ->
     )
     native_lang = None
     target_lang = None
-    if user_profile.active_profile_id:
+    if user_profile and user_profile.active_profile_id:
         lp_result = await db.execute(
             select(LearningProfile).where(LearningProfile.id == user_profile.active_profile_id)
         )
@@ -309,7 +309,7 @@ async def get_public_profile(handle: str, db: AsyncSession = Depends(get_db)) ->
         handle=public_profile.handle,
         display_name=public_profile.display_name,
         bio=public_profile.bio,
-        avatar_url=user_profile.avatar_url,
+        avatar_url=user_profile.avatar_url if user_profile else None,
         native_lang=native_lang,
         target_lang=target_lang,
         stats=stats,

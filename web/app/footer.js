@@ -10,6 +10,7 @@ const TEXT = {
     developer: "Разработчик: Kleget",
     contacts: "Контакты разработчика",
     server: "О сервере",
+    github: "GitHub",
     telegram: "Telegram",
     email: "Email",
     vk: "VK",
@@ -22,6 +23,7 @@ const TEXT = {
     developer: "Developer: Kleget",
     contacts: "Developer contacts",
     server: "Server info",
+    github: "GitHub",
     telegram: "Telegram",
     email: "Email",
     vk: "VK",
@@ -47,6 +49,9 @@ export default function Footer() {
           <div className="footer-links-title">{t.contacts}</div>
           <div className="footer-links-list">
             <a href="/server">{t.server}</a>
+            <a href="https://github.com/kleget/recallio.tech" target="_blank" rel="noopener noreferrer">
+              {t.github}
+            </a>
             <a href="https://t.me/kleget" target="_blank" rel="noopener noreferrer">
               {t.telegram}
             </a>
