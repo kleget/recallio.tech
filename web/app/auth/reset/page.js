@@ -107,7 +107,7 @@ export default function ResetPage() {
       {status ? (
         <div className="panel">
           <p className="success">{status}</p>
-          <a className="button-secondary" href="/auth">
+          <a className="button-secondary" href="/auth/login">
             {t.login}
           </a>
         </div>

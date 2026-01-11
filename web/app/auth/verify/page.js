@@ -80,7 +80,7 @@ export default function VerifyPage() {
   const [noticeType, setNoticeType] = useState("");
   const [redirectLeft, setRedirectLeft] = useState(REDIRECT_SECONDS);
   const didVerifyRef = useRef(false);
-  const redirectTarget = getCookie("token") ? "/" : "/auth";
+  const redirectTarget = getCookie("token") ? "/" : "/auth/login";
 
   useEffect(() => {
     if (statusParam === "ok") {
