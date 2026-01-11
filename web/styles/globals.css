@@ -121,6 +121,18 @@ body {
   flex-wrap: wrap;
 }
 
+.nav-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.nav-lang button {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
 .nav-brand {
   font-family: "Space Grotesk", "Manrope", sans-serif;
   font-weight: 700;
@@ -310,6 +322,86 @@ main {
   gap: 16px;
   flex-wrap: wrap;
   margin-bottom: 24px;
+}
+
+.auth-page {
+  display: grid;
+  gap: 28px;
+}
+
+.auth-hero {
+  margin-top: 6px;
+}
+
+.auth-hero-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  align-items: center;
+}
+
+.auth-eyebrow {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+
+.auth-lead {
+  font-size: 16px;
+  color: var(--muted);
+  max-width: 520px;
+}
+
+.auth-why {
+  margin-top: 6px;
+  color: var(--text);
+}
+
+.auth-actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.auth-meta {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.auth-hero-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.auth-hero-card h3 {
+  margin: 0 0 10px;
+}
+
+.auth-hero-card ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+}
+
+.auth-form {
+  margin-top: 10px;
+}
+
+.auth-form form {
+  background: transparent;
+  border: none;
+  padding: 0;
+  box-shadow: none;
+  max-width: none;
 }
 
 .page-header-actions {
@@ -1023,7 +1115,7 @@ button[disabled] {
     white-space: nowrap;
   }
 
-  .theme-toggle {
+  .nav-controls {
     order: 1;
     margin-left: auto;
   }
@@ -1045,6 +1137,10 @@ button[disabled] {
 
   .profile-actions.full {
     justify-content: flex-start;
+  }
+
+  .auth-hero-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1072,10 +1168,9 @@ button[disabled] {
     padding-bottom: 2px;
   }
 
-  .theme-toggle {
+  .nav-controls {
     grid-area: toggle;
     justify-self: end;
-    margin-left: 0;
   }
 }
 

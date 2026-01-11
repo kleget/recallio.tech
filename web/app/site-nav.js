@@ -16,7 +16,8 @@ const TEXT = {
     admin: "Админка",
     theme: "Тема",
     themeLight: "Светлая",
-    themeDark: "Темная"
+    themeDark: "Темная",
+    langLabel: "Язык"
   },
   en: {
     home: "Home",
@@ -25,7 +26,8 @@ const TEXT = {
     admin: "Admin",
     theme: "Theme",
     themeLight: "Light",
-    themeDark: "Dark"
+    themeDark: "Dark",
+    langLabel: "Language"
   }
 };
 
@@ -38,7 +40,7 @@ const NAV_ITEMS = [
 
 export default function SiteNav({ initialIsAdmin = false }) {
   const pathname = usePathname() || "/";
-  const { lang } = useUiLang();
+  const { lang, setLang } = useUiLang();
   const t = TEXT[lang] || TEXT.ru;
   const [isAdmin, setIsAdmin] = useState(
     () => Boolean(initialIsAdmin) || getCookie("is_admin") === "1"
@@ -120,18 +122,36 @@ export default function SiteNav({ initialIsAdmin = false }) {
               );
             })}
           </nav>
-          <button
-            type="button"
-            className={`theme-toggle${theme === "dark" ? " is-dark" : ""}`}
-            onClick={toggleTheme}
-            aria-label={`${t.theme}: ${themeLabel}`}
-            title={`${t.theme}: ${themeLabel}`}
-          >
-            <span className="theme-toggle-track">
-              <span className="theme-toggle-thumb" />
-            </span>
-            <span className="theme-toggle-text">{themeLabel}</span>
-          </button>
+          <div className="nav-controls">
+            <div className="segmented nav-lang" role="group" aria-label={t.langLabel}>
+              <button
+                type="button"
+                className={lang === "ru" ? "is-active" : ""}
+                onClick={() => setLang("ru")}
+              >
+                RU
+              </button>
+              <button
+                type="button"
+                className={lang === "en" ? "is-active" : ""}
+                onClick={() => setLang("en")}
+              >
+                EN
+              </button>
+            </div>
+            <button
+              type="button"
+              className={`theme-toggle${theme === "dark" ? " is-dark" : ""}`}
+              onClick={toggleTheme}
+              aria-label={`${t.theme}: ${themeLabel}`}
+              title={`${t.theme}: ${themeLabel}`}
+            >
+              <span className="theme-toggle-track">
+                <span className="theme-toggle-thumb" />
+              </span>
+              <span className="theme-toggle-text">{themeLabel}</span>
+            </button>
+          </div>
         </div>
       </div>
     </header>
