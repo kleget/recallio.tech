@@ -159,85 +159,87 @@ export default function SiteNav({ initialIsAdmin = false }) {
   };
 
   return (
-    <header className="site-nav">
-      <div className="site-nav-inner">
-        <a className="nav-brand" href="/">
-          <img className="brand-logo" src="/brand/Recallio_main.png" alt="Recallio" />
-          <img className="brand-mark" src="/brand/R_main.png" alt="Recallio" />
-        </a>
-        <div className="nav-actions">
-          <nav className="nav-links nav-links-top" aria-label="Main">
-            {items.map((item) => {
-              const isActive =
-                item.href === "/"
-                  ? pathname === "/"
-                  : pathname === item.href || pathname.startsWith(`${item.href}/`);
-              return (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  className={`nav-link${isActive ? " is-active" : ""}`}
-                  aria-current={isActive ? "page" : undefined}
-                  aria-label={t[item.key]}
+    <>
+      <header className="site-nav">
+        <div className="site-nav-inner">
+          <a className="nav-brand" href="/">
+            <img className="brand-logo" src="/brand/Recallio_main.png" alt="Recallio" />
+            <img className="brand-mark" src="/brand/R_main.png" alt="Recallio" />
+          </a>
+          <div className="nav-actions">
+            <nav className="nav-links nav-links-top" aria-label="Main">
+              {items.map((item) => {
+                const isActive =
+                  item.href === "/"
+                    ? pathname === "/"
+                    : pathname === item.href || pathname.startsWith(`${item.href}/`);
+                return (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    className={`nav-link${isActive ? " is-active" : ""}`}
+                    aria-current={isActive ? "page" : undefined}
+                    aria-label={t[item.key]}
+                  >
+                    <span className="nav-icon">{ICONS[item.icon]}</span>
+                    <span className="nav-text">{t[item.key]}</span>
+                  </a>
+                );
+              })}
+            </nav>
+            <div className="nav-controls">
+              <div className="segmented nav-lang" role="group" aria-label={t.langLabel}>
+                <button
+                  type="button"
+                  className={lang === "ru" ? "is-active" : ""}
+                  onClick={() => setLang("ru")}
                 >
-                  <span className="nav-icon">{ICONS[item.icon]}</span>
-                  <span className="nav-text">{t[item.key]}</span>
-                </a>
-              );
-            })}
-          </nav>
-          <div className="nav-controls">
-            <div className="segmented nav-lang" role="group" aria-label={t.langLabel}>
+                  RU
+                </button>
+                <button
+                  type="button"
+                  className={lang === "en" ? "is-active" : ""}
+                  onClick={() => setLang("en")}
+                >
+                  EN
+                </button>
+              </div>
               <button
                 type="button"
-                className={lang === "ru" ? "is-active" : ""}
-                onClick={() => setLang("ru")}
+                className={`theme-toggle${theme === "dark" ? " is-dark" : ""}`}
+                onClick={toggleTheme}
+                aria-label={`${t.theme}: ${themeLabel}`}
+                title={`${t.theme}: ${themeLabel}`}
               >
-                RU
-              </button>
-              <button
-                type="button"
-                className={lang === "en" ? "is-active" : ""}
-                onClick={() => setLang("en")}
-              >
-                EN
+                <span className="theme-toggle-track">
+                  <span className="theme-toggle-thumb" />
+                </span>
+                <span className="theme-toggle-text">{themeLabel}</span>
               </button>
             </div>
-            <button
-              type="button"
-              className={`theme-toggle${theme === "dark" ? " is-dark" : ""}`}
-              onClick={toggleTheme}
-              aria-label={`${t.theme}: ${themeLabel}`}
-              title={`${t.theme}: ${themeLabel}`}
-            >
-              <span className="theme-toggle-track">
-                <span className="theme-toggle-thumb" />
-              </span>
-              <span className="theme-toggle-text">{themeLabel}</span>
-            </button>
           </div>
         </div>
-      </div>
-    </header>
-    <nav className="nav-links nav-links-mobile" aria-label="Main">
-      {items.map((item) => {
-        const isActive =
-          item.href === "/"
-            ? pathname === "/"
-            : pathname === item.href || pathname.startsWith(`${item.href}/`);
-        return (
-          <a
-            key={item.href}
-            href={item.href}
-            className={`nav-link${isActive ? " is-active" : ""}`}
-            aria-current={isActive ? "page" : undefined}
-            aria-label={t[item.key]}
-          >
-            <span className="nav-icon">{ICONS[item.icon]}</span>
-            <span className="nav-text">{t[item.key]}</span>
-          </a>
-        );
-      })}
-    </nav>
+      </header>
+      <nav className="nav-links nav-links-mobile" aria-label="Main">
+        {items.map((item) => {
+          const isActive =
+            item.href === "/"
+              ? pathname === "/"
+              : pathname === item.href || pathname.startsWith(`${item.href}/`);
+          return (
+            <a
+              key={item.href}
+              href={item.href}
+              className={`nav-link${isActive ? " is-active" : ""}`}
+              aria-current={isActive ? "page" : undefined}
+              aria-label={t[item.key]}
+            >
+              <span className="nav-icon">{ICONS[item.icon]}</span>
+              <span className="nav-text">{t[item.key]}</span>
+            </a>
+          );
+        })}
+      </nav>
+    </>
   );
 }
