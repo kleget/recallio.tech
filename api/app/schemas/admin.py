@@ -53,3 +53,15 @@ class AdminAuditOut(BaseModel):
     ip: str | None = None
     user_agent: str | None = None
     created_at: datetime
+
+
+class AdminBroadcastRequest(BaseModel):
+    subject: str
+    message: str
+    channels: list[str] | None = None
+
+
+class AdminBroadcastOut(BaseModel):
+    created: int
+    skipped: int
+    channels: list[str]

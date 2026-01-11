@@ -8,6 +8,33 @@ import { useUiLang } from "../ui-lang-context";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
+const resolveAvatarUrl = (value) => {
+  if (!value) {
+    return "";
+  }
+  if (value.startsWith("http://") || value.startsWith("https://")) {
+    return value;
+  }
+  return `${API_BASE}${value}`;
+};
+
+const initialsFrom = (value) => {
+  if (!value) {
+    return "?";
+  }
+  return value.trim().slice(0, 1).toUpperCase();
+};
+
+const renderAvatar = (item) => {
+  const url = resolveAvatarUrl(item?.avatar_url);
+  const label = item?.display_name || item?.handle || "U";
+  return (
+    <div className="social-avatar" aria-hidden="true">
+      {url ? <img src={url} alt={label} /> : initialsFrom(label)}
+    </div>
+  );
+};
+
 const TEXT = {
   ru: {
     title: "\u0421\u043e\u0446\u0438\u0430\u043b\u044c\u043d\u044b\u0435 \u0444\u0438\u0447\u0438",
@@ -951,9 +978,12 @@ export default function CommunityPage() {
                     <div className="social-list">
                       {incomingRequests.map((item) => (
                         <div key={`incoming-${item.id}`} className="social-item">
-                          <div>
-                            <strong>@{item.handle}</strong>
-                            <div className="social-meta">{item.display_name || "-"}</div>
+                          <div className="social-main">
+                            {renderAvatar(item)}
+                            <div>
+                              <strong>@{item.handle}</strong>
+                              <div className="social-meta">{item.display_name || "-"}</div>
+                            </div>
                           </div>
                           <div className="community-inline">
                             <button type="button" onClick={() => acceptFriendRequest(item.id)}>
@@ -971,9 +1001,12 @@ export default function CommunityPage() {
                       ))}
                       {outgoingRequests.map((item) => (
                         <div key={`outgoing-${item.id}`} className="social-item">
-                          <div>
-                            <strong>@{item.handle}</strong>
-                            <div className="social-meta">{item.display_name || "-"}</div>
+                          <div className="social-main">
+                            {renderAvatar(item)}
+                            <div>
+                              <strong>@{item.handle}</strong>
+                              <div className="social-meta">{item.display_name || "-"}</div>
+                            </div>
                           </div>
                           <span className="status-pill warn">{t.friends.pending}</span>
                         </div>
@@ -991,9 +1024,12 @@ export default function CommunityPage() {
                 <div className="social-list">
                   {friends.map((item) => (
                     <div key={item.handle} className="social-item">
-                      <div>
-                        <strong>@{item.handle}</strong>
-                        <div className="social-meta">{item.display_name || "-"}</div>
+                      <div className="social-main">
+                        {renderAvatar(item)}
+                        <div>
+                          <strong>@{item.handle}</strong>
+                          <div className="social-meta">{item.display_name || "-"}</div>
+                        </div>
                       </div>
                       <div className="community-inline">
                         <a className="button-secondary" href={`/u/${item.handle}`}>
@@ -1240,9 +1276,12 @@ export default function CommunityPage() {
                 <div className="social-list">
                   {searchResults.map((item) => (
                     <div key={item.handle} className="social-item">
-                      <div>
-                        <strong>@{item.handle}</strong>
-                        <div className="social-meta">{item.display_name || "-"}</div>
+                      <div className="social-main">
+                        {renderAvatar(item)}
+                        <div>
+                          <strong>@{item.handle}</strong>
+                          <div className="social-meta">{item.display_name || "-"}</div>
+                        </div>
                       </div>
                       <div className="community-inline">
                         <a className="button-secondary" href={`/u/${item.handle}`}>
@@ -1270,9 +1309,12 @@ export default function CommunityPage() {
                 {leaderboard.map((row) => (
                   <div key={row.handle} className="social-item">
                     <div className="leaderboard-rank">#{row.rank}</div>
-                    <div className="leaderboard-main">
-                      <strong>@{row.handle}</strong>
-                      <div className="social-meta">{row.display_name || "-"}</div>
+                    <div className="social-main leaderboard-main">
+                      {renderAvatar(row)}
+                      <div>
+                        <strong>@{row.handle}</strong>
+                        <div className="social-meta">{row.display_name || "-"}</div>
+                      </div>
                     </div>
                     <div className="leaderboard-stats">
                       <span>
@@ -1352,9 +1394,12 @@ export default function CommunityPage() {
                 <div className="social-list">
                   {followers.map((item) => (
                     <div key={item.handle} className="social-item">
-                      <div>
-                        <strong>@{item.handle}</strong>
-                        <div className="social-meta">{item.display_name || "-"}</div>
+                      <div className="social-main">
+                        {renderAvatar(item)}
+                        <div>
+                          <strong>@{item.handle}</strong>
+                          <div className="social-meta">{item.display_name || "-"}</div>
+                        </div>
                       </div>
                       <a className="button-secondary" href={`/u/${item.handle}`}>
                         {t.actions.open}
@@ -1366,9 +1411,12 @@ export default function CommunityPage() {
                   <div className="panel-title">{t.profile.following}</div>
                   {following.map((item) => (
                     <div key={item.handle} className="social-item">
-                      <div>
-                        <strong>@{item.handle}</strong>
-                        <div className="social-meta">{item.display_name || "-"}</div>
+                      <div className="social-main">
+                        {renderAvatar(item)}
+                        <div>
+                          <strong>@{item.handle}</strong>
+                          <div className="social-meta">{item.display_name || "-"}</div>
+                        </div>
                       </div>
                       <a className="button-secondary" href={`/u/${item.handle}`}>
                         {t.actions.open}

@@ -47,6 +47,20 @@ const TEXT = {
       audit: "Аудит и лог",
       reports: "Репорты",
       tech: "Тех-настройки"
+    },
+    broadcast: {
+      title: "Рассылка уведомлений",
+      hint: "Отправка всем пользователям с включенными каналами.",
+      subject: "Тема",
+      message: "Сообщение",
+      channels: "Каналы",
+      email: "Email",
+      telegram: "Telegram",
+      send: "Отправить",
+      sending: "Отправка...",
+      success: "Создано уведомлений: {count}",
+      empty: "Заполни тему и текст.",
+      noChannels: "Выбери хотя бы один канал."
     }
   },
   en: {
@@ -87,6 +101,20 @@ const TEXT = {
       audit: "Audit logs",
       reports: "Reports",
       tech: "Tech"
+    },
+    broadcast: {
+      title: "Broadcast notifications",
+      hint: "Send to users with enabled channels.",
+      subject: "Subject",
+      message: "Message",
+      channels: "Channels",
+      email: "Email",
+      telegram: "Telegram",
+      send: "Send",
+      sending: "Sending...",
+      success: "Notifications created: {count}",
+      empty: "Enter subject and message.",
+      noChannels: "Pick at least one channel."
     }
   }
 };
@@ -109,6 +137,28 @@ async function getJson(path, token) {
   return response.json();
 }
 
+async function postJson(path, payload, token) {
+  const headers = { "Content-Type": "application/json" };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  const response = await fetch(`${API_BASE}${path}`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) {
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      const data = await response.json();
+      throw new Error(data.detail || "Request failed");
+    }
+    const message = await response.text();
+    throw new Error(message || "Request failed");
+  }
+  return response.json();
+}
+
 export default function AdminPage() {
   const { lang } = useUiLang();
   const uiLang = lang === "en" ? "en" : "ru";
@@ -117,6 +167,15 @@ export default function AdminPage() {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [broadcastSubject, setBroadcastSubject] = useState("");
+  const [broadcastMessage, setBroadcastMessage] = useState("");
+  const [broadcastChannels, setBroadcastChannels] = useState({
+    email: true,
+    telegram: false
+  });
+  const [broadcastStatus, setBroadcastStatus] = useState("");
+  const [broadcastError, setBroadcastError] = useState("");
+  const [broadcasting, setBroadcasting] = useState(false);
 
   const loadSummary = async () => {
     const token = getCookie("token");
@@ -132,6 +191,43 @@ export default function AdminPage() {
     setCookie("is_admin", me.is_admin ? "1" : "0");
     const data = await getJson("/admin/summary", token);
     setSummary(data);
+  };
+
+  const sendBroadcast = async () => {
+    setBroadcastStatus("");
+    setBroadcastError("");
+    const subject = broadcastSubject.trim();
+    const message = broadcastMessage.trim();
+    if (!subject || !message) {
+      setBroadcastError(t.broadcast.empty);
+      return;
+    }
+    const channels = [];
+    if (broadcastChannels.email) {
+      channels.push("email");
+    }
+    if (broadcastChannels.telegram) {
+      channels.push("telegram");
+    }
+    if (!channels.length) {
+      setBroadcastError(t.broadcast.noChannels);
+      return;
+    }
+    const token = getCookie("token");
+    if (!token) {
+      window.location.href = "/auth";
+      return;
+    }
+    setBroadcasting(true);
+    try {
+      const data = await postJson("/admin/notifications/broadcast", { subject, message, channels }, token);
+      const messageText = t.broadcast.success.replace("{count}", data.created ?? 0);
+      setBroadcastStatus(messageText);
+    } catch (err) {
+      setBroadcastError(err.message || t.error);
+    } finally {
+      setBroadcasting(false);
+    }
   };
 
   useEffect(() => {
@@ -291,6 +387,62 @@ export default function AdminPage() {
                   <div className="stat-value">{item.value}</div>
                 </div>
               ))}
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel-header">
+              <div className="panel-title">{t.broadcast.title}</div>
+            </div>
+            <p className="muted">{t.broadcast.hint}</p>
+            <div className="profile-grid profile-grid-top">
+              <div className="profile-cell">
+                <label>{t.broadcast.subject}</label>
+                <input
+                  value={broadcastSubject}
+                  onChange={(event) => setBroadcastSubject(event.target.value)}
+                  placeholder={t.broadcast.subject}
+                />
+              </div>
+              <div className="profile-cell">
+                <label>{t.broadcast.message}</label>
+                <textarea
+                  rows={4}
+                  value={broadcastMessage}
+                  onChange={(event) => setBroadcastMessage(event.target.value)}
+                  placeholder={t.broadcast.message}
+                />
+              </div>
+              <div className="profile-cell">
+                <div className="profile-label">{t.broadcast.channels}</div>
+                <label className="checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={broadcastChannels.email}
+                    onChange={(event) =>
+                      setBroadcastChannels((prev) => ({ ...prev, email: event.target.checked }))
+                    }
+                  />
+                  {t.broadcast.email}
+                </label>
+                <label className="checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={broadcastChannels.telegram}
+                    onChange={(event) =>
+                      setBroadcastChannels((prev) => ({ ...prev, telegram: event.target.checked }))
+                    }
+                  />
+                  {t.broadcast.telegram}
+                </label>
+              </div>
+              <div className="profile-actions full">
+                <button type="button" onClick={sendBroadcast} disabled={broadcasting}>
+                  {broadcasting ? t.broadcast.sending : t.broadcast.send}
+                </button>
+                {broadcastStatus ? <span className="muted">{broadcastStatus}</span> : null}
+                {broadcastError ? <span className="error">{broadcastError}</span> : null}
+              </div>
             </div>
           </div>
 

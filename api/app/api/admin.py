@@ -18,10 +18,18 @@ from app.models import (
     Corpus,
     LearningProfile,
     NotificationOutbox,
+    NotificationSettings,
     User,
     UserProfile,
 )
-from app.schemas.admin import AdminAuditOut, AdminSummaryOut, AdminUserOut, AdminUserUpdate
+from app.schemas.admin import (
+    AdminAuditOut,
+    AdminBroadcastOut,
+    AdminBroadcastRequest,
+    AdminSummaryOut,
+    AdminUserOut,
+    AdminUserUpdate,
+)
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -259,3 +267,81 @@ async def list_audit_logs(
         )
         for log, email in result.fetchall()
     ]
+
+
+@router.post("/notifications/broadcast", response_model=AdminBroadcastOut)
+async def broadcast_notifications(
+    data: AdminBroadcastRequest,
+    admin_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> AdminBroadcastOut:
+    ensure_admin(admin_user)
+
+    subject = (data.subject or "").strip()
+    message = (data.message or "").strip()
+    if not subject or not message:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Subject and message are required")
+
+    allowed_channels = {"email", "telegram"}
+    channels = [item.strip().lower() for item in (data.channels or []) if item.strip()]
+    if not channels:
+        channels = ["email"]
+    channels = [item for item in channels if item in allowed_channels]
+    if not channels:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No valid channels")
+
+    result = await db.execute(
+        select(NotificationSettings, User.email, UserProfile.interface_lang)
+        .join(User, User.id == NotificationSettings.user_id)
+        .join(UserProfile, UserProfile.user_id == NotificationSettings.user_id, isouter=True)
+    )
+    rows = result.fetchall()
+
+    created = 0
+    skipped = 0
+    now = datetime.now(timezone.utc)
+    for settings, email, interface_lang in rows:
+        locale = (interface_lang or "ru").strip().lower()
+        payload = {"kind": "broadcast", "subject": subject, "message": message, "lang": locale}
+
+        if "email" in channels:
+            recipient = settings.email or email
+            if settings.email_enabled and recipient:
+                db.add(
+                    NotificationOutbox(
+                        profile_id=settings.profile_id,
+                        user_id=settings.user_id,
+                        channel="email",
+                        payload=payload,
+                        status="pending",
+                        scheduled_at=now,
+                    )
+                )
+                created += 1
+            else:
+                skipped += 1
+
+        if "telegram" in channels:
+            if settings.telegram_enabled and settings.telegram_chat_id:
+                db.add(
+                    NotificationOutbox(
+                        profile_id=settings.profile_id,
+                        user_id=settings.user_id,
+                        channel="telegram",
+                        payload=payload,
+                        status="pending",
+                        scheduled_at=now,
+                    )
+                )
+                created += 1
+            else:
+                skipped += 1
+
+    await db.commit()
+    await log_audit_event(
+        "admin.notifications.broadcast",
+        user_id=admin_user.id,
+        meta={"channels": channels, "created": created, "skipped": skipped},
+        db=db,
+    )
+    return AdminBroadcastOut(created=created, skipped=skipped, channels=channels)

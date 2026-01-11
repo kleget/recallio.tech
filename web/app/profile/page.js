@@ -7,6 +7,16 @@ import { useUiLang } from "../ui-lang-context";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
+const resolveAvatarUrl = (value) => {
+  if (!value) {
+    return "";
+  }
+  if (value.startsWith("http://") || value.startsWith("https://")) {
+    return value;
+  }
+  return `${API_BASE}${value}`;
+};
+
 const TEXT = {
   ru: {
     title: "Профиль",
@@ -238,6 +248,28 @@ async function postJson(path, payload, token) {
   return response.json();
 }
 
+async function postForm(path, formData, token) {
+  const headers = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  const response = await fetch(`${API_BASE}${path}`, {
+    method: "POST",
+    headers,
+    body: formData
+  });
+  if (!response.ok) {
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      const data = await response.json();
+      throw new Error(data.detail || "Request failed");
+    }
+    const message = await response.text();
+    throw new Error(message || "Request failed");
+  }
+  return response.json();
+}
+
 async function deleteJson(path, token) {
   const headers = {};
   if (token) {
@@ -267,6 +299,8 @@ export default function ProfilePage() {
   const [knownResult, setKnownResult] = useState(null);
   const [knownError, setKnownError] = useState("");
   const [knownImporting, setKnownImporting] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteError, setDeleteError] = useState("");
@@ -279,6 +313,13 @@ export default function ProfilePage() {
   const uiLang = lang || "ru";
 
   const t = TEXT[uiLang] || TEXT.ru;
+  const avatarText = t.avatar || {
+    title: uiLang === "en" ? "Avatar" : "\u0410\u0432\u0430\u0442\u0430\u0440",
+    upload: uiLang === "en" ? "Upload" : "\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c",
+    uploading: uiLang === "en" ? "Uploading..." : "\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430...",
+    hint: uiLang === "en" ? "Formats: PNG, JPG, WebP." : "\u0424\u043e\u0440\u043c\u0430\u0442\u044b: PNG, JPG, WebP.",
+    error: uiLang === "en" ? "Failed to upload avatar" : "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c \u0430\u0432\u0430\u0442\u0430\u0440"
+  };
 
   useEffect(() => {
     const token = getCookie("token");
@@ -385,6 +426,35 @@ export default function ProfilePage() {
     }
   };
 
+  const uploadAvatar = async (file) => {
+    setAvatarError("");
+    const token = getCookie("token");
+    if (!token) {
+      window.location.href = "/auth";
+      return;
+    }
+    setAvatarUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const data = await postForm("/profile/avatar", formData, token);
+      setProfile((prev) => (prev ? { ...prev, avatar_url: data.avatar_url } : prev));
+    } catch (err) {
+      setAvatarError(err.message || avatarText.error);
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
+  const handleAvatarChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+    uploadAvatar(file);
+    event.target.value = "";
+  };
+
   const importKnownWords = async () => {
     setKnownError("");
     setKnownResult(null);
@@ -479,13 +549,34 @@ export default function ProfilePage() {
       {profile ? (
         <>
           <div className="panel profile-hero">
-            <div className="profile-avatar">{initials}</div>
+            <div className="profile-avatar">
+              {profile.avatar_url ? (
+                <img src={resolveAvatarUrl(profile.avatar_url)} alt="Avatar" />
+              ) : (
+                initials
+              )}
+            </div>
             <div className="profile-details">
               <div className="profile-name">{profile.email}</div>
               <div className="profile-meta">{t.email}</div>
               <span className={`status-pill ${onboardingReady ? "ok" : "warn"}`}>
                 {t.onboarding}: {onboardingReady ? t.onboardingReady : t.onboardingPending}
               </span>
+            </div>
+            <div className="profile-avatar-actions">
+              <div className="profile-label">{avatarText.title}</div>
+              <label className="button-secondary profile-upload">
+                {avatarText.upload}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={handleAvatarChange}
+                  disabled={avatarUploading}
+                />
+              </label>
+              <div className="muted profile-avatar-hint">{avatarText.hint}</div>
+              {avatarUploading ? <span className="muted">{avatarText.uploading}</span> : null}
+              {avatarError ? <span className="error">{avatarError}</span> : null}
             </div>
           </div>
 

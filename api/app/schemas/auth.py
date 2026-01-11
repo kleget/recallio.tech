@@ -37,6 +37,7 @@ class UserOut(BaseModel):
     email: str
     interface_lang: str | None = None
     theme: str | None = None
+    avatar_url: str | None = None
     email_verified: bool | None = None
     is_admin: bool | None = None
     native_lang: str | None = None

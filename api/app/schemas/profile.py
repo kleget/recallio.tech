@@ -6,6 +6,10 @@ class ProfileOut(BaseModel):
     theme: str
 
 
+class ProfileAvatarOut(BaseModel):
+    avatar_url: str | None
+
+
 class ProfileUpdateRequest(BaseModel):
     interface_lang: str | None = None
     theme: str | None = None

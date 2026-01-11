@@ -442,6 +442,7 @@ async def me(
         email=user.email,
         interface_lang=profile.interface_lang if profile else None,
         theme=profile.theme if profile else None,
+        avatar_url=profile.avatar_url if profile else None,
         email_verified=user.email_verified_at is not None,
         is_admin=user.email.strip().lower() in ADMIN_EMAILS,
         native_lang=learning_profile.native_lang if learning_profile else None,

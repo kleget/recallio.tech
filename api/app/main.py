@@ -3,6 +3,7 @@ import uuid
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.auth import router as auth_router
 from app.api.admin import router as admin_router
@@ -19,6 +20,7 @@ from app.api.study import router as study_router
 from app.api.tech import router as tech_router
 from app.api.support import router as support_router
 from app.core.audit import log_audit_event
+from app.core.config import MEDIA_DIR, MEDIA_URL
 from app.core.security import decode_access_token
 
 
@@ -28,6 +30,8 @@ class UTF8JSONResponse(JSONResponse):
 
 def create_app() -> FastAPI:
     app = FastAPI(title="Recallio API", version="0.1.0", default_response_class=UTF8JSONResponse)
+    MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+    app.mount(MEDIA_URL, StaticFiles(directory=str(MEDIA_DIR)), name="media")
     @app.middleware("http")
     async def audit_middleware(request: Request, call_next):
         user_id = None

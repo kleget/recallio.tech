@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 
 def get_env(name: str, default: str) -> str:
@@ -38,3 +39,8 @@ SMTP_PASSWORD = get_env("SMTP_PASSWORD", "")
 SMTP_FROM = get_env("SMTP_FROM", "")
 SMTP_TLS = get_env_bool("SMTP_TLS", True)
 TELEGRAM_BOT_TOKEN = get_env("TELEGRAM_BOT_TOKEN", "")
+
+BASE_DIR = Path(__file__).resolve().parents[2]
+MEDIA_DIR = Path(get_env("MEDIA_DIR", str(BASE_DIR / "media")))
+MEDIA_URL = get_env("MEDIA_URL", "/media")
+MAX_AVATAR_BYTES = int(get_env("MAX_AVATAR_BYTES", str(2 * 1024 * 1024)))

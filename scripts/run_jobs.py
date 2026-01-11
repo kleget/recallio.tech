@@ -59,6 +59,7 @@ from app.models import (  # noqa: E402
     NotificationSettings,
     Translation,
     User,
+    UserProfile,
     UserCustomWord,
     UserWord,
 )
@@ -206,14 +207,12 @@ async def process_send_review_notifications(session, job: BackgroundJob) -> dict
         if review_due == 0:
             continue
 
-        payload = {"review_due": review_due}
+        payload = {"kind": "review", "review_due": review_due}
         channels = []
         if settings.email_enabled:
             channels.append("email")
         if settings.telegram_enabled:
             channels.append("telegram")
-        if settings.push_enabled:
-            channels.append("push")
         for channel in channels:
             session.add(
                 NotificationOutbox(
@@ -276,6 +275,100 @@ def send_telegram(chat_id: str, text: str) -> None:
     request = urllib.request.Request(url, data=data)
     with urllib.request.urlopen(request, timeout=15) as response:
         response.read()
+
+
+def normalize_locale(value: str | None) -> str:
+    return "en" if (value or "").strip().lower() == "en" else "ru"
+
+
+def build_review_message(review_due: int, locale: str) -> tuple[str, str]:
+    if locale == "en":
+        subject = "Recallio: review reminder"
+        body = f"Time to review {review_due} words today."
+    else:
+        subject = "Recallio: повторение слов"
+        body = f"Сегодня нужно повторить {review_due} слов."
+    return subject, body
+
+
+def build_broadcast_message(payload: dict, locale: str) -> tuple[str, str]:
+    subject = str(payload.get("subject") or "Recallio")
+    message = str(payload.get("message") or "")
+    if locale == "en":
+        return subject, message or "Announcement from Recallio."
+    return subject, message or "Сообщение от Recallio."
+
+
+def build_notification_message(payload: dict | None, locale: str) -> tuple[str, str]:
+    payload = payload or {}
+    kind = str(payload.get("kind") or "").strip().lower()
+    locale = normalize_locale(payload.get("lang") or locale)
+    if kind == "review":
+        return build_review_message(int(payload.get("review_due") or 0), locale)
+    if kind == "broadcast":
+        return build_broadcast_message(payload, locale)
+    if locale == "en":
+        return "Recallio notification", "You have a new notification in Recallio."
+    return "Recallio: уведомление", "У вас есть новое уведомление в Recallio."
+
+
+async def load_pending_notifications(session, limit: int):
+    now = datetime.now(timezone.utc)
+    result = await session.execute(
+        select(NotificationOutbox)
+        .where(NotificationOutbox.status == "pending", NotificationOutbox.scheduled_at <= now)
+        .order_by(NotificationOutbox.scheduled_at)
+        .limit(limit)
+    )
+    return result.scalars().all()
+
+
+async def deliver_notification(session, item: NotificationOutbox) -> None:
+    settings = await session.get(NotificationSettings, item.profile_id)
+    if not settings:
+        raise ValueError("notification settings not found")
+    profile_result = await session.execute(
+        select(UserProfile.interface_lang).where(UserProfile.user_id == item.user_id)
+    )
+    interface_lang = profile_result.scalar_one_or_none() or "ru"
+    email_result = await session.execute(select(User.email).where(User.id == item.user_id))
+    user_email = email_result.scalar_one_or_none()
+
+    subject, body = build_notification_message(item.payload, interface_lang)
+
+    if item.channel == "email":
+        recipient = settings.email or user_email
+        if not recipient:
+            raise ValueError("email is not set")
+        send_email({recipient}, subject, body)
+        return
+    if item.channel == "telegram":
+        if not settings.telegram_chat_id:
+            raise ValueError("telegram chat id is not set")
+        text = f"{subject}\n\n{body}"
+        send_telegram(settings.telegram_chat_id, text)
+        return
+    raise ValueError("unsupported channel")
+
+
+async def process_pending_notifications(session, limit: int) -> int:
+    items = await load_pending_notifications(session, limit)
+    if not items:
+        return 0
+    now = datetime.now(timezone.utc)
+    processed = 0
+    for item in items:
+        try:
+            await deliver_notification(session, item)
+            item.status = "sent"
+            item.sent_at = now
+            item.error = None
+        except Exception as exc:
+            item.status = "failed"
+            item.error = str(exc)
+        processed += 1
+    await session.commit()
+    return processed
 
 
 async def process_send_report_notifications(session, job: BackgroundJob) -> dict:
@@ -356,11 +449,12 @@ async def handle_job(session, job: BackgroundJob) -> None:
 async def run_once(limit: int) -> int:
     async with AsyncSessionLocal() as session:
         jobs = await load_pending_jobs(session, limit)
-        if not jobs:
-            return 0
+        processed = 0
         for job in jobs:
             await handle_job(session, job)
-        return len(jobs)
+        processed += len(jobs)
+        processed += await process_pending_notifications(session, limit)
+        return processed
 
 
 async def run_loop(limit: int, interval: int) -> None:

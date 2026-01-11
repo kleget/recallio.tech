@@ -8,6 +8,23 @@ import { useUiLang } from "../../ui-lang-context";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
+const resolveAvatarUrl = (value) => {
+  if (!value) {
+    return "";
+  }
+  if (value.startsWith("http://") || value.startsWith("https://")) {
+    return value;
+  }
+  return `${API_BASE}${value}`;
+};
+
+const initialsFrom = (value) => {
+  if (!value) {
+    return "?";
+  }
+  return value.trim().slice(0, 1).toUpperCase();
+};
+
 const TEXT = {
   ru: {
     loading: "\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430...",
@@ -152,9 +169,18 @@ export default function PublicProfilePage() {
     <main>
       <div className="panel public-profile-card">
         <div className="public-profile-header">
-          <div>
-            <h1>@{profile.handle}</h1>
-            <p>{profile.display_name || "-"}</p>
+          <div className="public-profile-main">
+            <div className="public-profile-avatar">
+              {profile.avatar_url ? (
+                <img src={resolveAvatarUrl(profile.avatar_url)} alt={profile.handle} />
+              ) : (
+                initialsFrom(profile.display_name || profile.handle)
+              )}
+            </div>
+            <div>
+              <h1>@{profile.handle}</h1>
+              <p>{profile.display_name || "-"}</p>
+            </div>
           </div>
           <button type="button" onClick={toggleFollow}>
             {following ? t.unfollow : t.follow}
