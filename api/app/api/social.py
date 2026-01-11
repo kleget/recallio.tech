@@ -182,10 +182,11 @@ async def get_profile_stats(profile: LearningProfile, db: AsyncSession) -> Publi
     )
     learned_7d = int(learned_result.scalar() or 0)
 
+    day_bucket = func.date_trunc("day", StudySession.started_at)
     session_result = await db.execute(
-        select(func.date_trunc("day", StudySession.started_at))
+        select(day_bucket)
         .where(StudySession.profile_id == profile.id)
-        .group_by(func.date_trunc("day", StudySession.started_at))
+        .group_by(day_bucket)
     )
     session_days = [row[0].date() for row in session_result.fetchall()]
     streak_current, streak_best = compute_streaks(session_days)
@@ -568,14 +569,15 @@ async def compute_challenge_progress(
         return int(result.scalar() or 0)
 
     if definition["type"] == "streak":
+        day_bucket = func.date_trunc("day", StudySession.started_at)
         session_result = await db.execute(
-            select(func.date_trunc("day", StudySession.started_at))
+            select(day_bucket)
             .where(
                 StudySession.profile_id == profile_id,
                 StudySession.started_at >= started_at,
                 StudySession.started_at <= period_end,
             )
-            .group_by(func.date_trunc("day", StudySession.started_at))
+            .group_by(day_bucket)
         )
         days = [row[0].date() for row in session_result.fetchall()]
         streak_current, _best = compute_streaks(days)
