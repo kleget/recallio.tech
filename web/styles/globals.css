@@ -1195,22 +1195,35 @@ button[disabled] {
   }
 
   .site-nav-inner {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-areas: "brand toggle";
-    row-gap: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: nowrap;
   }
 
   .nav-actions {
-    display: contents;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: auto;
   }
 
   .nav-brand {
-    grid-area: brand;
+    flex-shrink: 0;
   }
 
   .nav-links-top {
     display: none;
+  }
+
+  .brand-logo {
+    display: none;
+  }
+
+  .brand-mark {
+    display: block;
+    height: 26px;
   }
 
   .nav-links-mobile {
@@ -1262,8 +1275,40 @@ button[disabled] {
   }
 
   .nav-controls {
-    grid-area: toggle;
-    justify-self: end;
+    gap: 6px;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .nav-lang {
+    padding: 3px;
+  }
+
+  .nav-lang button {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .theme-toggle {
+    padding: 4px 8px;
+  }
+
+  .theme-toggle-track {
+    width: 30px;
+    height: 16px;
+  }
+
+  .theme-toggle-thumb {
+    width: 10px;
+    height: 10px;
+  }
+
+  .theme-toggle.is-dark .theme-toggle-thumb {
+    left: 16px;
+  }
+
+  .theme-toggle-text {
+    display: none;
   }
 }
 
