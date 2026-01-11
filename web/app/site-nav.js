@@ -32,11 +32,73 @@ const TEXT = {
 };
 
 const NAV_ITEMS = [
-  { href: "/", key: "home" },
-  { href: "/community", key: "community" },
-  { href: "/profile", key: "profile" },
-  { href: "/admin", key: "admin", admin: true }
+  { href: "/", key: "home", icon: "home" },
+  { href: "/community", key: "community", icon: "community" },
+  { href: "/profile", key: "profile", icon: "profile" },
+  { href: "/admin", key: "admin", admin: true, icon: "admin" }
 ];
+
+const ICONS = {
+  home: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5.5a.5.5 0 0 1-.5-.5V15a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v6.5a.5.5 0 0 1-.5.5H4a1 1 0 0 1-1-1z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+    </svg>
+  ),
+  community: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M7.5 13a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7zM16.5 12.5a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
+      <path
+        d="M2.5 20c0-3 3.5-5 7-5s7 2 7 5M14 19.5c.3-1.6 1.8-3 4-3 2.2 0 3.7 1.2 4 3"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  ),
+  profile: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <path
+        d="M4 20c0-3.3 3.3-6 8-6s8 2.7 8 6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  ),
+  admin: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M12 3l7 3v6c0 4.1-3 7.7-7 9-4-1.3-7-4.9-7-9V6z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9 12l2 2 4-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+};
 
 export default function SiteNav({ initialIsAdmin = false }) {
   const pathname = usePathname() || "/";
@@ -116,8 +178,10 @@ export default function SiteNav({ initialIsAdmin = false }) {
                   href={item.href}
                   className={`nav-link${isActive ? " is-active" : ""}`}
                   aria-current={isActive ? "page" : undefined}
+                  aria-label={t[item.key]}
                 >
-                  {t[item.key]}
+                  <span className="nav-icon">{ICONS[item.icon]}</span>
+                  <span className="nav-text">{t[item.key]}</span>
                 </a>
               );
             })}
