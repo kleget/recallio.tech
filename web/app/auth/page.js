@@ -4,15 +4,21 @@ import { useUiLang } from "../ui-lang-context";
 
 const TEXT = {
   ru: {
-    title: "Recallio — сервис для устойчивого роста словаря",
+    title: "Recallio — тематические слова без перегруза",
     subtitle:
-      "Изучай иностранные слова по сферам: карточки, тесты на вспоминание, повторы и видимый прогресс.",
-    why: "Зачем: меньше перегруза, больше закрепления и понятный рост словаря.",
+      "Сферы для биологов, математиков, айтишников и других. Карточки, тесты на вспоминание и прогресс за 10-15 минут в день.",
+    why: "Зачем: учишь только нужное по своей сфере и тратишь минимум времени.",
     stepsTitle: "Как это работает",
     steps: [
       "Выбираешь язык, сферы и лимиты.",
       "Учишь карточки и проходишь тест на вспоминание.",
       "Повторяешь вовремя и видишь рост на графике."
+    ],
+    focusTitle: "Сферы и темп",
+    focusPoints: [
+      "Сферы: биология, математика, IT, экономика и другие.",
+      "Темп: 10-15 минут в день.",
+      "Лимиты: учишь ровно столько, сколько нужно."
     ],
     benefitsTitle: "Почему это работает",
     benefits: [
@@ -21,16 +27,24 @@ const TEXT = {
         desc: "Память закрепляется лучше, когда ты сам пытаешься вспомнить перевод."
       },
       {
-        title: "Короткие сессии",
-        desc: "10–15 минут в день дают стабильный прогресс без выгорания."
+        title: "Тематические сферы",
+        desc: "Учишь лексику по своей области, а не все подряд."
       },
       {
-        title: "Сферы и цели",
-        desc: "Учишь то, что нужно именно тебе — по теме и с понятным лимитом."
+        title: "Малый ежедневный темп",
+        desc: "10-15 минут в день дают стабильный рост без выгорания."
+      },
+      {
+        title: "Лимиты под цель",
+        desc: "Задаешь нужное количество слов для каждой сферы."
       },
       {
         title: "Видимый прогресс",
         desc: "График и статистика показывают дисциплину и рост словаря."
+      },
+      {
+        title: "Фокус на слабом",
+        desc: "Сервис выделяет слова, где ты чаще ошибаешься."
       }
     ],
     featuresTitle: "Что внутри",
@@ -68,7 +82,7 @@ const TEXT = {
       },
       {
         title: "Самообучению",
-        desc: "Даже 10–15 минут в день дают стабильный рост."
+        desc: "Даже 10-15 минут в день дают стабильный рост."
       },
       {
         title: "Тем, кто читает и смотрит контент",
@@ -76,20 +90,26 @@ const TEXT = {
       }
     ],
     developer: "Разработчик: Kleget",
-    ctaRegister: "Начать бесплатно",
-    ctaLogin: "Войти в аккаунт",
+    ctaRegister: "Зарегистрироваться",
+    ctaLogin: "Войти",
     ctaNote: "Все основные функции доступны бесплатно."
   },
   en: {
-    title: "Recallio — steady vocabulary growth",
+    title: "Recallio — themed words without overload",
     subtitle:
-      "Learn words by domain with flashcards, recall tests, timely reviews, and visible progress.",
-    why: "Why: less overload, stronger recall, and clear progress.",
+      "Domains for biologists, engineers, IT and more. Flashcards, recall tests, and progress in 10-15 minutes a day.",
+    why: "Why: learn only what you need for your domain and spend minimal time.",
     stepsTitle: "How it works",
     steps: [
       "Pick language, domains, and limits.",
       "Learn with cards and pass a recall test.",
       "Review on time and track growth."
+    ],
+    focusTitle: "Domains and pace",
+    focusPoints: [
+      "Domains: biology, math, IT, economics, and more.",
+      "Pace: 10-15 minutes a day.",
+      "Limits: learn exactly how much you need."
     ],
     benefitsTitle: "Why it works",
     benefits: [
@@ -98,16 +118,24 @@ const TEXT = {
         desc: "Memory gets stronger when you try to recall, not just read."
       },
       {
-        title: "Short sessions",
-        desc: "10–15 minutes a day is enough for consistent progress."
+        title: "Themed domains",
+        desc: "Learn vocabulary by your field instead of random lists."
       },
       {
-        title: "Domains and goals",
-        desc: "Learn what you really need with clear limits."
+        title: "Small daily pace",
+        desc: "10-15 minutes a day is enough for consistent growth."
+      },
+      {
+        title: "Limits by goal",
+        desc: "Set the right amount of words for each domain."
       },
       {
         title: "Visible progress",
         desc: "Charts and stats keep motivation real."
+      },
+      {
+        title: "Focus on weak words",
+        desc: "The service highlights words where you often make mistakes."
       }
     ],
     featuresTitle: "What you get",
@@ -145,7 +173,7 @@ const TEXT = {
       },
       {
         title: "Self-learners",
-        desc: "10–15 minutes a day gives steady growth."
+        desc: "10-15 minutes a day gives steady growth."
       },
       {
         title: "Readers and viewers",
@@ -153,7 +181,7 @@ const TEXT = {
       }
     ],
     developer: "Developer: Kleget",
-    ctaRegister: "Start for free",
+    ctaRegister: "Sign up",
     ctaLogin: "Sign in",
     ctaNote: "All core features are available for free."
   }
@@ -192,20 +220,30 @@ export default function AuthLandingPage() {
             <p className="landing-meta">{t.ctaNote}</p>
             <p className="landing-meta">{t.developer}</p>
           </div>
-          <div className="landing-hero-card">
-            <h3>{t.stepsTitle}</h3>
-            <ol className="landing-steps">
-              {t.steps.map((step) => (
-                <li key={step}>{step}</li>
-              ))}
-            </ol>
+          <div className="landing-hero-side">
+            <div className="landing-hero-card">
+              <h3>{t.stepsTitle}</h3>
+              <ol className="landing-steps">
+                {t.steps.map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ol>
+            </div>
+            <div className="landing-hero-card">
+              <h3>{t.focusTitle}</h3>
+              <ul className="landing-steps">
+                {t.focusPoints.map((point) => (
+                  <li key={point}>{point}</li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       </section>
 
       <section className="panel">
         <div className="panel-title">{t.benefitsTitle}</div>
-        <div className="feature-grid">
+        <div className="feature-grid grid-3">
           {t.benefits.map((item) => (
             <div className="feature-card" key={item.title}>
               <div className="feature-title">{item.title}</div>
@@ -217,7 +255,7 @@ export default function AuthLandingPage() {
 
       <section className="panel">
         <div className="panel-title">{t.featuresTitle}</div>
-        <div className="feature-grid">
+        <div className="feature-grid grid-3">
           {t.features.map((feature) => (
             <div className="feature-card" key={feature.title}>
               <div className="feature-title">{feature.title}</div>
@@ -229,7 +267,7 @@ export default function AuthLandingPage() {
 
       <section className="panel">
         <div className="panel-title">{t.audienceTitle}</div>
-        <div className="feature-grid">
+        <div className="feature-grid grid-3">
           {t.audience.map((item) => (
             <div className="feature-card" key={item.title}>
               <div className="feature-title">{item.title}</div>

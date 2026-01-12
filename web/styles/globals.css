@@ -409,7 +409,7 @@ main {
 .landing-actions {
   margin-top: 14px;
   display: flex;
-  gap: 12px;
+  gap: 16px;
   flex-wrap: wrap;
 }
 
@@ -417,6 +417,11 @@ main {
   margin-top: 12px;
   color: var(--muted);
   font-size: 13px;
+}
+
+.landing-hero-side {
+  display: grid;
+  gap: 16px;
 }
 
 .landing-hero-card {
@@ -937,6 +942,10 @@ button[disabled] {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 16px;
+}
+
+.feature-grid.grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .feature-card {
@@ -2462,6 +2471,11 @@ button[disabled] {
   background: var(--panel-strong);
   border-color: rgba(47, 124, 246, 0.35);
   box-shadow: var(--shadow-sm);
+}
+
+.auth-panel .auth-switch {
+  margin-top: 14px;
+  width: 100%;
 }
 
 .community-stat {

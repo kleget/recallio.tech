@@ -168,7 +168,11 @@ export default function AuthForm({ mode = "login" }) {
           </div>
         ) : null}
 
-        <button type="button" className="button-secondary" onClick={() => (window.location.href = switchHref)}>
+        <button
+          type="button"
+          className="button-secondary auth-switch"
+          onClick={() => (window.location.href = switchHref)}
+        >
           {switchLabel}
         </button>
       </section>
