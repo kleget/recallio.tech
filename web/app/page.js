@@ -39,15 +39,11 @@ const TEXT = {
       items: [
         {
           title: "Метод 7 строк (листок + ручка)",
-          desc: "Запиши 7 пар слово–перевод и проговори вслух. Так запоминается написание, произношение и перевод."
+          desc: "Пиши слово-перевод 7 строк ручкой на листочке и проговаривай, так запоминается и произношение, и правильное написание и перевод."
         },
         {
           title: "Карточки и активное вспоминание",
           desc: "Сначала попробуй вспомнить перевод, затем проверь себя. Ошибки ускоряют запоминание."
-        },
-        {
-          title: "Интервальные повторы",
-          desc: "Повторяй через 1 день, 3 дня, 7 дней, 3 недели и 3 месяца."
         },
         {
           title: "Контекст",
@@ -135,15 +131,11 @@ const TEXT = {
       items: [
         {
           title: "7-line method (paper + pen)",
-          desc: "Write 7 word–translation pairs and say them aloud. It trains spelling, pronunciation, and recall."
+          desc: "Write word-translation pairs in 7 lines by hand and say them aloud. It helps pronunciation, spelling, and recall."
         },
         {
           title: "Flashcards and active recall",
           desc: "Try to recall first, then check. Errors help memory stick faster."
-        },
-        {
-          title: "Spaced repetition",
-          desc: "Review after 1 day, 3 days, 7 days, 3 weeks, and 3 months."
         },
         {
           title: "Context",
