@@ -33,13 +33,19 @@ const TEXT = {
     langRu: "Русский",
     langEn: "English",
     chartAria: "График количества выученных слов",
+    chartRanges: {
+      week: "7 дней",
+      twoWeeks: "2 недели",
+      month: "Месяц",
+      all: "Все время"
+    },
     tips: {
       title: "Как учить слова эффективнее",
       intro: "Короткие методы, которые реально работают.",
       items: [
         {
           title: "Метод 7 строк (листок + ручка)",
-          desc: "Пиши слово-перевод 7 строк ручкой на листочке и проговаривай, так запоминается и произношение, и правильное написание и перевод."
+          desc: "Пиши слово-перевод 7 строк ручкой на листочке и проговаривай. Так запоминается и произношение, и правильное написание, и перевод."
         },
         {
           title: "Карточки и активное вспоминание",
@@ -125,6 +131,12 @@ const TEXT = {
     langRu: "Русский",
     langEn: "English",
     chartAria: "Chart of learned words",
+    chartRanges: {
+      week: "7 days",
+      twoWeeks: "2 weeks",
+      month: "Month",
+      all: "All time"
+    },
     tips: {
       title: "How to learn words effectively",
       intro: "Short methods that work in practice.",
@@ -217,6 +229,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [dashboard, setDashboard] = useState(null);
+  const [chartRange, setChartRange] = useState("14d");
   const [theme, setTheme] = useState(() => getCookie("theme") || "light");
   const { lang, setLang } = useUiLang();
   const interfaceLang = lang || "ru";
@@ -275,7 +288,8 @@ export default function Home() {
       window.location.href = "/auth";
       return;
     }
-    getJson("/dashboard", token)
+    setLoading(true);
+    getJson(`/dashboard?range=${chartRange}`, token)
       .then((data) => {
         if (!active) {
           return;
@@ -305,7 +319,7 @@ export default function Home() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [chartRange]);
 
   useEffect(() => {
     if (!dashboard) {
@@ -409,6 +423,12 @@ export default function Home() {
         }
       : null;
   const chartDelta = chartSummary ? chartSummary.end - chartSummary.start : 0;
+  const rangeOptions = [
+    { key: "7d", label: t.chartRanges.week },
+    { key: "14d", label: t.chartRanges.twoWeeks },
+    { key: "30d", label: t.chartRanges.month },
+    { key: "all", label: t.chartRanges.all }
+  ];
   const tips = t.tips?.items || [];
 
   const chartTicks = chart
@@ -520,6 +540,20 @@ export default function Home() {
           <div className="panel" data-tour="chart">
             <div className="panel-title">{t.chartTitle}</div>
             <p className="muted">{t.chartDesc}</p>
+            <div className="chart-controls">
+              <div className="segmented">
+                {rangeOptions.map((option) => (
+                  <button
+                    key={option.key}
+                    type="button"
+                    className={chartRange === option.key ? "is-active" : ""}
+                    onClick={() => setChartRange(option.key)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             {chart && chart.points.length ? (
               <div className="chart">
                 <svg

@@ -1468,6 +1468,10 @@ button[disabled] {
     justify-content: center;
   }
 
+  .chart-controls .segmented {
+    width: 100%;
+  }
+
   .segmented button {
     flex: 1 1 calc(50% - 8px);
     text-align: center;
@@ -1569,6 +1573,16 @@ button[disabled] {
 .chart {
   display: grid;
   gap: 12px;
+}
+
+.chart-controls {
+  margin: 10px 0 4px;
+}
+
+.chart-controls .segmented {
+  width: fit-content;
+  max-width: 100%;
+  flex-wrap: wrap;
 }
 
 .chart-svg {

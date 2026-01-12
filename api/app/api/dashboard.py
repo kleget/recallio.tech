@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date, datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -42,6 +42,19 @@ def build_series(counts: dict[date, int], start_date: date, days: int) -> list[L
         day = start_date + timedelta(days=offset)
         series.append(LearnedSeriesPoint(date=day, count=counts.get(day, 0)))
     return series
+
+
+def parse_series_range(value: str) -> tuple[str, int | None]:
+    normalized = (value or "").strip().lower()
+    if normalized in ("7d", "7", "week"):
+        return "7d", 7
+    if normalized in ("14d", "14", "2w", "2weeks", "two_weeks"):
+        return "14d", 14
+    if normalized in ("30d", "30", "month"):
+        return "30d", 30
+    if normalized in ("all", "alltime", "all-time"):
+        return "all", None
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid range")
 
 
 async def count_available_new_words(
@@ -92,6 +105,7 @@ async def count_available_new_words(
 @router.get("/dashboard", response_model=DashboardOut)
 async def get_dashboard(
     refresh: bool = False,
+    series_range: str = Query("14d", alias="range"),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> DashboardOut:
@@ -115,7 +129,10 @@ async def get_dashboard(
 
     now = datetime.now(timezone.utc)
 
-    if not refresh:
+    range_key, range_days = parse_series_range(series_range)
+    use_cache = not refresh and range_key == "14d"
+
+    if use_cache:
         cache_result = await db.execute(
             select(DashboardCache).where(DashboardCache.profile_id == learning_profile.id)
         )
@@ -182,25 +199,46 @@ async def get_dashboard(
     learn_today = min(settings.daily_new_words, learn_available)
     review_today = min(settings.daily_review_words, review_available)
 
-    days_total = 14
-    start_date = (now - timedelta(days=days_total - 1)).date()
-    series_stmt = (
-        select(func.date_trunc("day", UserWord.learned_at).label("day"), func.count())
-        .select_from(UserWord)
-        .join(Word, Word.id == UserWord.word_id)
-        .where(
-            UserWord.profile_id == learning_profile.id,
-            UserWord.learned_at.is_not(None),
-            UserWord.learned_at >= datetime.combine(start_date, datetime.min.time(), tzinfo=timezone.utc),
-            UserWord.status.in_(KNOWN_STATUSES),
-            Word.lang == learning_profile.native_lang,
+    learned_series: list[LearnedSeriesPoint] = []
+    start_date = None
+    if range_key == "all":
+        first_learned_result = await db.execute(
+            select(func.min(UserWord.learned_at))
+            .select_from(UserWord)
+            .join(Word, Word.id == UserWord.word_id)
+            .where(
+                UserWord.profile_id == learning_profile.id,
+                UserWord.learned_at.is_not(None),
+                UserWord.status.in_(KNOWN_STATUSES),
+                Word.lang == learning_profile.native_lang,
+            )
         )
-        .group_by("day")
-        .order_by("day")
-    )
-    series_result = await db.execute(series_stmt)
-    counts = {row.day.date(): int(row[1]) for row in series_result.fetchall()}
-    learned_series = build_series(counts, start_date, days_total)
+        first_learned_at = first_learned_result.scalar_one_or_none()
+        if first_learned_at:
+            start_date = first_learned_at.date()
+            range_days = (now.date() - start_date).days + 1
+    else:
+        start_date = (now - timedelta(days=range_days - 1)).date()
+    if range_days:
+        if start_date is None:
+            start_date = (now - timedelta(days=range_days - 1)).date()
+        series_stmt = (
+            select(func.date_trunc("day", UserWord.learned_at).label("day"), func.count())
+            .select_from(UserWord)
+            .join(Word, Word.id == UserWord.word_id)
+            .where(
+                UserWord.profile_id == learning_profile.id,
+                UserWord.learned_at.is_not(None),
+                UserWord.learned_at >= datetime.combine(start_date, datetime.min.time(), tzinfo=timezone.utc),
+                UserWord.status.in_(KNOWN_STATUSES),
+                Word.lang == learning_profile.native_lang,
+            )
+            .group_by("day")
+            .order_by("day")
+        )
+        series_result = await db.execute(series_stmt)
+        counts = {row.day.date(): int(row[1]) for row in series_result.fetchall()}
+        learned_series = build_series(counts, start_date, range_days)
 
     payload = DashboardOut(
         user_id=str(user.id),
@@ -221,15 +259,16 @@ async def get_dashboard(
         learn_batch_size=settings.learn_batch_size,
         learned_series=learned_series,
     )
-    cache_result = await db.execute(
-        select(DashboardCache).where(DashboardCache.profile_id == learning_profile.id)
-    )
-    cache = cache_result.scalar_one_or_none()
-    data = jsonable_encoder(payload)
-    if cache:
-        cache.data = data
-        cache.updated_at = now
-    else:
-        db.add(DashboardCache(profile_id=learning_profile.id, data=data, updated_at=now))
-    await db.commit()
+    if use_cache:
+        cache_result = await db.execute(
+            select(DashboardCache).where(DashboardCache.profile_id == learning_profile.id)
+        )
+        cache = cache_result.scalar_one_or_none()
+        data = jsonable_encoder(payload)
+        if cache:
+            cache.data = data
+            cache.updated_at = now
+        else:
+            db.add(DashboardCache(profile_id=learning_profile.id, data=data, updated_at=now))
+        await db.commit()
     return payload
