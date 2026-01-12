@@ -1,106 +1,161 @@
-"use client";
+﻿"use client";
 
 import { useUiLang } from "../ui-lang-context";
 
 const TEXT = {
   ru: {
-    title: "\u0421\u0435\u0440\u0432\u0438\u0441 \u0434\u043b\u044f \u0440\u043e\u0441\u0442\u0430 \u0441\u043b\u043e\u0432\u0430\u0440\u044f \u0438 \u0434\u0438\u0441\u0446\u0438\u043f\u043b\u0438\u043d\u044b",
+    title: "Recallio — сервис для устойчивого роста словаря",
     subtitle:
-      "Recallio \u2014 \u043b\u0438\u0447\u043d\u044b\u0439 \u043f\u043e\u043c\u043e\u0449\u043d\u0438\u043a \u043f\u043e \u0438\u0437\u0443\u0447\u0435\u043d\u0438\u044e \u0438\u043d\u043e\u0441\u0442\u0440\u0430\u043d\u043d\u044b\u0445 \u0441\u043b\u043e\u0432. \u0421\u043e\u0431\u0438\u0440\u0430\u0435\u043c \u043b\u0435\u043a\u0441\u0438\u043a\u0443 \u043f\u043e \u0441\u0444\u0435\u0440\u0430\u043c, \u043f\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u043c \u043a\u0430\u0440\u0442\u043e\u0447\u043a\u0438, \u0442\u0435\u0441\u0442\u0438\u0440\u0443\u0435\u043c \u0437\u0430\u043f\u043e\u043c\u0438\u043d\u0430\u043d\u0438\u0435 \u0438 \u043d\u0430\u043f\u043e\u043c\u0438\u043d\u0430\u0435\u043c \u043e \u043f\u043e\u0432\u0442\u043e\u0440\u0435\u043d\u0438\u044f\u0445.",
-    why:
-      "\u0417\u0430\u0447\u0435\u043c: \u0443\u0447\u0438\u0448\u044c \u043c\u0435\u043d\u044c\u0448\u0435, \u0437\u0430\u043f\u043e\u043c\u0438\u043d\u0430\u0435\u0448\u044c \u043b\u0443\u0447\u0448\u0435 \u0438 \u0432\u0438\u0434\u0438\u0448\u044c \u0440\u0435\u0430\u043b\u044c\u043d\u044b\u0439 \u043f\u0440\u043e\u0433\u0440\u0435\u0441\u0441.",
-    stepsTitle: "\u041a\u0430\u043a \u044d\u0442\u043e \u0440\u0430\u0431\u043e\u0442\u0430\u0435\u0442",
+      "Изучай иностранные слова по сферам: карточки, тесты на вспоминание, повторы и видимый прогресс.",
+    why: "Зачем: меньше перегруза, больше закрепления и понятный рост словаря.",
+    stepsTitle: "Как это работает",
     steps: [
-      "\u0412\u044b\u0431\u0438\u0440\u0430\u0435\u0448\u044c \u0441\u0444\u0435\u0440\u044b \u0438 \u043a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u0441\u043b\u043e\u0432.",
-      "\u041f\u0440\u043e\u0445\u043e\u0434\u0438\u0448\u044c \u043a\u0430\u0440\u0442\u043e\u0447\u043a\u0438 \u0438 \u043a\u043e\u0440\u043e\u0442\u043a\u0438\u0439 \u0442\u0435\u0441\u0442.",
-      "\u0421\u0435\u0440\u0432\u0438\u0441 \u0432\u043e\u0432\u0440\u0435\u043c\u044f \u043d\u0430\u043f\u043e\u043c\u0438\u043d\u0430\u0435\u0442 \u043e \u043f\u043e\u0432\u0442\u043e\u0440\u0435\u043d\u0438\u0438."
+      "Выбираешь язык, сферы и лимиты.",
+      "Учишь карточки и проходишь тест на вспоминание.",
+      "Повторяешь вовремя и видишь рост на графике."
     ],
-    featuresTitle: "\u0427\u0442\u043e \u0432\u043d\u0443\u0442\u0440\u0438",
+    benefitsTitle: "Почему это работает",
+    benefits: [
+      {
+        title: "Активное вспоминание",
+        desc: "Память закрепляется лучше, когда ты сам пытаешься вспомнить перевод."
+      },
+      {
+        title: "Короткие сессии",
+        desc: "10–15 минут в день дают стабильный прогресс без выгорания."
+      },
+      {
+        title: "Сферы и цели",
+        desc: "Учишь то, что нужно именно тебе — по теме и с понятным лимитом."
+      },
+      {
+        title: "Видимый прогресс",
+        desc: "График и статистика показывают дисциплину и рост словаря."
+      }
+    ],
+    featuresTitle: "Что внутри",
     features: [
       {
-        title: "\u041a\u0430\u0440\u0442\u043e\u0447\u043a\u0438 \u0438 \u0442\u0435\u0441\u0442\u044b",
-        desc: "\u0421\u043d\u0430\u0447\u0430\u043b\u0430 \u0443\u0447\u0438\u0448\u044c \u043a\u0430\u0440\u0442\u043e\u0447\u043a\u0438, \u043f\u043e\u0442\u043e\u043c \u0432\u0441\u043f\u043e\u043c\u0438\u043d\u0430\u0435\u0448\u044c \u043f\u0435\u0440\u0435\u0432\u043e\u0434."
+        title: "Карточки + тест на вспоминание",
+        desc: "Сначала учишь, затем проверяешь себя — так формируется долгосрочная память."
       },
       {
-        title: "\u041f\u043e\u0432\u0442\u043e\u0440\u0435\u043d\u0438\u044f \u043f\u043e \u0438\u043d\u0442\u0435\u0440\u0432\u0430\u043b\u0430\u043c",
-        desc: "\u041d\u0435 \u043f\u0435\u0440\u0435\u0433\u0440\u0443\u0436\u0430\u0435\u0448\u044c \u043f\u0430\u043c\u044f\u0442\u044c, \u043f\u043e\u0432\u0442\u043e\u0440\u044f\u0435\u0448\u044c \u0432\u043e\u0432\u0440\u0435\u043c\u044f."
+        title: "Повторы и напоминания",
+        desc: "Сервис подсказывает, когда повторять, чтобы не забывать."
       },
       {
-        title: "\u041c\u043e\u0438 \u0441\u043b\u043e\u0432\u0430 \u0438 \u0441\u043b\u0430\u0431\u044b\u0435 \u043c\u0435\u0441\u0442\u0430",
-        desc: "\u0414\u043e\u0431\u0430\u0432\u043b\u044f\u0435\u0448\u044c \u0441\u0432\u043e\u0438 \u0441\u043b\u043e\u0432\u0430 \u0438 \u0432\u0438\u0434\u0438\u0448\u044c, \u0447\u0442\u043e \u0445\u0440\u043e\u043c\u0430\u0435\u0442."
+        title: "Слабые слова",
+        desc: "Список слов, где ты чаще всего ошибаешься."
       },
       {
-        title: "\u041f\u0440\u043e\u0433\u0440\u0435\u0441\u0441 \u0438 \u0434\u0438\u0441\u0446\u0438\u043f\u043b\u0438\u043d\u0430",
-        desc: "\u0413\u0440\u0430\u0444\u0438\u043a \u0438 \u0441\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043a\u0430 \u043c\u043e\u0442\u0438\u0432\u0438\u0440\u0443\u044e\u0442 \u043f\u0440\u043e\u0434\u043e\u043b\u0436\u0430\u0442\u044c."
+        title: "Мои слова",
+        desc: "Добавляй личные слова и учи именно их."
+      },
+      {
+        title: "Сообщество",
+        desc: "Публичный профиль, друзья, общий чат и челленджи."
+      },
+      {
+        title: "Репорты и поддержка",
+        desc: "Можно сообщить об ошибках в словарях — админ быстро исправит."
       }
     ],
-    audienceTitle: "\u041a\u043e\u043c\u0443 \u043f\u043e\u0434\u0445\u043e\u0434\u0438\u0442",
+    audienceTitle: "Кому подходит",
     audience: [
       {
-        title: "\u0421\u0442\u0443\u0434\u0435\u043d\u0442\u0430\u043c \u0438 \u0441\u043f\u0435\u0446\u0438\u0430\u043b\u0438\u0441\u0442\u0430\u043c",
-        desc: "\u0421\u0444\u0435\u0440\u044b \u0437\u043d\u0430\u043d\u0438\u0439 \u043f\u043e\u043c\u043e\u0433\u0430\u044e\u0442 \u0431\u044b\u0441\u0442\u0440\u043e \u043d\u0430\u0431\u0440\u0430\u0442\u044c \u043f\u0440\u043e\u0444\u0435\u0441\u0441\u0438\u043e\u043d\u0430\u043b\u044c\u043d\u0443\u044e \u043b\u0435\u043a\u0441\u0438\u043a\u0443."
+        title: "Студентам и специалистам",
+        desc: "Тематические сферы помогают быстро набрать профессиональную лексику."
       },
       {
-        title: "\u0421\u0430\u043c\u043e\u043e\u0431\u0443\u0447\u0435\u043d\u0438\u044e",
-        desc: "\u0414\u0430\u0436\u0435 10 \u043c\u0438\u043d\u0443\u0442 \u0432 \u0434\u0435\u043d\u044c \u0434\u0430\u044e\u0442 \u0437\u0430\u043c\u0435\u0442\u043d\u044b\u0439 \u0440\u043e\u0441\u0442."
+        title: "Самообучению",
+        desc: "Даже 10–15 минут в день дают стабильный рост."
       },
       {
-        title: "\u0422\u0435\u043c, \u043a\u0442\u043e \u0447\u0438\u0442\u0430\u0435\u0442 \u0438 \u0441\u043c\u043e\u0442\u0440\u0438\u0442 \u043a\u043e\u043d\u0442\u0435\u043d\u0442",
-        desc: "\u041b\u0435\u0433\u043a\u043e \u0437\u0430\u043a\u0440\u0435\u043f\u043b\u044f\u0442\u044c \u0441\u043b\u043e\u0432\u0430 \u0438\u0437 \u043a\u043d\u0438\u0433 \u0438 \u0432\u0438\u0434\u0435\u043e."
+        title: "Тем, кто читает и смотрит контент",
+        desc: "Удобно закреплять слова из книг, видео и курсов."
       }
     ],
-    developer: "\u0420\u0430\u0437\u0440\u0430\u0431\u043e\u0442\u0447\u0438\u043a: Kleget",
-    ctaRegister: "\u0421\u043e\u0437\u0434\u0430\u0442\u044c \u0430\u043a\u043a\u0430\u0443\u043d\u0442",
-    ctaLogin: "\u0412\u043e\u0439\u0442\u0438 \u0432 \u0430\u043a\u043a\u0430\u0443\u043d\u0442"
+    developer: "Разработчик: Kleget",
+    ctaRegister: "Начать бесплатно",
+    ctaLogin: "Войти в аккаунт",
+    ctaNote: "Все основные функции доступны бесплатно."
   },
   en: {
-    title: "A service for vocabulary growth and discipline",
+    title: "Recallio — steady vocabulary growth",
     subtitle:
-      "Recallio is a personal assistant for learning words. We organize vocabulary by domain, show flashcards, test recall, and remind you when it is time to review.",
-    why: "Why: learn less, remember more, and see real progress.",
+      "Learn words by domain with flashcards, recall tests, timely reviews, and visible progress.",
+    why: "Why: less overload, stronger recall, and clear progress.",
     stepsTitle: "How it works",
     steps: [
-      "Pick domains and a word limit.",
-      "Go through cards and a short recall test.",
-      "Get timely reminders for reviews."
+      "Pick language, domains, and limits.",
+      "Learn with cards and pass a recall test.",
+      "Review on time and track growth."
+    ],
+    benefitsTitle: "Why it works",
+    benefits: [
+      {
+        title: "Active recall",
+        desc: "Memory gets stronger when you try to recall, not just read."
+      },
+      {
+        title: "Short sessions",
+        desc: "10–15 minutes a day is enough for consistent progress."
+      },
+      {
+        title: "Domains and goals",
+        desc: "Learn what you really need with clear limits."
+      },
+      {
+        title: "Visible progress",
+        desc: "Charts and stats keep motivation real."
+      }
     ],
     featuresTitle: "What you get",
     features: [
       {
-        title: "Cards + recall tests",
-        desc: "Learn first, then prove you remember."
+        title: "Flashcards + recall test",
+        desc: "Learn first, then check yourself to lock it in."
       },
       {
-        title: "Spaced reviews",
-        desc: "Repeat at the right time without overload."
+        title: "Reviews and reminders",
+        desc: "Timely reviews help you not forget."
       },
       {
-        title: "Your words + weak spots",
-        desc: "Add your own words and track what is hard."
+        title: "Weak words",
+        desc: "See the words where you make the most mistakes."
       },
       {
-        title: "Progress & discipline",
-        desc: "Charts keep motivation visible."
+        title: "My words",
+        desc: "Add your own words and learn exactly what matters."
+      },
+      {
+        title: "Community",
+        desc: "Public profile, friends, global chat, and challenges."
+      },
+      {
+        title: "Reports & support",
+        desc: "Report dictionary issues — admin fixes them."
       }
     ],
     audienceTitle: "Who it is for",
     audience: [
       {
         title: "Students and professionals",
-        desc: "Domain sets help you build subject vocabulary fast."
+        desc: "Domain sets help you build professional vocabulary fast."
       },
       {
         title: "Self-learners",
-        desc: "Even 10 minutes a day gives steady growth."
+        desc: "10–15 minutes a day gives steady growth."
       },
       {
         title: "Readers and viewers",
-        desc: "Keep words from books and media."
+        desc: "Capture words from books, videos, and courses."
       }
     ],
     developer: "Developer: Kleget",
-    ctaRegister: "Create account",
-    ctaLogin: "Sign in"
+    ctaRegister: "Start for free",
+    ctaLogin: "Sign in",
+    ctaNote: "All core features are available for free."
   }
 };
 
@@ -134,6 +189,7 @@ export default function AuthLandingPage() {
                 {t.ctaLogin}
               </button>
             </div>
+            <p className="landing-meta">{t.ctaNote}</p>
             <p className="landing-meta">{t.developer}</p>
           </div>
           <div className="landing-hero-card">
@@ -144,6 +200,18 @@ export default function AuthLandingPage() {
               ))}
             </ol>
           </div>
+        </div>
+      </section>
+
+      <section className="panel">
+        <div className="panel-title">{t.benefitsTitle}</div>
+        <div className="feature-grid">
+          {t.benefits.map((item) => (
+            <div className="feature-card" key={item.title}>
+              <div className="feature-title">{item.title}</div>
+              <p className="feature-desc">{item.desc}</p>
+            </div>
+          ))}
         </div>
       </section>
 

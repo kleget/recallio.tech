@@ -1,161 +1,110 @@
-# Recallio
+﻿# Recallio
 
-Веб‑сервис для изучения иностранных языков: карточки, тесты и интервальные повторения.
-Проект рассчитан на локальную разработку, но структура готова к разворачиванию на VPS.
+Recallio — сервис для изучения иностранных слов без перегруза. Основа: карточки + тест на вспоминание, повторы по расписанию и видимый прогресс на графике дисциплины. Слова собраны по сферам (корпусам), можно добавлять свои и отслеживать слабые места.
 
-## Что это умеет
-- Регистрация и вход, выбор языка интерфейса (ru/en), светлая/тёмная тема.
-- Онбординг: выбор направления (родной/изучаемый), корпусов, лимитов и темпа.
-- Учёба: карточки → короткий текст → тест с “fuzzy”‑проверкой ответов.
-- Повторение: интервальные повторения по SRS (SM‑2).
-- Пользовательские слова: добавление/редактирование/удаление/импорт.
-- Дашборд: статистика, сколько знаешь, график по дням.
-- Слабые слова: сортировки по ошибкам, точности и алфавиту.
+## Зачем
+- меньше перегруза и хаоса
+- больше закрепления за счёт активного вспоминания
+- понятный прогресс: статистика + график
 
-## Технологии
-- Backend: FastAPI, SQLAlchemy (async), Alembic, Postgres, asyncpg
+## Ключевые функции
+- карточки и тест на вспоминание
+- повторы и напоминания (email/telegram)
+- слабые слова и мои слова
+- тематические сферы (корпуса) и лимиты слов
+- график дисциплины с периодами (7/14/30 дней и всё время)
+- сообщество: публичный профиль, друзья, общий чат, челленджи
+- репорты и поддержка, админ‑редактор слов/переводов
+- админка: пользователи, аудит, рассылка уведомлений
+
+## Как это работает
+1. Выбираешь язык, сферы и лимиты.
+2. Учишь карточки и проходишь тест на вспоминание.
+3. Повторяешь вовремя и видишь рост словаря.
+
+## Стек
+- Backend: FastAPI, SQLAlchemy (async), Alembic, asyncpg
+- БД: PostgreSQL
+- Очереди/фоновые задачи: Redis
 - Frontend: Next.js (App Router)
-- Инфраструктура: Docker Compose (Postgres, Redis)
+- Инфра: Docker Compose, Nginx (на проде)
 
-## Архитектура на уровне сервиса
-- `api/`: FastAPI API + бизнес‑логика обучения.
-- `web/`: Next.js UI (страницы, стили, состояние интерфейса).
-- `infra/`: docker‑compose с Postgres/Redis.
-- `scripts/`: импорты и демо‑скрипты.
-
-## Учебные профили
-Каждая пара языков хранится как отдельный учебный профиль.  
-Это позволяет переключать направление (ru→en / en→ru) без потери прогресса.
-Активный профиль выбирается в онбординге.
-
-## Структура репозитория
+## Структура проекта
 ```
 english_web/
-  api/
-    app/
-      api/            эндпоинты
-      core/           конфиги/безопасность
-      db/             база и session
-      models/         SQLAlchemy модели
-      schemas/        Pydantic схемы
-    alembic/          миграции
-  web/
-    app/              Next.js страницы
-    styles/           глобальные стили
-  infra/
-    docker-compose.yml
-  scripts/
-    import_sqlite.py  импорт из SQLite
-    onboarding_demo.ps1
-    learn_demo.bat / learn_demo.ps1
-    review_demo.bat / review_demo.ps1
-    dashboard_demo.bat
+  api/            # FastAPI API
+  web/            # Next.js UI
+  infra/          # Docker Compose (Postgres/Redis)
+  scripts/        # Скрипты импорта и демо
+  .env.example    # Пример настроек
 ```
 
-## Требования
-- Python 3.11+
-- Node.js 18+
-- Docker Desktop (для Postgres/Redis)
-
 ## Быстрый старт (локально)
-1) Скопируй env:
-   - Windows (cmd): `copy .env.example .env`
-   - macOS/Linux: `cp .env.example .env`
+1) Скопируй настройки:
+```
+cp .env.example .env
+```
+Заполни `DATABASE_URL`, `ADMIN_EMAILS`, `NEXT_PUBLIC_API_BASE` и прочее.
 
-2) Подними БД:
-```bash
+2) Подними Postgres + Redis:
+```
 docker compose -f infra/docker-compose.yml up -d
 ```
 
-3) API:
-```bash
-cd api
+3) Установи зависимости API:
+```
 python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
+.venv\Scripts\Activate.ps1
+pip install -r api/requirements.txt
+pip install python-multipart
+```
+
+4) Применяй миграции:
+```
+cd api
 alembic upgrade head
+```
+
+5) Импорт словарей (опционально):
+```
+python scripts/import_sqlite.py
+```
+
+6) Запусти API:
+```
 uvicorn app.main:app --reload
 ```
-macOS/Linux:
-```bash
-source .venv/bin/activate
-```
 
-4) Импорт SQLite:
-```bash
-python scripts/import_sqlite.py --sqlite-dir E:\Code\english_project\database
+7) Запусти фронт:
 ```
-(папка может быть любой, где лежат твои `.db` файлы)
-
-5) Web:
-```bash
 cd web
 npm install
 npm run dev
 ```
 
-6) Открой: http://localhost:3000
+Открой: http://localhost:3000
 
-## Переменные окружения
-```
-DATABASE_URL=postgresql+asyncpg://english:english@localhost:5432/english_web
-REDIS_URL=redis://localhost:6379/0
-API_HOST=0.0.0.0
-API_PORT=8000
-NEXT_PUBLIC_API_BASE=http://localhost:8000
-JWT_SECRET=change-me
-JWT_ALGORITHM=HS256
-JWT_EXPIRE_MINUTES=1440
-```
+## Переменные окружения (важные)
+- `DATABASE_URL` — подключение к Postgres
+- `NEXT_PUBLIC_API_BASE` — адрес API для фронта
+- `APP_BASE_URL` — адрес фронта
+- `ADMIN_EMAILS` — email админов (через запятую)
+- `SMTP_*`, `TELEGRAM_BOT_TOKEN` — уведомления
+- `MEDIA_DIR`, `MEDIA_URL` — аватары
 
-## Как пользоваться
-1) Авторизуйся (страница `/auth`).
-2) Пройди онбординг (`/onboarding`):
-   - выбери направление (native/target),
-   - выбери корпуса и лимиты слов,
-   - задай темп (новые/повторы/пачка).
-3) Учёба: `/learn`
-4) Повторы: `/review`
-5) Свои слова: `/custom-words`
-6) Статистика слабых слов: `/stats`
-7) Профиль и настройки: `/profile`, `/settings`
-
-## Формат импорта пользовательских слов
-Одна строка = одно слово:
+## Уведомления и фоновые задачи
+Фоновый воркер:
 ```
-слово - перевод
-cat - кошка
-```
-Разделитель: дефис `-` (пробелы игнорируются).
-
-## Миграции
-Из папки `api/`:
-```bash
-alembic upgrade head
-```
-Новая миграция:
-```bash
-alembic revision --autogenerate -m "описание"
+python scripts/run_jobs.py --loop
 ```
 
-## Демо‑скрипты
-- `scripts/onboarding_demo.ps1` – регистрация/вход + онбординг.
-- `scripts/dashboard_demo.bat` – тест дашборда.
-- `scripts/learn_demo.bat` / `scripts/review_demo.bat` – учёба/повтор.
+## Админка
+Добавь свой email в `ADMIN_EMAILS`, чтобы видеть админ‑разделы и инструменты модерации.
 
-## Где хранятся данные Postgres
-В Docker‑томе `db_data` (см. `infra/docker-compose.yml`).
-Проверить путь:
-```bash
-docker volume inspect db_data
-```
+## Продакшн (кратко)
+- Build фронта: `npm run build`
+- Запуск API через systemd
+- Nginx проксирует `/api` на FastAPI и отдаёт `/media`
 
-## Частые вопросы
-**Ошибка “Onboarding required”**  
-Пройди онбординг: `/onboarding`.
-
-**Нет слов для повторения**  
-Проверь, что есть выученные слова и пришло время повторения.
-
-## Лицензия
-Пока не задана. Если нужна – добавим отдельным файлом.
+---
+Проект развивается, цель — сделать обучение слов максимально простым, полезным и честным.
