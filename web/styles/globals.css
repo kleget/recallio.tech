@@ -1774,6 +1774,22 @@ button[disabled] {
   box-shadow: 0 6px 14px rgba(47, 124, 246, 0.2);
 }
 
+@media (max-width: 600px) {
+  .segmented {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    padding: 4px;
+  }
+
+  .segmented button {
+    border-radius: var(--radius-sm);
+  }
+
+  .segmented button.is-active {
+    box-shadow: none;
+  }
+}
+
 .swap-button {
   background: var(--panel-strong);
   color: var(--text);
