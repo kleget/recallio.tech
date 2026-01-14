@@ -1272,6 +1272,7 @@ button[disabled] {
   }
 
   .feature-grid,
+  .feature-grid.grid-3,
   .community-grid {
     grid-template-columns: 1fr;
   }
