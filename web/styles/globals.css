@@ -1476,6 +1476,8 @@ button[disabled] {
     width: 100%;
     flex-wrap: wrap;
     justify-content: center;
+    border-radius: var(--radius-md);
+    padding: 6px;
   }
 
   .chart-controls .segmented {
@@ -1485,6 +1487,7 @@ button[disabled] {
   .segmented button {
     flex: 1 1 calc(50% - 8px);
     text-align: center;
+    border-radius: var(--radius-sm);
   }
 
   .nav-link {
