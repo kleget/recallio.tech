@@ -181,9 +181,9 @@ if [ "${BACKUP_ENABLE_DRIVE,,}" = "true" ]; then
     if [ -n "$BACKUP_DRIVE_RETENTION_DAYS" ]; then
       rclone delete "$BACKUP_DRIVE_REMOTE" \
         --min-age "${BACKUP_DRIVE_RETENTION_DAYS}d" \
-        --include "${BACKUP_NAME_PREFIX}_*.tar.gz" \
-        --include "${BACKUP_NAME_PREFIX}_*.tar.gz.sha256" \
-        --exclude "*"
+        --filter "+ ${BACKUP_NAME_PREFIX}_*.tar.gz" \
+        --filter "+ ${BACKUP_NAME_PREFIX}_*.tar.gz.sha256" \
+        --filter "- *"
     fi
   fi
 fi
