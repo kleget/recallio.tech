@@ -28,6 +28,7 @@ from app.models import (
     UserProfile,
     UserPublicProfile,
     UserWord,
+    Word,
 )
 from app.schemas.social import (
     ActivityActorOut,
@@ -197,9 +198,18 @@ async def get_profile_stats(profile: LearningProfile, db: AsyncSession) -> Publi
     session_days = [row[0].date() for row in session_result.fetchall()]
     streak_current, streak_best = compute_streaks(session_days)
 
-    days_learning = 0
-    if profile.created_at:
-        days_learning = max((now.date() - profile.created_at.date()).days + 1, 1)
+    days_result = await db.execute(
+        select(func.count(func.distinct(func.date_trunc("day", UserWord.learned_at))))
+        .select_from(UserWord)
+        .join(Word, Word.id == UserWord.word_id)
+        .where(
+            UserWord.profile_id == profile.id,
+            UserWord.learned_at.is_not(None),
+            UserWord.status.in_(KNOWN_STATUSES),
+            Word.lang == profile.native_lang,
+        )
+    )
+    days_learning = int(days_result.scalar() or 0)
 
     return PublicProfileStatsOut(
         known_words=known_words,

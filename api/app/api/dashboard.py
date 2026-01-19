@@ -29,11 +29,19 @@ KNOWN_STATUSES = ("known", "learned")
 CACHE_TTL_SECONDS = 120
 
 
-def days_since(start: datetime, now: datetime) -> int:
-    if start is None:
-        return 0
-    delta = now.date() - start.date()
-    return max(delta.days, 0) + 1
+async def count_learning_days(profile_id, source_lang: str, db: AsyncSession) -> int:
+    result = await db.execute(
+        select(func.count(func.distinct(func.date_trunc("day", UserWord.learned_at))))
+        .select_from(UserWord)
+        .join(Word, Word.id == UserWord.word_id)
+        .where(
+            UserWord.profile_id == profile_id,
+            UserWord.learned_at.is_not(None),
+            UserWord.status.in_(KNOWN_STATUSES),
+            Word.lang == source_lang,
+        )
+    )
+    return int(result.scalar() or 0)
 
 
 def build_series(counts: dict[date, int], start_date: date, days: int) -> list[LearnedSeriesPoint]:
@@ -158,6 +166,12 @@ async def get_dashboard(
     known_result = await db.execute(known_stmt)
     known_words = int(known_result.scalar() or 0)
 
+    days_learning = await count_learning_days(
+        learning_profile.id,
+        learning_profile.native_lang,
+        db,
+    )
+
     due_words_subq = (
         select(UserWord.word_id)
         .select_from(UserWord)
@@ -248,7 +262,7 @@ async def get_dashboard(
         theme=user_profile.theme or "light",
         native_lang=learning_profile.native_lang,
         target_lang=learning_profile.target_lang,
-        days_learning=days_since(learning_profile.created_at or user.created_at, now),
+        days_learning=days_learning,
         known_words=known_words,
         learn_today=learn_today,
         learn_available=learn_available,
