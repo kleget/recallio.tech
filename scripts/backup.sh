@@ -30,6 +30,7 @@ fi
 BACKUP_ENABLE_TELEGRAM="${BACKUP_ENABLE_TELEGRAM:-true}"
 BACKUP_TELEGRAM_BOT_TOKEN="${BACKUP_TELEGRAM_BOT_TOKEN:-}"
 BACKUP_TELEGRAM_CHAT_ID="${BACKUP_TELEGRAM_CHAT_ID:-}"
+BACKUP_TELEGRAM_MAX_BYTES="${BACKUP_TELEGRAM_MAX_BYTES:-0}"
 
 BACKUP_ENABLE_DRIVE="${BACKUP_ENABLE_DRIVE:-true}"
 BACKUP_DRIVE_REMOTE="${BACKUP_DRIVE_REMOTE:-}"
@@ -46,6 +47,15 @@ if command -v docker >/dev/null 2>&1; then
 elif command -v docker-compose >/dev/null 2>&1; then
   compose_cmd=(docker-compose)
 fi
+
+file_size_bytes() {
+  local path="$1"
+  if stat -c%s "$path" >/dev/null 2>&1; then
+    stat -c%s "$path"
+  else
+    wc -c < "$path"
+  fi
+}
 
 get_db_container() {
   if [ ${#compose_cmd[@]} -eq 0 ]; then
@@ -128,14 +138,34 @@ if [ "${BACKUP_ENABLE_TELEGRAM,,}" = "true" ]; then
   if [ -z "$BACKUP_TELEGRAM_BOT_TOKEN" ] || [ -z "$BACKUP_TELEGRAM_CHAT_ID" ]; then
     log "Telegram is enabled but BACKUP_TELEGRAM_BOT_TOKEN or BACKUP_TELEGRAM_CHAT_ID is missing."
   else
-    log "Sending archive to Telegram."
-    curl -fsS \
-      --retry 3 \
-      --retry-delay 5 \
-      -F "chat_id=$BACKUP_TELEGRAM_CHAT_ID" \
-      -F "document=@$archive_path" \
-      -F "caption=Backup $archive_name ($iso_time UTC)" \
-      "https://api.telegram.org/bot${BACKUP_TELEGRAM_BOT_TOKEN}/sendDocument" >/dev/null
+    if [ "$BACKUP_TELEGRAM_MAX_BYTES" -gt 0 ]; then
+      size_bytes="$(file_size_bytes "$archive_path")"
+      if [ "$size_bytes" -gt "$BACKUP_TELEGRAM_MAX_BYTES" ]; then
+        log "Archive exceeds Telegram limit (${BACKUP_TELEGRAM_MAX_BYTES} bytes), skipping upload."
+      else
+        log "Sending archive to Telegram."
+        if ! curl -fsS \
+          --retry 3 \
+          --retry-delay 5 \
+          -F "chat_id=$BACKUP_TELEGRAM_CHAT_ID" \
+          -F "document=@$archive_path" \
+          -F "caption=Backup $archive_name ($iso_time UTC)" \
+          "https://api.telegram.org/bot${BACKUP_TELEGRAM_BOT_TOKEN}/sendDocument" >/dev/null; then
+          log "Telegram upload failed."
+        fi
+      fi
+    else
+      log "Sending archive to Telegram."
+      if ! curl -fsS \
+        --retry 3 \
+        --retry-delay 5 \
+        -F "chat_id=$BACKUP_TELEGRAM_CHAT_ID" \
+        -F "document=@$archive_path" \
+        -F "caption=Backup $archive_name ($iso_time UTC)" \
+        "https://api.telegram.org/bot${BACKUP_TELEGRAM_BOT_TOKEN}/sendDocument" >/dev/null; then
+        log "Telegram upload failed."
+      fi
+    fi
   fi
 fi
 
