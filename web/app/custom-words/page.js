@@ -6,6 +6,7 @@ import { getCookie } from "../lib/client-cookies";
 import { useUiLang } from "../ui-lang-context";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
+const MAX_CUSTOM_WORDS_PAGE = 200;
 
 const TEXT = {
   ru: {
@@ -236,9 +237,10 @@ export default function CustomWordsPage() {
       return;
     }
     try {
+      const effectivePageSize = Math.min(pageSize, MAX_CUSTOM_WORDS_PAGE);
       const [me, words, count] = await Promise.all([
         getJson("/auth/me", token),
-        getJson(`/custom-words?limit=${pageSize}&offset=0`, token),
+        getJson(`/custom-words?limit=${effectivePageSize}&offset=0`, token),
         getJson("/custom-words/count", token)
       ]);
       if (me?.interface_lang) {
@@ -409,12 +411,37 @@ export default function CustomWordsPage() {
     if (remaining <= 0) {
       return;
     }
-    const limit = loadAll ? remaining : Math.min(pageSize, remaining);
     setLoadingMore(true);
     try {
-      const data = await getJson(`/custom-words?limit=${limit}&offset=${items.length}`, token);
-      if (Array.isArray(data) && data.length) {
-        setItems((prev) => [...prev, ...data]);
+      if (!loadAll) {
+        const limit = Math.min(pageSize, remaining, MAX_CUSTOM_WORDS_PAGE);
+        const data = await getJson(`/custom-words?limit=${limit}&offset=${items.length}`, token);
+        if (Array.isArray(data) && data.length) {
+          setItems((prev) => [...prev, ...data]);
+        }
+        return;
+      }
+
+      const collected = [];
+      const startOffset = items.length;
+      let loaded = 0;
+      while (loaded < remaining) {
+        const limit = Math.min(MAX_CUSTOM_WORDS_PAGE, remaining - loaded);
+        const data = await getJson(
+          `/custom-words?limit=${limit}&offset=${startOffset + loaded}`,
+          token
+        );
+        if (!Array.isArray(data) || data.length === 0) {
+          break;
+        }
+        collected.push(...data);
+        loaded += data.length;
+        if (data.length < limit) {
+          break;
+        }
+      }
+      if (collected.length) {
+        setItems((prev) => [...prev, ...collected]);
       }
     } catch (err) {
       setLoadMoreError(err.message || t.error);
