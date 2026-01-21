@@ -474,7 +474,10 @@ export default function CustomWordsPage() {
             {items.length ? (
               <div className="custom-list">
                 {items.map((item) => (
-                  <div key={item.word_id} className="custom-card">
+                  <div
+                    key={item.word_id}
+                    className={`custom-card${editingId === item.word_id ? " is-editing" : ""}`}
+                  >
                     {editingId === item.word_id ? (
                       <>
                         <div className="custom-form-row">
