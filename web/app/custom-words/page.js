@@ -518,6 +518,39 @@ export default function CustomWordsPage() {
           </div>
 
           <div className="panel">
+            <div className="panel-title">{t.importTitle}</div>
+            <p className="muted">{t.importHint}</p>
+            <div className="import-sample">
+              <div className="import-sample-title">{t.importExampleTitle}</div>
+              <pre>{t.importExample}</pre>
+            </div>
+            <textarea
+              value={importText}
+              onChange={(event) => setImportText(event.target.value)}
+              placeholder={t.importExample}
+            />
+            <div className="actions">
+              <button type="button" onClick={importList} disabled={importing || !importText.trim()}>
+                {importing ? t.importing : t.importAction}
+              </button>
+              {importError ? <span className="error">{importError}</span> : null}
+            </div>
+            {importStats.length ? (
+              <>
+                <div className="panel-title">{t.importResult}</div>
+                <div className="import-grid">
+                  {importStats.map((item) => (
+                    <div key={item.label} className="import-card">
+                      <div className="import-title">{item.label}</div>
+                      <div className="import-value">{item.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : null}
+          </div>
+
+          <div className="panel">
             <div className="custom-list-header">
               <div>
                 <div className="panel-title">{listTitle}</div>
@@ -628,39 +661,6 @@ export default function CustomWordsPage() {
                 </button>
                 {loadMoreError ? <span className="error">{loadMoreError}</span> : null}
               </div>
-            ) : null}
-          </div>
-
-          <div className="panel">
-            <div className="panel-title">{t.importTitle}</div>
-            <p className="muted">{t.importHint}</p>
-            <div className="import-sample">
-              <div className="import-sample-title">{t.importExampleTitle}</div>
-              <pre>{t.importExample}</pre>
-            </div>
-            <textarea
-              value={importText}
-              onChange={(event) => setImportText(event.target.value)}
-              placeholder={t.importExample}
-            />
-            <div className="actions">
-              <button type="button" onClick={importList} disabled={importing || !importText.trim()}>
-                {importing ? t.importing : t.importAction}
-              </button>
-              {importError ? <span className="error">{importError}</span> : null}
-            </div>
-            {importStats.length ? (
-              <>
-                <div className="panel-title">{t.importResult}</div>
-                <div className="import-grid">
-                  {importStats.map((item) => (
-                    <div key={item.label} className="import-card">
-                      <div className="import-title">{item.label}</div>
-                      <div className="import-value">{item.value}</div>
-                    </div>
-                  ))}
-                </div>
-              </>
             ) : null}
           </div>
         </>
