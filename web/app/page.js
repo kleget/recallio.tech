@@ -23,6 +23,20 @@ const TEXT = {
     today: "Сегодня",
     learnButton: "Учить",
     reviewButton: "Повторять",
+    reading: {
+      title: "Чтение для повторения",
+      desc: "Короткий связный текст с вашими недавними словами.",
+      targetLabel: "Сколько слов покрыть",
+      daysLabel: "За сколько дней",
+      action: "Собрать текст",
+      loading: "Собираем...",
+      empty: "Пока нет текста.",
+      coverage: "Покрытие",
+      words: "слов",
+      length: "Длина",
+      source: "Источник",
+      requested: "Цель"
+    },
     chartTitle: "График дисциплины",
     chartDesc:
       "Ось X — время, ось Y — сколько слов вы знаете. Даже пара слов в день превращается в заметный рост.",
@@ -121,6 +135,20 @@ const TEXT = {
     today: "Today",
     learnButton: "Learn",
     reviewButton: "Review",
+    reading: {
+      title: "Reading practice",
+      desc: "Short coherent text with your recently learned words.",
+      targetLabel: "Words to include",
+      daysLabel: "Days back",
+      action: "Build text",
+      loading: "Building...",
+      empty: "No text yet.",
+      coverage: "Coverage",
+      words: "words",
+      length: "Length",
+      source: "Source",
+      requested: "Target"
+    },
     chartTitle: "Discipline chart",
     chartDesc:
       "X axis is time, Y axis is how many words you know. Even a few words a day add up quickly.",
@@ -225,11 +253,38 @@ async function getJson(path, token) {
   return response.json();
 }
 
+async function postJson(path, payload, token) {
+  const headers = { "Content-Type": "application/json" };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  const response = await fetch(`${API_BASE}${path}`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) {
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      const data = await response.json();
+      throw new Error(data.detail || "Request failed");
+    }
+    const message = await response.text();
+    throw new Error(message || "Request failed");
+  }
+  return response.json();
+}
+
 export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [dashboard, setDashboard] = useState(null);
   const [chartRange, setChartRange] = useState("14d");
+  const [reading, setReading] = useState(null);
+  const [readingError, setReadingError] = useState("");
+  const [readingLoading, setReadingLoading] = useState(false);
+  const [readingTargetWords, setReadingTargetWords] = useState(10);
+  const [readingDays, setReadingDays] = useState(3);
   const [theme, setTheme] = useState(() => getCookie("theme") || "light");
   const { lang, setLang } = useUiLang();
   const interfaceLang = lang || "ru";
@@ -243,6 +298,28 @@ export default function Home() {
 
   const goReview = () => {
     window.location.href = "/review";
+  };
+
+  const loadReading = async () => {
+    const token = getCookie("token");
+    if (!token) {
+      window.location.href = "/auth";
+      return;
+    }
+    setReadingError("");
+    setReadingLoading(true);
+    try {
+      const data = await postJson(
+        "/reading",
+        { target_words: readingTargetWords, days: readingDays },
+        token
+      );
+      setReading(data);
+    } catch (err) {
+      setReadingError(err.message || t.loading);
+    } finally {
+      setReadingLoading(false);
+    }
   };
 
   const continueToCommunity = () => {
@@ -429,6 +506,20 @@ export default function Home() {
     { key: "30d", label: t.chartRanges.month },
     { key: "all", label: t.chartRanges.all }
   ];
+  const readingCoveragePct =
+    reading && reading.target_words ? Math.round((reading.coverage || 0) * 100) : 0;
+  const readingCoverageLabel =
+    reading && reading.target_words ? `${reading.hits}/${reading.target_words}` : "";
+  const readingLengthLabel =
+    reading && reading.word_count ? `${reading.word_count} ${t.reading.words}` : "";
+  const readingSourceLabel =
+    reading && (reading.source_title || reading.corpus_name)
+      ? reading.source_title || reading.corpus_name
+      : "";
+  const readingRequestedLabel =
+    reading && reading.target_words_requested
+      ? `${reading.target_words_requested} ${t.reading.words}`
+      : "";
   const tips = t.tips?.items || [];
 
   const chartTicks = chart
@@ -494,11 +585,11 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="panel" data-tour="today">
-            <div className="panel-title">{t.today}</div>
-            <div className="today-actions">
-              <button type="button" className="today-action" onClick={goLearn}>
-                <span className="today-action-label">{t.stats.learnToday}</span>
+            <div className="panel" data-tour="today">
+              <div className="panel-title">{t.today}</div>
+              <div className="today-actions">
+                <button type="button" className="today-action" onClick={goLearn}>
+                  <span className="today-action-label">{t.stats.learnToday}</span>
                 <span className="today-action-count">
                   {dashboard.learn_today} {wordsLabel}
                 </span>
@@ -508,14 +599,88 @@ export default function Home() {
                 <span className="today-action-count">
                   {dashboard.review_today} {wordsLabel}
                 </span>
-              </button>
+                </button>
+              </div>
             </div>
-          </div>
 
-          <div className="panel">
-            <div className="panel-title">{t.tips.title}</div>
-            <p className="muted">{t.tips.intro}</p>
-            <div className="feature-grid">
+            <div className="panel reading-panel reading-home">
+              <div className="panel-title">{t.reading.title}</div>
+              <p className="muted">{t.reading.desc}</p>
+              <div className="reading-controls">
+                <label className="reading-control">
+                  <span className="reading-label">{t.reading.targetLabel}</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="50"
+                    value={readingTargetWords}
+                    onChange={(event) => {
+                      const next = Number(event.target.value || 1);
+                      if (Number.isNaN(next)) {
+                        return;
+                      }
+                      setReadingTargetWords(Math.max(1, Math.min(50, next)));
+                    }}
+                  />
+                </label>
+                <label className="reading-control">
+                  <span className="reading-label">{t.reading.daysLabel}</span>
+                  <select
+                    value={readingDays}
+                    onChange={(event) => setReadingDays(Number(event.target.value))}
+                  >
+                    <option value={3}>3</option>
+                    <option value={7}>7</option>
+                    <option value={14}>14</option>
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  className="button-secondary reading-action"
+                  onClick={loadReading}
+                  disabled={readingLoading}
+                >
+                  {readingLoading ? t.reading.loading : t.reading.action}
+                </button>
+              </div>
+              {readingError ? <div className="error">{readingError}</div> : null}
+              {reading && reading.text ? (
+                <>
+                  <div className="reading-meta muted">
+                    {readingRequestedLabel ? (
+                      <span>
+                        {t.reading.requested}: {readingRequestedLabel}
+                      </span>
+                    ) : null}
+                    {readingCoverageLabel ? (
+                      <span>
+                        {t.reading.coverage}: {readingCoverageLabel} ({readingCoveragePct}%)
+                      </span>
+                    ) : null}
+                    {readingLengthLabel ? (
+                      <span>
+                        {t.reading.length}: {readingLengthLabel}
+                      </span>
+                    ) : null}
+                    {readingSourceLabel ? (
+                      <span>
+                        {t.reading.source}: {readingSourceLabel}
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="reading-text reading-content">{reading.text}</div>
+                </>
+              ) : (
+                <div className="muted reading-empty">
+                  {reading?.message || t.reading.empty}
+                </div>
+              )}
+            </div>
+
+            <div className="panel">
+              <div className="panel-title">{t.tips.title}</div>
+              <p className="muted">{t.tips.intro}</p>
+              <div className="feature-grid">
               {tips.map((item) => (
                 <div key={item.title} className="feature-card">
                   <div className="feature-title">{item.title}</div>

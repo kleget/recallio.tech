@@ -456,6 +456,54 @@ class Translation(Base):
     source: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
 
+class ReadingSource(Base):
+    __tablename__ = "reading_sources"
+    __table_args__ = (
+        UniqueConstraint("slug", "lang", name="uq_reading_sources_slug_lang"),
+        Index("ix_reading_sources_corpus", "corpus_id"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    corpus_id: Mapped[int | None] = mapped_column(
+        ForeignKey("corpora.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    slug: Mapped[str] = mapped_column(String(128))
+    title: Mapped[str] = mapped_column(String(200))
+    lang: Mapped[str] = mapped_column(String(2))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ReadingPassage(Base):
+    __tablename__ = "reading_passages"
+    __table_args__ = (
+        Index("ix_reading_passages_source_position", "source_id", "position"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    source_id: Mapped[int] = mapped_column(
+        ForeignKey("reading_sources.id", ondelete="CASCADE"),
+    )
+    position: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    text: Mapped[str] = mapped_column(Text)
+    word_count: Mapped[int] = mapped_column(Integer)
+
+
+class ReadingPassageToken(Base):
+    __tablename__ = "reading_passage_tokens"
+    __table_args__ = (
+        Index("ix_reading_passage_tokens_token", "token"),
+    )
+
+    passage_id: Mapped[int] = mapped_column(
+        ForeignKey("reading_passages.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    token: Mapped[str] = mapped_column(String(64), primary_key=True)
+    count: Mapped[int] = mapped_column(Integer, default=1)
+
+
 class ContentReport(Base):
     __tablename__ = "content_reports"
     __table_args__ = (

@@ -1189,12 +1189,62 @@ button[disabled] {
   border-color: rgba(59, 130, 246, 0.35);
 }
 
+.reading-home {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reading-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.reading-control {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 160px;
+}
+
+.reading-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.reading-control input[type="number"] {
+  max-width: 140px;
+}
+
+.reading-action {
+  align-self: flex-end;
+  height: 44px;
+}
+
 .reading-text {
   color: var(--text);
 }
 
 .reading-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
   margin-top: 6px;
+}
+
+.reading-meta span {
+  white-space: nowrap;
+}
+
+.reading-content {
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+.reading-empty {
+  padding: 8px 0 4px;
 }
 
 .progress-panel {
