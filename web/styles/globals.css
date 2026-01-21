@@ -2343,8 +2343,8 @@ button[disabled] {
 
 .custom-list {
   display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 8px;
+  grid-template-columns: 1fr;
 }
 
 .custom-card {
@@ -2357,6 +2357,68 @@ button[disabled] {
   gap: 4px;
 }
 
+.custom-list-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.custom-list-meta {
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.custom-list-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.custom-list-select {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.custom-list-select select {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 10px;
+}
+
+.custom-list-footer {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.custom-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.custom-text {
+  display: grid;
+  gap: 4px;
+}
+
+.custom-edit {
+  display: grid;
+  gap: 10px;
+}
+
 .custom-actions {
   display: flex;
   gap: 8px;
@@ -2367,6 +2429,10 @@ button[disabled] {
 
 .custom-actions .error {
   font-size: 12px;
+}
+
+.custom-row .custom-actions {
+  justify-content: flex-end;
 }
 
 .custom-word {
@@ -2382,36 +2448,6 @@ button[disabled] {
   color: var(--muted);
 }
 
-.custom-card-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr) auto;
-  grid-template-areas:
-    "word translation actions"
-    "meta meta meta";
-  gap: 4px 12px;
-  align-items: center;
-}
-
-.custom-card-row .custom-word {
-  grid-area: word;
-}
-
-.custom-card-row .custom-translation {
-  grid-area: translation;
-  color: var(--muted);
-}
-
-.custom-card-row .custom-meta {
-  grid-area: meta;
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.custom-card-row .custom-actions {
-  grid-area: actions;
-  justify-content: flex-end;
-}
-
 .custom-card.is-editing {
   padding: 14px 16px;
 }
@@ -2423,18 +2459,10 @@ button[disabled] {
 }
 
 @media (max-width: 900px) {
-  .custom-list {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  }
-
-  .custom-card-row {
+  .custom-row {
     grid-template-columns: 1fr;
-    grid-template-areas:
-      "word"
-      "translation"
-      "meta"
-      "actions";
-    gap: 6px;
+    align-items: flex-start;
+    gap: 8px;
   }
 
   .custom-actions {

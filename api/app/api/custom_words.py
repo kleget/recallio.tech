@@ -56,11 +56,14 @@ async def load_profile(user_id, db: AsyncSession):
 @router.get("/custom-words", response_model=list[CustomWordOut])
 async def list_custom_words(
     limit: int = 50,
+    offset: int = 0,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> list[CustomWordOut]:
     if limit < 1 or limit > 200:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid limit")
+    if offset < 0 or offset > 100000:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid offset")
     profile = await load_profile(user.id, db)
 
     result = await db.execute(
@@ -73,6 +76,7 @@ async def list_custom_words(
         )
         .order_by(UserCustomWord.created_at.desc(), UserCustomWord.word_id.desc())
         .limit(limit)
+        .offset(offset)
     )
     return [
         CustomWordOut(

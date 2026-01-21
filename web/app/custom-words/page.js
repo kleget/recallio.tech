@@ -24,6 +24,11 @@ const TEXT = {
     translationPlaceholder: "например: собака",
     listTitle: "Добавленные слова",
     empty: "Пока нет своих слов.",
+    listShown: "Показано {shown} из {total}",
+    perPage: "На странице",
+    loadMore: "Показать ещё",
+    loadAll: "Показать все",
+    loadingMore: "Загрузка...",
     direction: "Направление",
     home: "На главную",
     edit: "Редактировать",
@@ -67,6 +72,11 @@ const TEXT = {
     translationPlaceholder: "e.g. собака",
     listTitle: "Added words",
     empty: "No custom words yet.",
+    listShown: "Showing {shown} of {total}",
+    perPage: "Per page",
+    loadMore: "Load more",
+    loadAll: "Load all",
+    loadingMore: "Loading...",
     direction: "Direction",
     home: "Home",
     edit: "Edit",
@@ -196,11 +206,14 @@ export default function CustomWordsPage() {
   const [editingId, setEditingId] = useState(null);
   const [editSaving, setEditSaving] = useState(false);
   const [error, setError] = useState("");
+  const [loadMoreError, setLoadMoreError] = useState("");
   const [saveError, setSaveError] = useState("");
   const [editError, setEditError] = useState("");
   const [status, setStatus] = useState("");
   const [items, setItems] = useState([]);
   const [totalCount, setTotalCount] = useState(null);
+  const [pageSize, setPageSize] = useState(100);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [profile, setProfile] = useState(null);
   const [form, setForm] = useState({ word: "", translation: "" });
   const [editForm, setEditForm] = useState({ word: "", translation: "" });
@@ -216,6 +229,7 @@ export default function CustomWordsPage() {
   const loadData = async () => {
     setLoading(true);
     setError("");
+    setLoadMoreError("");
     const token = getCookie("token");
     if (!token) {
       window.location.href = "/auth";
@@ -224,7 +238,7 @@ export default function CustomWordsPage() {
     try {
       const [me, words, count] = await Promise.all([
         getJson("/auth/me", token),
-        getJson("/custom-words?limit=50", token),
+        getJson(`/custom-words?limit=${pageSize}&offset=0`, token),
         getJson("/custom-words/count", token)
       ]);
       if (me?.interface_lang) {
@@ -251,7 +265,7 @@ export default function CustomWordsPage() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [pageSize]);
 
   useEffect(() => {
     setSaveError("");
@@ -378,6 +392,37 @@ export default function CustomWordsPage() {
     }
   };
 
+  const loadMore = async (loadAll = false) => {
+    if (loadingMore) {
+      return;
+    }
+    setLoadMoreError("");
+    const token = getCookie("token");
+    if (!token) {
+      window.location.href = "/auth";
+      return;
+    }
+    if (totalCount === null) {
+      return;
+    }
+    const remaining = totalCount - items.length;
+    if (remaining <= 0) {
+      return;
+    }
+    const limit = loadAll ? remaining : Math.min(pageSize, remaining);
+    setLoadingMore(true);
+    try {
+      const data = await getJson(`/custom-words?limit=${limit}&offset=${items.length}`, token);
+      if (Array.isArray(data) && data.length) {
+        setItems((prev) => [...prev, ...data]);
+      }
+    } catch (err) {
+      setLoadMoreError(err.message || t.error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
   const goHome = () => {
     window.location.href = "/";
   };
@@ -396,6 +441,11 @@ export default function CustomWordsPage() {
     ? `${langLabel(profile.native_lang)} \u2192 ${langLabel(profile.target_lang)}`
     : "-";
   const listTitle = totalCount !== null ? `${t.listTitle} (${totalCount})` : t.listTitle;
+  const hasMore = totalCount !== null && items.length < totalCount;
+  const shownText =
+    totalCount !== null
+      ? t.listShown.replace("{shown}", String(items.length)).replace("{total}", String(totalCount))
+      : "";
 
   const importStats = importResult
     ? [
@@ -468,7 +518,27 @@ export default function CustomWordsPage() {
           </div>
 
           <div className="panel">
-            <div className="panel-title">{listTitle}</div>
+            <div className="custom-list-header">
+              <div>
+                <div className="panel-title">{listTitle}</div>
+                {shownText ? <div className="custom-list-meta muted">{shownText}</div> : null}
+              </div>
+              <div className="custom-list-controls">
+                <label className="custom-list-select">
+                  <span className="muted">{t.perPage}</span>
+                  <select
+                    value={pageSize}
+                    onChange={(event) => setPageSize(Number(event.target.value))}
+                  >
+                    {[50, 100, 200].map((size) => (
+                      <option key={size} value={size}>
+                        {size}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </div>
             <p className="muted">{t.listHint}</p>
             {items.length === 0 ? <p className="muted">{t.empty}</p> : null}
             {items.length ? (
@@ -479,7 +549,7 @@ export default function CustomWordsPage() {
                     className={`custom-card${editingId === item.word_id ? " is-editing" : ""}`}
                   >
                     {editingId === item.word_id ? (
-                      <>
+                      <div className="custom-edit">
                         <div className="custom-form-row">
                           <div>
                             <label>{t.wordLabel}</label>
@@ -519,28 +589,44 @@ export default function CustomWordsPage() {
                           </button>
                           {editError ? <span className="error">{editError}</span> : null}
                         </div>
-                      </>
+                      </div>
                     ) : (
-                      <>
-                        <div className="custom-card-row">
+                      <div className="custom-row">
+                        <div className="custom-text">
                           <div className="custom-word">{item.word}</div>
                           <div className="custom-translation">{item.translation}</div>
                           <div className="custom-meta">
                             {formatDate(item.created_at, locale)}
                           </div>
-                          <div className="custom-actions">
-                            <button type="button" className="button-secondary" onClick={() => startEdit(item)}>
-                              {t.edit}
-                            </button>
-                            <button type="button" className="button-secondary" onClick={() => removeWord(item.word_id)}>
-                              {t.delete}
-                            </button>
-                          </div>
                         </div>
-                      </>
+                        <div className="custom-actions">
+                          <button type="button" className="button-secondary" onClick={() => startEdit(item)}>
+                            {t.edit}
+                          </button>
+                          <button type="button" className="button-secondary" onClick={() => removeWord(item.word_id)}>
+                            {t.delete}
+                          </button>
+                        </div>
+                      </div>
                     )}
                   </div>
                 ))}
+              </div>
+            ) : null}
+            {hasMore ? (
+              <div className="custom-list-footer">
+                <button type="button" onClick={() => loadMore(false)} disabled={loadingMore}>
+                  {loadingMore ? t.loadingMore : t.loadMore}
+                </button>
+                <button
+                  type="button"
+                  className="button-secondary"
+                  onClick={() => loadMore(true)}
+                  disabled={loadingMore}
+                >
+                  {t.loadAll}
+                </button>
+                {loadMoreError ? <span className="error">{loadMoreError}</span> : null}
               </div>
             ) : null}
           </div>
