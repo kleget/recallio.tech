@@ -200,6 +200,7 @@ export default function CustomWordsPage() {
   const [editError, setEditError] = useState("");
   const [status, setStatus] = useState("");
   const [items, setItems] = useState([]);
+  const [totalCount, setTotalCount] = useState(null);
   const [profile, setProfile] = useState(null);
   const [form, setForm] = useState({ word: "", translation: "" });
   const [editForm, setEditForm] = useState({ word: "", translation: "" });
@@ -221,15 +222,17 @@ export default function CustomWordsPage() {
       return;
     }
     try {
-      const [me, words] = await Promise.all([
+      const [me, words, count] = await Promise.all([
         getJson("/auth/me", token),
-        getJson("/custom-words?limit=50", token)
+        getJson("/custom-words?limit=50", token),
+        getJson("/custom-words/count", token)
       ]);
       if (me?.interface_lang) {
         setLang(me.interface_lang === "en" ? "en" : "ru");
       }
       setProfile(me);
       setItems(Array.isArray(words) ? words : []);
+      setTotalCount(typeof count?.total === "number" ? count.total : null);
     } catch (err) {
       const message = err.message || t.error;
       if (message === "Onboarding required") {
@@ -392,6 +395,7 @@ export default function CustomWordsPage() {
   const direction = profile
     ? `${langLabel(profile.native_lang)} \u2192 ${langLabel(profile.target_lang)}`
     : "-";
+  const listTitle = totalCount !== null ? `${t.listTitle} (${totalCount})` : t.listTitle;
 
   const importStats = importResult
     ? [
@@ -464,7 +468,7 @@ export default function CustomWordsPage() {
           </div>
 
           <div className="panel">
-            <div className="panel-title">{t.listTitle}</div>
+            <div className="panel-title">{listTitle}</div>
             <p className="muted">{t.listHint}</p>
             {items.length === 0 ? <p className="muted">{t.empty}</p> : null}
             {items.length ? (
@@ -515,18 +519,20 @@ export default function CustomWordsPage() {
                       </>
                     ) : (
                       <>
-                        <div className="custom-word">{item.word}</div>
-                        <div className="custom-translation">{item.translation}</div>
-                        <div className="custom-meta">
-                          {formatDate(item.created_at, locale)}
-                        </div>
-                        <div className="custom-actions">
-                          <button type="button" className="button-secondary" onClick={() => startEdit(item)}>
-                            {t.edit}
-                          </button>
-                          <button type="button" className="button-secondary" onClick={() => removeWord(item.word_id)}>
-                            {t.delete}
-                          </button>
+                        <div className="custom-card-row">
+                          <div className="custom-word">{item.word}</div>
+                          <div className="custom-translation">{item.translation}</div>
+                          <div className="custom-meta">
+                            {formatDate(item.created_at, locale)}
+                          </div>
+                          <div className="custom-actions">
+                            <button type="button" className="button-secondary" onClick={() => startEdit(item)}>
+                              {t.edit}
+                            </button>
+                            <button type="button" className="button-secondary" onClick={() => removeWord(item.word_id)}>
+                              {t.delete}
+                            </button>
+                          </div>
                         </div>
                       </>
                     )}

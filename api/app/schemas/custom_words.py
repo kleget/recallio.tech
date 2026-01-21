@@ -26,3 +26,7 @@ class CustomWordsImportOut(BaseModel):
     inserted: int
     updated: int
     skipped: int
+
+
+class CustomWordsCountOut(BaseModel):
+    total: int

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,6 +11,7 @@ from app.models import User, UserCustomWord, UserWord, Word
 from app.schemas.custom_words import (
     CustomWordIn,
     CustomWordOut,
+    CustomWordsCountOut,
     CustomWordsImportOut,
     CustomWordsImportRequest,
 )
@@ -82,6 +83,26 @@ async def list_custom_words(
         )
         for row in result.fetchall()
     ]
+
+
+@router.get("/custom-words/count", response_model=CustomWordsCountOut)
+async def count_custom_words(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> CustomWordsCountOut:
+    profile = await load_profile(user.id, db)
+    result = await db.execute(
+        select(func.count())
+        .select_from(UserCustomWord)
+        .join(Word, Word.id == UserCustomWord.word_id)
+        .where(
+            UserCustomWord.profile_id == profile.id,
+            UserCustomWord.target_lang == profile.target_lang,
+            Word.lang == profile.native_lang,
+        )
+    )
+    total = int(result.scalar() or 0)
+    return CustomWordsCountOut(total=total)
 
 
 @router.post("/custom-words", response_model=CustomWordOut)

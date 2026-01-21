@@ -2343,25 +2343,26 @@ button[disabled] {
 
 .custom-list {
   display: grid;
-  gap: 12px;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
 .custom-card {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 14px 16px;
+  padding: 10px 12px;
   box-shadow: var(--shadow-sm);
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 
 .custom-actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
   align-items: center;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .custom-actions .error {
@@ -2379,6 +2380,41 @@ button[disabled] {
 .custom-meta {
   font-size: 12px;
   color: var(--muted);
+}
+
+.custom-card-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) minmax(180px, 1.3fr) minmax(90px, auto) auto;
+  gap: 6px 12px;
+  align-items: center;
+}
+
+.custom-card-row .custom-meta {
+  justify-self: end;
+  white-space: nowrap;
+}
+
+.custom-card-row .custom-actions {
+  margin-top: 0;
+  justify-content: flex-end;
+}
+
+@media (max-width: 820px) {
+  .custom-list {
+    grid-template-columns: 1fr;
+  }
+
+  .custom-card-row {
+    grid-template-columns: 1fr;
+  }
+
+  .custom-card-row .custom-meta {
+    justify-self: start;
+  }
+
+  .custom-card-row .custom-actions {
+    justify-content: flex-start;
+  }
 }
 
 .community-tabs {
