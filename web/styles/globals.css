@@ -2383,6 +2383,11 @@ button[disabled] {
   gap: 8px;
   align-items: center;
   font-size: 13px;
+  white-space: nowrap;
+}
+
+.custom-list-select span {
+  white-space: nowrap;
 }
 
 .custom-list-select select {
