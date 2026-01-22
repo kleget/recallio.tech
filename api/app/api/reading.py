@@ -170,6 +170,7 @@ async def preview_reading(
     profile = await get_active_learning_profile(user.id, db, require_onboarding=True)
     target_words_requested = max(1, min(int(data.target_words or 0), 50))
     days = max(1, min(int(data.days or 3), 30))
+    variant = max(0, int(data.variant or 0))
 
     target_tokens = await collect_target_tokens(
         profile.id,
@@ -229,15 +230,16 @@ async def preview_reading(
             ReadingPassage.word_count,
         )
         .order_by(hits_expr.desc(), ReadingPassage.word_count.asc())
-        .limit(10)
+        .limit(12)
     )
-    candidate = candidate_result.first()
-    if not candidate:
+    candidates = candidate_result.fetchall()
+    if not candidates:
         return ReadingPreviewOut(
             target_words_requested=target_words_requested,
             target_words=len(target_tokens),
             message="No matching passages found.",
         )
+    candidate = candidates[variant % len(candidates)]
 
     min_words, max_words = reading_target_range(target_words_requested)
     span = max(6, int(max_words / 80) + 2)
@@ -266,6 +268,7 @@ async def preview_reading(
     passage_tokens = {row.token for row in token_result.fetchall()}
     hits = len(set(target_tokens) & passage_tokens)
     coverage = hits / len(target_tokens) if target_tokens else 0.0
+    highlight_tokens = sorted(set(target_tokens) & passage_tokens)
 
     source_row = await db.execute(
         select(ReadingSource, Corpus.name)
@@ -286,4 +289,5 @@ async def preview_reading(
         target_words_requested=target_words_requested,
         hits=hits,
         coverage=coverage,
+        highlight_tokens=highlight_tokens,
     )

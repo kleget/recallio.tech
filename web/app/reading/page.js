@@ -15,6 +15,9 @@ const TEXT = {
     targetLabel: "Сколько слов покрыть",
     daysLabel: "За сколько дней",
     action: "Собрать текст",
+    regenerate: "Еще вариант",
+    highlightOn: "Подсветить слова",
+    highlightOff: "Убрать подсветку",
     loading: "Собираем...",
     empty: "Пока нет текста.",
     coverage: "Покрытие",
@@ -31,6 +34,9 @@ const TEXT = {
     targetLabel: "Words to include",
     daysLabel: "Days back",
     action: "Build text",
+    regenerate: "New variant",
+    highlightOn: "Highlight words",
+    highlightOff: "Hide highlights",
     loading: "Building...",
     empty: "No text yet.",
     coverage: "Coverage",
@@ -70,6 +76,8 @@ export default function ReadingPage() {
   const [loading, setLoading] = useState(false);
   const [targetWords, setTargetWords] = useState(10);
   const [days, setDays] = useState(3);
+  const [variant, setVariant] = useState(0);
+  const [highlightOn, setHighlightOn] = useState(false);
   const { lang } = useUiLang();
   const uiLang = lang === "en" ? "en" : "ru";
   const t = TEXT[uiLang] || TEXT.ru;
@@ -78,7 +86,7 @@ export default function ReadingPage() {
     window.location.href = "/";
   };
 
-  const loadReading = async () => {
+  const loadReading = async (nextVariant = variant, resetHighlight = false) => {
     const token = getCookie("token");
     if (!token) {
       window.location.href = "/auth";
@@ -87,8 +95,16 @@ export default function ReadingPage() {
     setError("");
     setLoading(true);
     try {
-      const data = await postJson("/reading", { target_words: targetWords, days }, token);
+      const data = await postJson(
+        "/reading",
+        { target_words: targetWords, days, variant: nextVariant },
+        token
+      );
       setReading(data);
+      setVariant(nextVariant);
+      if (resetHighlight) {
+        setHighlightOn(false);
+      }
     } catch (err) {
       setError(err.message || t.error);
     } finally {
@@ -110,6 +126,45 @@ export default function ReadingPage() {
     reading && reading.target_words_requested
       ? `${reading.target_words_requested} ${t.words}`
       : "";
+  const highlightTokens = new Set(
+    (reading?.highlight_tokens || []).map((item) => String(item).toLowerCase())
+  );
+  const highlightLabel = highlightOn ? t.highlightOff : t.highlightOn;
+  const hasReading = Boolean(reading && reading.text);
+
+  const renderHighlightedText = () => {
+    if (!reading || !reading.text) {
+      return null;
+    }
+    if (!highlightOn || highlightTokens.size === 0) {
+      return reading.text;
+    }
+    const regex = /(\p{L}+(?:['’]\p{L}+)*)/gu;
+    const parts = [];
+    let lastIndex = 0;
+    for (const match of reading.text.matchAll(regex)) {
+      const [word] = match;
+      const index = match.index ?? 0;
+      if (index > lastIndex) {
+        parts.push(reading.text.slice(lastIndex, index));
+      }
+      const normalized = word.toLowerCase();
+      if (highlightTokens.has(normalized)) {
+        parts.push(
+          <mark key={`${index}-${word}`} className="reading-highlight">
+            {word}
+          </mark>
+        );
+      } else {
+        parts.push(word);
+      }
+      lastIndex = index + word.length;
+    }
+    if (lastIndex < reading.text.length) {
+      parts.push(reading.text.slice(lastIndex));
+    }
+    return parts;
+  };
 
   return (
     <main>
@@ -151,13 +206,26 @@ export default function ReadingPage() {
               <option value={14}>14</option>
             </select>
           </label>
+        </div>
+        <div className="reading-actions">
+          <button type="button" onClick={() => loadReading(0, true)} disabled={loading}>
+            {loading ? t.loading : t.action}
+          </button>
           <button
             type="button"
-            className="button-secondary reading-action"
-            onClick={loadReading}
-            disabled={loading}
+            className="button-secondary"
+            onClick={() => loadReading(variant + 1, true)}
+            disabled={loading || !hasReading}
           >
-            {loading ? t.loading : t.action}
+            {t.regenerate}
+          </button>
+          <button
+            type="button"
+            className="button-secondary"
+            onClick={() => setHighlightOn((prev) => !prev)}
+            disabled={!hasReading}
+          >
+            {highlightLabel}
           </button>
         </div>
         {error ? <div className="error">{error}</div> : null}
@@ -185,7 +253,7 @@ export default function ReadingPage() {
                 </span>
               ) : null}
             </div>
-            <div className="reading-text reading-content">{reading.text}</div>
+            <div className="reading-text reading-content">{renderHighlightedText()}</div>
           </>
         ) : (
           <div className="muted reading-empty">{reading?.message || t.empty}</div>

@@ -1223,6 +1223,16 @@ button[disabled] {
   height: 44px;
 }
 
+.reading-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.reading-actions button {
+  min-width: 160px;
+}
+
 .reading-text {
   color: var(--text);
 }
@@ -1241,6 +1251,13 @@ button[disabled] {
 .reading-content {
   white-space: pre-wrap;
   line-height: 1.6;
+}
+
+.reading-highlight {
+  background: rgba(59, 130, 246, 0.28);
+  color: var(--text);
+  padding: 0 2px;
+  border-radius: 4px;
 }
 
 .reading-empty {
@@ -1396,6 +1413,14 @@ button[disabled] {
   }
 
   .reading-action {
+    width: 100%;
+  }
+
+  .reading-actions {
+    flex-direction: column;
+  }
+
+  .reading-actions button {
     width: 100%;
   }
 
