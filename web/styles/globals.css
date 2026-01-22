@@ -135,6 +135,7 @@ body {
 
 .nav-controls .segmented {
   align-items: center;
+  height: 34px;
 }
 
 .nav-controls .segmented button {
@@ -142,6 +143,7 @@ body {
   align-items: center;
   justify-content: center;
   min-height: 30px;
+  line-height: 1;
 }
 
 .nav-theme button {
@@ -1661,12 +1663,12 @@ html[data-theme="dark"] .input-status.wrong {
   }
 
   .nav-controls .segmented {
-    height: 36px;
+    height: 38px;
     padding: 3px;
   }
 
   .nav-controls .segmented button {
-    height: 30px;
+    height: 32px;
     min-height: 30px;
   }
 
