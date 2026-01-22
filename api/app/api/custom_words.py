@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert
@@ -21,6 +23,41 @@ router = APIRouter(tags=["custom-words"])
 
 def normalize_text(value: str) -> str:
     return " ".join(value.strip().split()).lower()
+
+
+LATIN_RE = re.compile(r"[A-Za-z]")
+CYRILLIC_RE = re.compile(r"[\u0400-\u04FF]")
+
+
+def detect_lang(value: str) -> str | None:
+    if not value:
+        return None
+    latin = len(LATIN_RE.findall(value))
+    cyrillic = len(CYRILLIC_RE.findall(value))
+    total = latin + cyrillic
+    if total == 0:
+        return None
+    latin_ratio = latin / total
+    cyrillic_ratio = cyrillic / total
+    if latin_ratio >= 0.8 and cyrillic_ratio <= 0.2:
+        return "en"
+    if cyrillic_ratio >= 0.8 and latin_ratio <= 0.2:
+        return "ru"
+    return None
+
+
+def maybe_swap(word: str, translation: str, native_lang: str, target_lang: str) -> tuple[str, str]:
+    if not word or not translation:
+        return word, translation
+    if native_lang == target_lang:
+        return word, translation
+    if native_lang not in {"ru", "en"} or target_lang not in {"ru", "en"}:
+        return word, translation
+    word_lang = detect_lang(word)
+    translation_lang = detect_lang(translation)
+    if word_lang == target_lang and translation_lang == native_lang:
+        return translation, word
+    return word, translation
 
 
 def chunked(items: list[str], size: int) -> list[list[str]]:
@@ -119,6 +156,7 @@ async def add_custom_word(
 
     word = normalize_text(data.word)
     translation = normalize_text(data.translation)
+    word, translation = maybe_swap(word, translation, profile.native_lang, profile.target_lang)
     if not word or not translation:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Word and translation required")
     if len(word) > 255:
@@ -184,6 +222,7 @@ async def update_custom_word(
 
     word = normalize_text(data.word)
     translation = normalize_text(data.translation)
+    word, translation = maybe_swap(word, translation, profile.native_lang, profile.target_lang)
     if not word or not translation:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Word and translation required")
     if len(word) > 255:
@@ -377,7 +416,12 @@ async def import_custom_words(
 
     entries_map = {}
     for word, translation in entries:
-        entries_map[word] = translation
+        fixed_word, fixed_translation = maybe_swap(
+            word, translation, profile.native_lang, profile.target_lang
+        )
+        if not fixed_word or not fixed_translation:
+            continue
+        entries_map[fixed_word] = fixed_translation
 
     lemmas = list(entries_map.keys())
     for batch in chunked(lemmas, 1000):

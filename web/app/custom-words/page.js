@@ -12,7 +12,7 @@ const TEXT = {
   ru: {
     title: "Мои слова",
     tagline: "Личный список слов, которые ты хочешь выучить.",
-    hint: "Эти слова попадут в обучение и повторение. Уже известные слова импортируются отдельно в профиле.",
+    hint: "Эти слова попадут в обучение и повторение. Если слово и перевод перепутаны, мы автоматически поменяем их местами.",
     loading: "Загрузка...",
     error: "Не удалось загрузить список",
     saveError: "Не удалось добавить слово",
@@ -62,7 +62,7 @@ const TEXT = {
   en: {
     title: "My words",
     tagline: "A personal list of words you want to learn.",
-    hint: "These words appear in learning and review. Known words are imported in Profile.",
+    hint: "These words appear in learning and review. If word and translation are swapped, we will auto-fix them.",
     loading: "Loading...",
     error: "Failed to load list",
     saveError: "Failed to add word",
