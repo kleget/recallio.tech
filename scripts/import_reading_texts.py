@@ -20,6 +20,24 @@ from app.db.session import AsyncSessionLocal  # noqa: E402
 from app.models import Corpus, ReadingPassage, ReadingPassageToken, ReadingSource  # noqa: E402
 
 TOKEN_RE = re.compile(r"[A-Za-z\u0400-\u04FF]+(?:['\u2019][A-Za-z\u0400-\u04FF]+)?")
+DIGIT_RE = re.compile(r"\d")
+NUM_TOKEN_RE = re.compile(r"\b\d+\b")
+LETTER_RE = re.compile(r"[A-Za-z\u0400-\u04FF]")
+NOISE_MARKERS = [
+    "table of contents",
+    "contents",
+    "index",
+    "bibliography",
+    "references",
+    "appendix",
+    "copyright",
+    "isbn",
+    "all rights reserved",
+    "\u0441\u043e\u0434\u0435\u0440\u0436\u0430\u043d\u0438\u0435",
+    "\u043e\u0433\u043b\u0430\u0432\u043b\u0435\u043d\u0438\u0435",
+    "\u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0435",
+    "\u043b\u0438\u0442\u0435\u0440\u0430\u0442\u0443\u0440\u0430",
+]
 
 
 def normalize_key(value: str) -> str:
@@ -50,6 +68,25 @@ def tokenize_words(text: str) -> list[str]:
     return [token.lower() for token in TOKEN_RE.findall(text)]
 
 
+def is_noisy_paragraph(text: str) -> bool:
+    lowered = text.lower()
+    if any(marker in lowered for marker in NOISE_MARKERS):
+        return True
+    letters = len(LETTER_RE.findall(text))
+    if letters < 20:
+        return True
+    digit_ratio = len(DIGIT_RE.findall(text)) / max(len(text), 1)
+    if digit_ratio > 0.08:
+        return True
+    tokens = tokenize_words(text)
+    if len(tokens) < 6:
+        return True
+    numeric_tokens = len(NUM_TOKEN_RE.findall(text))
+    if numeric_tokens / max(len(tokens), 1) > 0.2:
+        return True
+    return False
+
+
 def extract_paragraphs(text: str) -> list[str]:
     lines = [line.strip() for line in text.splitlines()]
     paragraphs: list[str] = []
@@ -63,7 +100,15 @@ def extract_paragraphs(text: str) -> list[str]:
         buffer.append(line)
     if buffer:
         paragraphs.append(" ".join(buffer))
-    return [para for para in paragraphs if para.strip()]
+    cleaned: list[str] = []
+    for para in paragraphs:
+        collapsed = " ".join(para.split())
+        if not collapsed:
+            continue
+        if is_noisy_paragraph(collapsed):
+            continue
+        cleaned.append(collapsed)
+    return cleaned
 
 
 def build_passages(paragraphs: list[str], min_words: int, max_words: int) -> list[str]:
