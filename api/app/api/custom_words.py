@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -297,6 +297,71 @@ async def delete_custom_word(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Custom word not found")
     await db.commit()
     return {"deleted": True}
+
+
+@router.post("/custom-words/{word_id}/known")
+async def mark_custom_word_known(
+    word_id: int,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    profile = await load_profile(user.id, db)
+    result = await db.execute(
+        select(UserCustomWord, Word.lemma)
+        .join(Word, Word.id == UserCustomWord.word_id)
+        .where(
+            UserCustomWord.profile_id == profile.id,
+            UserCustomWord.word_id == word_id,
+            UserCustomWord.target_lang == profile.target_lang,
+            Word.lang == profile.native_lang,
+        )
+    )
+    row = result.first()
+    if not row:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Custom word not found")
+
+    existing_result = await db.execute(
+        select(UserWord.status).where(
+            UserWord.profile_id == profile.id,
+            UserWord.word_id == word_id,
+        )
+    )
+    existing_status = existing_result.scalar_one_or_none()
+    now = func.now()
+    if existing_status is None:
+        stmt = insert(UserWord).values(
+            profile_id=profile.id,
+            user_id=user.id,
+            word_id=word_id,
+            status="known",
+            stage=0,
+            repetitions=0,
+            interval_days=0,
+            ease_factor=2.5,
+            learned_at=now,
+            last_review_at=now,
+            next_review_at=None,
+            correct_streak=0,
+            wrong_streak=0,
+        )
+        stmt = stmt.on_conflict_do_nothing(index_elements=["profile_id", "word_id"])
+        await db.execute(stmt)
+    elif existing_status != "learned":
+        await db.execute(
+            update(UserWord)
+            .where(UserWord.profile_id == profile.id, UserWord.word_id == word_id)
+            .values(status="known", learned_at=now, last_review_at=now, next_review_at=None)
+        )
+
+    await db.execute(
+        delete(UserCustomWord).where(
+            UserCustomWord.profile_id == profile.id,
+            UserCustomWord.word_id == word_id,
+            UserCustomWord.target_lang == profile.target_lang,
+        )
+    )
+    await db.commit()
+    return {"marked": True}
 
 
 @router.post("/custom-words/import", response_model=CustomWordsImportOut)

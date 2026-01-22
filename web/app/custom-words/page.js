@@ -38,6 +38,8 @@ const TEXT = {
     save: "Сохранить",
     saving: "Сохранение...",
     deleteConfirm: "Удалить это слово?",
+    know: "Знаю",
+    knowing: "Отмечаем...",
     listHint: "Можно редактировать перевод и удалять слова.",
     importTitle: "Импорт слов для изучения",
     importHint: "Формат: слово - перевод, одна пара на строку. Эти слова попадут в обучение.",
@@ -86,6 +88,8 @@ const TEXT = {
     save: "Save",
     saving: "Saving...",
     deleteConfirm: "Delete this word?",
+    know: "Know",
+    knowing: "Marking...",
     listHint: "You can edit word and translation.",
     importTitle: "Import words to learn",
     importHint: "Format: word - translation, one per line. These words will be learned.",
@@ -215,6 +219,7 @@ export default function CustomWordsPage() {
   const [totalCount, setTotalCount] = useState(null);
   const [pageSize, setPageSize] = useState(100);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [markingId, setMarkingId] = useState(null);
   const [profile, setProfile] = useState(null);
   const [form, setForm] = useState({ word: "", translation: "" });
   const [editForm, setEditForm] = useState({ word: "", translation: "" });
@@ -368,6 +373,29 @@ export default function CustomWordsPage() {
       await loadData();
     } catch (err) {
       setSaveError(err.message || t.saveError);
+    }
+  };
+
+  const markKnown = async (wordId) => {
+    setSaveError("");
+    setStatus("");
+    const token = getCookie("token");
+    if (!token) {
+      window.location.href = "/auth";
+      return;
+    }
+    setMarkingId(wordId);
+    try {
+      await postJson(`/custom-words/${wordId}/known`, {}, token);
+      setItems((prev) => prev.filter((item) => item.word_id !== wordId));
+      setTotalCount((prev) => (typeof prev === "number" ? Math.max(0, prev - 1) : prev));
+      if (editingId === wordId) {
+        cancelEdit();
+      }
+    } catch (err) {
+      setSaveError(err.message || t.saveError);
+    } finally {
+      setMarkingId(null);
     }
   };
 
@@ -662,6 +690,14 @@ export default function CustomWordsPage() {
                         <div className="custom-actions">
                           <button type="button" className="button-secondary" onClick={() => startEdit(item)}>
                             {t.edit}
+                          </button>
+                          <button
+                            type="button"
+                            className="button-secondary"
+                            onClick={() => markKnown(item.word_id)}
+                            disabled={markingId === item.word_id}
+                          >
+                            {markingId === item.word_id ? t.knowing : t.know}
                           </button>
                           <button type="button" className="button-secondary" onClick={() => removeWord(item.word_id)}>
                             {t.delete}
