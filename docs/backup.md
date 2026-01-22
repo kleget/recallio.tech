@@ -47,6 +47,9 @@ BACKUP_ENABLE_TELEGRAM=true
 BACKUP_TELEGRAM_BOT_TOKEN=...
 BACKUP_TELEGRAM_CHAT_ID=...
 BACKUP_TELEGRAM_MAX_BYTES=0
+BACKUP_TELEGRAM_LIGHT=true
+BACKUP_TELEGRAM_EXCLUDE_TABLE_DATA=public.reading_passages,public.reading_passage_tokens
+BACKUP_TELEGRAM_INCLUDE_MEDIA=false
 
 BACKUP_ENABLE_DRIVE=true
 BACKUP_DRIVE_REMOTE=gdrive:recallio-backups
@@ -65,6 +68,11 @@ Check:
 - A new file in `/var/backups/recallio`.
 - A copy in Google Drive.
 - A message in your Telegram channel.
+
+Notes:
+- Telegram uses a light dump by default (excludes reading passages/tokens data).
+- After restoring from a Telegram backup, re-import reading texts if needed.
+- Set `BACKUP_TELEGRAM_LIGHT=false` to send the full archive to Telegram.
 
 ## Schedule (cron)
 
