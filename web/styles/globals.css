@@ -134,15 +134,15 @@ body {
 }
 
 .nav-theme button {
-  padding: 6px 10px;
+  padding: 6px 12px;
   font-size: 12px;
-  width: 34px;
+  width: 40px;
   justify-content: center;
 }
 
 .nav-theme svg {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   display: block;
   pointer-events: none;
 }
@@ -966,6 +966,14 @@ button[disabled] {
   box-shadow: 0 0 0 4px rgba(var(--stat-accent), 0.15);
 }
 
+.stats-grid-home .stat-label::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  opacity: 0;
+}
+
 .stats-grid-home .stat-value {
   font-size: 34px;
   font-weight: 700;
@@ -1618,13 +1626,13 @@ html[data-theme="dark"] .input-status.wrong {
   }
 
   .nav-theme button {
-    width: 30px;
+    width: 34px;
     padding: 4px 6px;
   }
 
   .nav-theme svg {
-    width: 13px;
-    height: 13px;
+    width: 16px;
+    height: 16px;
   }
 }
 
@@ -1711,7 +1719,7 @@ html[data-theme="dark"] .input-status.wrong {
   }
 
   .nav-theme button {
-    padding: 6px 6px;
+    padding: 6px 8px;
   }
 
   .panel {
