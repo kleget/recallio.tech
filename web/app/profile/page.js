@@ -204,28 +204,6 @@ async function getJson(path, token) {
   return response.json();
 }
 
-async function putJson(path, payload, token) {
-  const headers = { "Content-Type": "application/json" };
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-  const response = await fetch(`${API_BASE}${path}`, {
-    method: "PUT",
-    headers,
-    body: JSON.stringify(payload)
-  });
-  if (!response.ok) {
-    const contentType = response.headers.get("content-type") || "";
-    if (contentType.includes("application/json")) {
-      const data = await response.json();
-      throw new Error(data.detail || "Request failed");
-    }
-    const message = await response.text();
-    throw new Error(message || "Request failed");
-  }
-  return response.json();
-}
-
 async function postJson(path, payload, token) {
   const headers = { "Content-Type": "application/json" };
   if (token) {
@@ -305,11 +283,7 @@ export default function ProfilePage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [deleting, setDeleting] = useState(false);
-  const [interfaceLang, setInterfaceLang] = useState("ru");
-  const [saving, setSaving] = useState(false);
-  const [status, setStatus] = useState("");
-  const [saveError, setSaveError] = useState("");
-  const { lang, setLang } = useUiLang();
+  const { lang } = useUiLang();
   const uiLang = lang || "ru";
 
   const t = TEXT[uiLang] || TEXT.ru;
@@ -330,9 +304,6 @@ export default function ProfilePage() {
     getJson("/auth/me", token)
       .then((data) => {
         setProfile(data);
-        const nextLang = data.interface_lang === "en" ? "en" : "ru";
-        setLang(nextLang);
-        setInterfaceLang(nextLang);
       })
       .catch((err) => {
         const message = err.message || t.error;
@@ -346,11 +317,6 @@ export default function ProfilePage() {
         setLoading(false);
       });
   }, []);
-
-  useEffect(() => {
-    setStatus("");
-    setSaveError("");
-  }, [interfaceLang]);
 
   useEffect(() => {
     setKnownError("");
@@ -395,34 +361,6 @@ export default function ProfilePage() {
       setDeleteError(err.message || t.danger.error);
     } finally {
       setDeleting(false);
-    }
-  };
-
-  const saveInterface = async () => {
-    setStatus("");
-    setSaveError("");
-    const token = getCookie("token");
-    if (!token) {
-      window.location.href = "/auth";
-      return;
-    }
-    setSaving(true);
-    try {
-      const data = await putJson(
-        "/profile",
-        { interface_lang: interfaceLang },
-        token
-      );
-      const nextLang = data.interface_lang === "en" ? "en" : "ru";
-      setLang(nextLang);
-      setProfile((prev) =>
-        prev ? { ...prev, interface_lang: data.interface_lang } : prev
-      );
-      setStatus(t.saved);
-    } catch (err) {
-      setSaveError(err.message || t.saveError);
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -481,20 +419,12 @@ export default function ProfilePage() {
     }
   };
 
-  const goCustomWords = () => {
-    window.location.href = "/custom-words";
-  };
-
   const goOnboarding = () => {
     window.location.href = "/onboarding";
   };
 
   const goTech = () => {
     window.location.href = "/tech";
-  };
-
-  const goHelp = () => {
-    window.location.href = "/welcome";
   };
 
   const goSupport = () => {
@@ -511,12 +441,8 @@ export default function ProfilePage() {
     return "-";
   };
 
-  const themeLabel = (value) => (value === "dark" ? t.themeDark : t.themeLight);
-
   const initials = profile?.email ? profile.email.slice(0, 1).toUpperCase() : "?";
   const onboardingReady = Boolean(profile?.onboarding_done);
-  const currentLang = profile?.interface_lang === "en" ? "en" : "ru";
-  const canSave = Boolean(profile) && interfaceLang !== currentLang;
   const knownStats = knownResult
     ? [
         { label: t.known.stats.totalLines, value: knownResult.total_lines },
@@ -581,34 +507,6 @@ export default function ProfilePage() {
           </div>
 
           <div className="panel">
-            <div className="panel-title">{t.interfaceSection}</div>
-            <div className="profile-grid profile-grid-top">
-              <div className="profile-cell">
-                <label>{t.interfaceLang}</label>
-                <select
-                  value={interfaceLang}
-                  onChange={(event) => setInterfaceLang(event.target.value)}
-                >
-                  <option value="ru">{t.langRu}</option>
-                  <option value="en">{t.langEn}</option>
-                </select>
-              </div>
-              <div className="profile-cell">
-                <div className="profile-label">{t.theme}</div>
-                <div className="profile-value">{themeLabel(profile.theme)}</div>
-                <div className="muted">{t.themeHint}</div>
-              </div>
-              <div className="profile-actions full">
-                <button type="button" onClick={saveInterface} disabled={saving || !canSave}>
-                  {saving ? t.saving : t.save}
-                </button>
-                {status ? <span className="muted">{status}</span> : null}
-                {saveError ? <span className="error">{saveError}</span> : null}
-              </div>
-            </div>
-          </div>
-
-          <div className="panel">
             <div className="panel-title">{t.sections.learning}</div>
             <div className="profile-grid profile-grid-top">
               <div className="profile-cell">
@@ -626,21 +524,6 @@ export default function ProfilePage() {
               </div>
             </div>
             <p className="muted">{t.learningHint}</p>
-          </div>
-
-          <div className="panel">
-            <div className="panel-title">{t.wordsSection}</div>
-            <div className="profile-grid profile-grid-top">
-              <div className="profile-cell">
-                <div className="profile-label">{t.wordsLearnTitle}</div>
-                <div className="profile-value">{t.wordsLearnDesc}</div>
-              </div>
-              <div className="profile-actions full">
-                <button type="button" className="button-secondary" onClick={goCustomWords}>
-                  {t.wordsLearnAction}
-                </button>
-              </div>
-            </div>
           </div>
 
           <div className="panel">
@@ -688,16 +571,6 @@ export default function ProfilePage() {
             <div className="actions">
               <button type="button" className="button-secondary" onClick={goTech}>
                 {t.actions.tech}
-              </button>
-            </div>
-          </div>
-
-          <div className="panel">
-            <div className="panel-title">{t.sections.help}</div>
-            <p className="muted">{t.helpHint}</p>
-            <div className="actions">
-              <button type="button" className="button-secondary" onClick={goHelp}>
-                {t.actions.help}
               </button>
             </div>
           </div>

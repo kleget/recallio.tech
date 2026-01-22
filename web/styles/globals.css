@@ -133,6 +133,18 @@ body {
   font-size: 12px;
 }
 
+.nav-theme button {
+  padding: 6px 10px;
+  font-size: 12px;
+  width: 34px;
+  justify-content: center;
+}
+
+.nav-theme svg {
+  width: 14px;
+  height: 14px;
+}
+
 .nav-brand {
   font-family: "Space Grotesk", "Manrope", sans-serif;
   font-weight: 700;
@@ -1595,26 +1607,14 @@ html[data-theme="dark"] .input-status.wrong {
     font-size: 11px;
   }
 
-  .theme-toggle {
-    padding: 4px 8px;
-  }
-
-  .theme-toggle-track {
+  .nav-theme button {
     width: 30px;
-    height: 16px;
+    padding: 4px 6px;
   }
 
-  .theme-toggle-thumb {
-    width: 10px;
-    height: 10px;
-  }
-
-  .theme-toggle.is-dark .theme-toggle-thumb {
-    left: 16px;
-  }
-
-  .theme-toggle-text {
-    display: none;
+  .nav-theme svg {
+    width: 13px;
+    height: 13px;
   }
 }
 
@@ -1680,6 +1680,11 @@ html[data-theme="dark"] .input-status.wrong {
     padding: 6px;
   }
 
+  .nav-controls .segmented {
+    width: auto;
+    padding: 4px;
+  }
+
   .chart-controls .segmented {
     width: 100%;
   }
@@ -1695,8 +1700,8 @@ html[data-theme="dark"] .input-status.wrong {
     font-size: 12px;
   }
 
-  .theme-toggle {
-    padding: 6px 8px;
+  .nav-theme button {
+    padding: 6px 6px;
   }
 
   .panel {

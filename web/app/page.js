@@ -19,7 +19,8 @@ const TEXT = {
       learnToday: "Учить сегодня",
       reviewToday: "Повторить сегодня",
       readingToday: "Читать сегодня",
-      available: "Доступно"
+      availableLearn: "К обучению",
+      availableReview: "К повтору"
     },
     today: "Сегодня",
     learnButton: "Учить",
@@ -118,7 +119,8 @@ const TEXT = {
       learnToday: "Learn today",
       reviewToday: "Review today",
       readingToday: "Read today",
-      available: "Available"
+      availableLearn: "To learn",
+      availableReview: "To review"
     },
     today: "Today",
     learnButton: "Learn",
@@ -489,11 +491,11 @@ export default function Home() {
               <div className="stat-value">{dashboard.days_learning}</div>
             </div>
             <div className="stat-card stat-card-home stat-card-learn">
-              <div className="stat-label">{t.stats.available}</div>
+              <div className="stat-label">{t.stats.availableLearn}</div>
               <div className="stat-value">{dashboard.learn_available}</div>
             </div>
             <div className="stat-card stat-card-home stat-card-review">
-              <div className="stat-label">{t.stats.available}</div>
+              <div className="stat-label">{t.stats.availableReview}</div>
               <div className="stat-value">{dashboard.review_available}</div>
             </div>
           </div>

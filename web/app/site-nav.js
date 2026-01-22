@@ -124,7 +124,6 @@ export default function SiteNav({ initialIsAdmin = false }) {
   }, []);
 
   const items = isAdmin ? NAV_ITEMS : NAV_ITEMS.filter((item) => !item.admin);
-  const themeLabel = theme === "dark" ? t.themeDark : t.themeLight;
 
   const applyTheme = (nextTheme) => {
     setTheme(nextTheme);
@@ -152,8 +151,10 @@ export default function SiteNav({ initialIsAdmin = false }) {
     }
   };
 
-  const toggleTheme = () => {
-    const nextTheme = theme === "dark" ? "light" : "dark";
+  const setThemeChoice = (nextTheme) => {
+    if (nextTheme === theme) {
+      return;
+    }
     applyTheme(nextTheme);
     persistTheme(nextTheme);
   };
@@ -204,18 +205,51 @@ export default function SiteNav({ initialIsAdmin = false }) {
                   EN
                 </button>
               </div>
-              <button
-                type="button"
-                className={`theme-toggle${theme === "dark" ? " is-dark" : ""}`}
-                onClick={toggleTheme}
-                aria-label={`${t.theme}: ${themeLabel}`}
-                title={`${t.theme}: ${themeLabel}`}
-              >
-                <span className="theme-toggle-track">
-                  <span className="theme-toggle-thumb" />
-                </span>
-                <span className="theme-toggle-text">{themeLabel}</span>
-              </button>
+              <div className="segmented nav-theme" role="group" aria-label={t.theme}>
+                <button
+                  type="button"
+                  className={theme === "light" ? "is-active" : ""}
+                  onClick={() => setThemeChoice("light")}
+                  aria-label={t.themeLight}
+                  title={t.themeLight}
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                    />
+                    <path
+                      d="M12 3v2.2M12 18.8V21M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M3 12h2.2M18.8 12H21M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  className={theme === "dark" ? "is-active" : ""}
+                  onClick={() => setThemeChoice("dark")}
+                  aria-label={t.themeDark}
+                  title={t.themeDark}
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M20 14.5a8 8 0 1 1-10.5-10 6.8 6.8 0 0 0 10.5 10z"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
