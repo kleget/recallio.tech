@@ -184,11 +184,12 @@ export default function ReadingPage() {
   };
 
   const formatSources = (items) => {
-    if (!items.length) {
+    const list = Array.isArray(items) ? items : items ? [items] : [];
+    if (!list.length) {
       return "";
     }
-    const limited = items.slice(0, MAX_SOURCE_ITEMS).map(truncateSource).filter(Boolean);
-    const extra = items.length - limited.length;
+    const limited = list.slice(0, MAX_SOURCE_ITEMS).map(truncateSource).filter(Boolean);
+    const extra = list.length - limited.length;
     if (extra > 0) {
       return `${limited.join(" · ")} · +${extra}`;
     }
