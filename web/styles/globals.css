@@ -131,22 +131,25 @@ body {
 .nav-lang button {
   padding: 0 12px;
   font-size: 12px;
+  width: 42px;
 }
 
 .nav-controls .segmented {
   display: inline-flex;
-  align-items: center;
+  align-items: stretch;
   height: 36px;
-  padding: 3px;
+  padding: 2px;
 }
 
 .nav-controls .segmented button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 30px;
-  min-height: 30px;
+  height: 100%;
+  min-height: 100%;
+  padding: 0 12px;
   line-height: 1;
+  align-self: stretch;
 }
 
 .nav-theme button {
@@ -1663,16 +1666,18 @@ html[data-theme="dark"] .input-status.wrong {
   .nav-lang button {
     padding: 0 10px;
     font-size: 11px;
+    width: 40px;
   }
 
   .nav-controls .segmented {
-    height: 36px;
+    height: 34px;
     padding: 2px;
   }
 
   .nav-controls .segmented button {
-    height: 30px;
-    min-height: 30px;
+    height: 100%;
+    min-height: 100%;
+    padding: 0 10px;
   }
 
   .nav-theme button {
