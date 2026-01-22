@@ -2357,6 +2357,10 @@ html[data-theme="dark"] .input-status.wrong {
   width: min(520px, 100%);
 }
 
+.word-list-modal {
+  width: min(820px, 100%);
+}
+
 .modal-header {
   padding: 16px 18px;
   display: flex;
@@ -2382,6 +2386,55 @@ html[data-theme="dark"] .input-status.wrong {
   overflow: auto;
   display: grid;
   gap: 12px;
+}
+
+.word-list {
+  display: grid;
+  gap: 10px;
+}
+
+.word-list-item {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--panel-strong);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.word-list-item:hover {
+  border-color: var(--accent);
+  background: var(--accent-gradient-soft);
+}
+
+.word-list-item.is-active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.word-list-word {
+  font-weight: 600;
+}
+
+.word-list-index {
+  font-size: 12px;
+  justify-self: end;
+}
+
+@media (max-width: 720px) {
+  .word-list-item {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .word-list-index {
+    justify-self: start;
+  }
 }
 
 .modal-footer {
