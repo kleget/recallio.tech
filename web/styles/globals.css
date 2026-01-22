@@ -133,6 +133,17 @@ body {
   font-size: 12px;
 }
 
+.nav-controls .segmented {
+  align-items: center;
+}
+
+.nav-controls .segmented button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+}
+
 .nav-theme button {
   padding: 6px 12px;
   font-size: 12px;
@@ -1623,6 +1634,16 @@ html[data-theme="dark"] .input-status.wrong {
   .nav-lang button {
     padding: 4px 8px;
     font-size: 11px;
+  }
+
+  .nav-controls .segmented {
+    height: 36px;
+    padding: 3px;
+  }
+
+  .nav-controls .segmented button {
+    height: 30px;
+    min-height: 30px;
   }
 
   .nav-theme button {
