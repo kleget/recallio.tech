@@ -489,18 +489,12 @@ export default function Home() {
               <div className="stat-value">{dashboard.days_learning}</div>
             </div>
             <div className="stat-card stat-card-home stat-card-learn">
-              <div className="stat-label">{t.stats.learnToday}</div>
-              <div className="stat-value">{dashboard.learn_today}</div>
-              <div className="stat-sub">
-                {t.stats.available}: {dashboard.learn_available}
-              </div>
+              <div className="stat-label">{t.stats.available}</div>
+              <div className="stat-value">{dashboard.learn_available}</div>
             </div>
             <div className="stat-card stat-card-home stat-card-review">
-              <div className="stat-label">{t.stats.reviewToday}</div>
-              <div className="stat-value">{dashboard.review_today}</div>
-              <div className="stat-sub">
-                {t.stats.available}: {dashboard.review_available}
-              </div>
+              <div className="stat-label">{t.stats.available}</div>
+              <div className="stat-value">{dashboard.review_available}</div>
             </div>
           </div>
 
