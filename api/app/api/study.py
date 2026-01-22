@@ -782,10 +782,19 @@ def score_answer(answer: str, translations: list[str]) -> tuple[bool, int, list[
     options = sorted(build_translation_options(translations))
     if not normalized:
         return False, 0, options
-    if normalized in options:
-        return True, 5, options
-    if any(is_fuzzy_match(normalized, option) for option in options):
-        return True, 4, options
+
+    answer_options = sorted(build_translation_options([answer]))
+    if not answer_options and normalized:
+        answer_options = [normalized]
+
+    for item in answer_options:
+        if item in options:
+            return True, 5, options
+
+    for item in answer_options:
+        if any(is_fuzzy_match(item, option) for option in options):
+            return True, 4, options
+
     return False, 2, options
 
 

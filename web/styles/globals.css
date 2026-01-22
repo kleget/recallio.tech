@@ -1255,6 +1255,26 @@ button[disabled] {
   background: rgba(239, 68, 68, 0.16);
 }
 
+html[data-theme="dark"] .input-row.correct {
+  border-color: rgba(34, 197, 94, 0.45);
+  background: rgba(20, 83, 45, 0.35);
+}
+
+html[data-theme="dark"] .input-row.wrong {
+  border-color: rgba(239, 68, 68, 0.45);
+  background: rgba(127, 29, 29, 0.35);
+}
+
+html[data-theme="dark"] .input-status.correct {
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.2);
+}
+
+html[data-theme="dark"] .input-status.wrong {
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.22);
+}
+
 .result {
   margin-top: 12px;
   color: var(--muted);
