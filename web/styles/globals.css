@@ -1626,13 +1626,13 @@ html[data-theme="dark"] .input-status.wrong {
   }
 
   .nav-theme button {
-    width: 34px;
-    padding: 4px 6px;
+    width: 40px;
+    padding: 4px 8px;
   }
 
   .nav-theme svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
   }
 }
 
@@ -1719,6 +1719,7 @@ html[data-theme="dark"] .input-status.wrong {
   }
 
   .nav-theme button {
+    width: 40px;
     padding: 6px 8px;
   }
 
