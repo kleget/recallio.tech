@@ -1382,6 +1382,23 @@ button[disabled] {
     height: 26px;
   }
 
+  .reading-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .reading-control {
+    min-width: 100%;
+  }
+
+  .reading-control input[type="number"] {
+    max-width: 100%;
+  }
+
+  .reading-action {
+    width: 100%;
+  }
+
   .nav-links-mobile {
     display: flex;
     position: fixed;

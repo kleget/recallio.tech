@@ -112,16 +112,20 @@ export default function ReadingPage() {
       : "";
 
   return (
-    <div className="page">
+    <main>
       <div className="page-header">
-        <h1>{t.title}</h1>
-        <p className="muted">{t.tagline}</p>
-        <button type="button" className="button-secondary" onClick={goHome}>
-          {t.home}
-        </button>
+        <div>
+          <h1>{t.title}</h1>
+          <p>{t.tagline}</p>
+        </div>
+        <div className="page-header-actions">
+          <button type="button" className="button-secondary" onClick={goHome}>
+            {t.home}
+          </button>
+        </div>
       </div>
 
-      <div className="panel reading-panel">
+      <div className="panel reading-panel reading-home">
         <div className="reading-controls">
           <label className="reading-control">
             <span className="reading-label">{t.targetLabel}</span>
@@ -187,6 +191,6 @@ export default function ReadingPage() {
           <div className="muted reading-empty">{reading?.message || t.empty}</div>
         )}
       </div>
-    </div>
+    </main>
   );
 }
