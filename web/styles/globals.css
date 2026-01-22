@@ -906,6 +906,7 @@ button[disabled] {
     radial-gradient(140px 120px at 92% -20%, rgba(var(--stat-accent), 0.32), transparent 70%),
     linear-gradient(140deg, rgba(var(--stat-accent), 0.16) 0%, rgba(var(--stat-accent), 0.05) 45%, var(--panel) 85%);
   box-shadow: 0 18px 40px rgba(6, 12, 24, 0.22), var(--shadow-sm);
+  text-align: center;
 }
 
 .stats-grid-home .stat-card-known {
@@ -921,7 +922,7 @@ button[disabled] {
 }
 
 .stats-grid-home .stat-card-review {
-  --stat-accent: 251 146 60;
+  --stat-accent: 56 189 248;
 }
 
 .stats-grid-home .stat-label {
@@ -931,6 +932,8 @@ button[disabled] {
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
+  justify-content: center;
+  width: 100%;
 }
 
 .stats-grid-home .stat-label::before {
