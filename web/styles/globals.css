@@ -123,33 +123,36 @@ body {
 
 .nav-controls {
   display: inline-flex;
-  align-items: center;
+  align-items: stretch;
   gap: 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .nav-lang button {
-  padding: 6px 10px;
+  padding: 0 12px;
   font-size: 12px;
 }
 
 .nav-controls .segmented {
+  display: inline-flex;
   align-items: center;
-  height: 34px;
+  height: 36px;
+  padding: 3px;
 }
 
 .nav-controls .segmented button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  height: 30px;
   min-height: 30px;
   line-height: 1;
 }
 
 .nav-theme button {
-  padding: 6px 12px;
+  padding: 0;
   font-size: 12px;
-  width: 40px;
+  width: 42px;
   justify-content: center;
 }
 
@@ -1654,27 +1657,27 @@ html[data-theme="dark"] .input-status.wrong {
   }
 
   .nav-lang {
-    padding: 3px;
+    padding: 0;
   }
 
   .nav-lang button {
-    padding: 4px 8px;
+    padding: 0 10px;
     font-size: 11px;
   }
 
   .nav-controls .segmented {
-    height: 38px;
-    padding: 3px;
+    height: 34px;
+    padding: 2px;
   }
 
   .nav-controls .segmented button {
-    height: 32px;
+    height: 30px;
     min-height: 30px;
   }
 
   .nav-theme button {
     width: 40px;
-    padding: 4px 8px;
+    padding: 0;
   }
 
   .nav-theme svg {
