@@ -214,20 +214,9 @@ export default function SiteNav({ initialIsAdmin = false }) {
                   title={t.themeLight}
                 >
                   <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="4"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                    />
                     <path
-                      d="M12 3v2.2M12 18.8V21M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M3 12h2.2M18.8 12H21M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
+                      d="M12 7.2a4.8 4.8 0 1 0 0 9.6 4.8 4.8 0 0 0 0-9.6zm0-4.2a1 1 0 0 1 1 1v1.8a1 1 0 1 1-2 0V4a1 1 0 0 1 1-1zm0 16.2a1 1 0 0 1 1 1V22a1 1 0 1 1-2 0v-1.8a1 1 0 0 1 1-1zm-8-7.2a1 1 0 0 1 1-1h1.8a1 1 0 1 1 0 2H5a1 1 0 0 1-1-1zm13.2 0a1 1 0 0 1 1-1H20a1 1 0 1 1 0 2h-1.8a1 1 0 0 1-1-1zM6.4 6.4a1 1 0 0 1 1.4 0l1.3 1.3a1 1 0 1 1-1.4 1.4L6.4 7.8a1 1 0 0 1 0-1.4zm8.9 8.9a1 1 0 0 1 1.4 0l1.3 1.3a1 1 0 1 1-1.4 1.4l-1.3-1.3a1 1 0 0 1 0-1.4zM6.4 17.6a1 1 0 0 1 0-1.4l1.3-1.3a1 1 0 1 1 1.4 1.4l-1.3 1.3a1 1 0 0 1-1.4 0zm8.9-8.9a1 1 0 0 1 0-1.4l1.3-1.3a1 1 0 0 1 1.4 1.4l-1.3 1.3a1 1 0 0 1-1.4 0z"
+                      fill="currentColor"
                     />
                   </svg>
                 </button>
@@ -240,12 +229,8 @@ export default function SiteNav({ initialIsAdmin = false }) {
                 >
                   <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path
-                      d="M20 14.5a8 8 0 1 1-10.5-10 6.8 6.8 0 0 0 10.5 10z"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                      d="M21.2 14.4a8.6 8.6 0 0 1-11.6-11A9.6 9.6 0 1 0 21.2 14.4z"
+                      fill="currentColor"
                     />
                   </svg>
                 </button>

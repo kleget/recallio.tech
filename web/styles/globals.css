@@ -141,8 +141,10 @@ body {
 }
 
 .nav-theme svg {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
+  display: block;
+  pointer-events: none;
 }
 
 .nav-brand {
@@ -919,6 +921,12 @@ button[disabled] {
     var(--panel);
   box-shadow: var(--shadow-sm);
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 120px;
 }
 
 .stats-grid-home .stat-card-known {
@@ -946,6 +954,7 @@ button[disabled] {
   text-transform: uppercase;
   justify-content: center;
   width: 100%;
+  line-height: 1.2;
 }
 
 .stats-grid-home .stat-label::before {
@@ -969,7 +978,7 @@ button[disabled] {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: 10px;
+  margin-top: 4px;
   padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid rgba(var(--stat-accent), 0.28);
@@ -1513,6 +1522,7 @@ html[data-theme="dark"] .input-status.wrong {
 
   .stats-grid-home .stat-card-home {
     padding: 16px;
+    min-height: 104px;
   }
 
   .stats-grid-home .stat-value {
