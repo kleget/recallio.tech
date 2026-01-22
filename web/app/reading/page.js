@@ -6,6 +6,8 @@ import { getCookie } from "../lib/client-cookies";
 import { useUiLang } from "../ui-lang-context";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
+const MAX_SOURCE_TITLE = 48;
+const MAX_SOURCE_ITEMS = 3;
 
 const TEXT = {
   ru: {
@@ -155,7 +157,7 @@ export default function ReadingPage() {
       ? [reading.corpus_name]
       : [];
   const sourceItems = sourceTitles.length ? sourceTitles : corpusTitles;
-  const sourceLabel = sourceItems.length ? sourceItems.join(" · ") : "";
+  const sourceLabel = sourceItems.length ? formatSources(sourceItems) : "";
   const sourceLabelText = sourceItems.length > 1 ? t.sources || t.source : t.source;
   const requestedLabel =
     reading && reading.target_words_requested
@@ -169,6 +171,29 @@ export default function ReadingPage() {
   const hasReading = Boolean(reading && reading.text);
   const canFlag = Boolean(hasReading && reading?.passage_ids?.length);
   const busy = loading || flagging;
+
+  const truncateSource = (value) => {
+    const trimmed = String(value || "").trim();
+    if (!trimmed) {
+      return "";
+    }
+    if (trimmed.length <= MAX_SOURCE_TITLE) {
+      return trimmed;
+    }
+    return `${trimmed.slice(0, Math.max(0, MAX_SOURCE_TITLE - 3))}...`;
+  };
+
+  const formatSources = (items) => {
+    if (!items.length) {
+      return "";
+    }
+    const limited = items.slice(0, MAX_SOURCE_ITEMS).map(truncateSource).filter(Boolean);
+    const extra = items.length - limited.length;
+    if (extra > 0) {
+      return `${limited.join(" · ")} · +${extra}`;
+    }
+    return limited.join(" · ");
+  };
 
   const renderHighlightedText = () => {
     if (!reading || !reading.text) {

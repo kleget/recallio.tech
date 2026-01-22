@@ -28,6 +28,8 @@ router = APIRouter(prefix="/reading", tags=["reading"])
 
 KNOWN_STATUSES = ("known", "learned")
 TOKEN_RE = re.compile(r"[A-Za-z\u0400-\u04FF]+(?:['\u2019][A-Za-z\u0400-\u04FF]+)?")
+LATIN_RE = re.compile(r"[A-Za-z]")
+CYRILLIC_RE = re.compile(r"[\u0400-\u04FF]")
 
 
 def normalize_text(value: str) -> str:
@@ -66,6 +68,23 @@ def reading_target_range(target_words: int) -> tuple[int, int]:
     if max_words < min_words:
         max_words = min_words
     return min_words, max_words
+
+
+def matches_target_language(text: str, lang: str) -> bool:
+    if not text:
+        return False
+    latin = len(LATIN_RE.findall(text))
+    cyrillic = len(CYRILLIC_RE.findall(text))
+    letters = latin + cyrillic
+    if letters == 0:
+        return False
+    latin_ratio = latin / letters
+    cyrillic_ratio = cyrillic / letters
+    if lang == "en":
+        return latin_ratio >= 0.9 and cyrillic_ratio <= 0.05
+    if lang == "ru":
+        return cyrillic_ratio >= 0.9 and latin_ratio <= 0.05
+    return True
 
 
 async def collect_target_tokens(
@@ -269,8 +288,18 @@ async def preview_reading(
     candidate_passages: list[ReadingPassage] = []
     for row in candidate_rows:
         passage = passages_map.get(row.id)
-        if passage is not None:
-            candidate_passages.append(passage)
+        if passage is None:
+            continue
+        if not matches_target_language(passage.text, profile.target_lang or ""):
+            continue
+        candidate_passages.append(passage)
+
+    if not candidate_passages:
+        return ReadingPreviewOut(
+            target_words_requested=target_words_requested,
+            target_words=len(target_tokens),
+            message="No matching passages found.",
+        )
 
     bundles: list[tuple[list[ReadingPassage], int, set[str]]] = []
     sorted_passages = sorted(
