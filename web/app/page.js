@@ -10,8 +10,8 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
 const TEXT = {
   ru: {
-    title: "Главная",
-    tagline: "Небольшие шаги каждый день дают большой результат.",
+    title: "Сегодня",
+    tagline: "Твой план на день по учёбе.",
     loading: "Загрузка...",
     stats: {
       known: "Слов знаю",
@@ -109,8 +109,8 @@ const TEXT = {
     }
 },
   en: {
-    title: "Home",
-    tagline: "Small daily steps lead to a big result.",
+    title: "Today",
+    tagline: "Your daily learning plan.",
     loading: "Loading...",
     stats: {
       known: "Words known",
@@ -238,6 +238,10 @@ export default function Home() {
   const t = TEXT[interfaceLang] || TEXT.ru;
   const locale = interfaceLang === "en" ? "en-US" : "ru-RU";
   const wordsLabel = interfaceLang === "en" ? "words" : "слов";
+  const heroTitle = t.title;
+  const heroSubtitle = dashboard
+    ? `${t.stats.learnToday}: ${dashboard.learn_today} ${wordsLabel} · ${t.stats.reviewToday}: ${dashboard.review_today} ${wordsLabel}`
+    : t.tagline;
 
   const goLearn = () => {
     window.location.href = "/learn";
@@ -465,8 +469,8 @@ export default function Home() {
     <main>
       <div className="page-header">
         <div>
-          <h1>{t.title}</h1>
-          <p>{t.tagline}</p>
+          <h1>{heroTitle}</h1>
+          <p>{heroSubtitle}</p>
         </div>
       </div>
 
@@ -475,23 +479,23 @@ export default function Home() {
 
       {dashboard ? (
         <>
-          <div className="stats-grid" data-tour="stats">
-            <div className="stat-card">
+          <div className="stats-grid stats-grid-home" data-tour="stats">
+            <div className="stat-card stat-card-home stat-card-known">
               <div className="stat-label">{t.stats.known}</div>
               <div className="stat-value">{dashboard.known_words}</div>
             </div>
-            <div className="stat-card">
+            <div className="stat-card stat-card-home stat-card-days">
               <div className="stat-label">{t.stats.days}</div>
               <div className="stat-value">{dashboard.days_learning}</div>
             </div>
-            <div className="stat-card">
+            <div className="stat-card stat-card-home stat-card-learn">
               <div className="stat-label">{t.stats.learnToday}</div>
               <div className="stat-value">{dashboard.learn_today}</div>
               <div className="stat-sub">
                 {t.stats.available}: {dashboard.learn_available}
               </div>
             </div>
-            <div className="stat-card">
+            <div className="stat-card stat-card-home stat-card-review">
               <div className="stat-label">{t.stats.reviewToday}</div>
               <div className="stat-value">{dashboard.review_today}</div>
               <div className="stat-sub">

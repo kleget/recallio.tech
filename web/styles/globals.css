@@ -891,6 +891,79 @@ button[disabled] {
   color: var(--muted);
 }
 
+.stats-grid-home {
+  gap: 18px;
+  margin: 22px 0 16px;
+}
+
+.stats-grid-home .stat-card-home {
+  --stat-accent: 99 165 255;
+  position: relative;
+  overflow: hidden;
+  padding: 20px 20px 18px;
+  border: 1px solid rgba(var(--stat-accent), 0.25);
+  background:
+    radial-gradient(140px 120px at 92% -20%, rgba(var(--stat-accent), 0.32), transparent 70%),
+    linear-gradient(140deg, rgba(var(--stat-accent), 0.16) 0%, rgba(var(--stat-accent), 0.05) 45%, var(--panel) 85%);
+  box-shadow: 0 18px 40px rgba(6, 12, 24, 0.22), var(--shadow-sm);
+}
+
+.stats-grid-home .stat-card-known {
+  --stat-accent: 99 165 255;
+}
+
+.stats-grid-home .stat-card-days {
+  --stat-accent: 45 212 191;
+}
+
+.stats-grid-home .stat-card-learn {
+  --stat-accent: 74 222 128;
+}
+
+.stats-grid-home .stat-card-review {
+  --stat-accent: 251 146 60;
+}
+
+.stats-grid-home .stat-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.stats-grid-home .stat-label::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(var(--stat-accent), 0.95);
+  box-shadow: 0 0 0 4px rgba(var(--stat-accent), 0.15);
+}
+
+.stats-grid-home .stat-value {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: rgb(var(--stat-accent));
+  text-shadow: 0 12px 28px rgba(var(--stat-accent), 0.25);
+}
+
+.stats-grid-home .stat-sub {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--stat-accent), 0.28);
+  background: rgba(var(--stat-accent), 0.12);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 600;
+}
+
 .actions {
   display: flex;
   gap: 14px;
@@ -1397,6 +1470,18 @@ button[disabled] {
   .brand-mark {
     display: block;
     height: 26px;
+  }
+
+  .stats-grid-home {
+    gap: 14px;
+  }
+
+  .stats-grid-home .stat-card-home {
+    padding: 16px;
+  }
+
+  .stats-grid-home .stat-value {
+    font-size: 28px;
   }
 
   .reading-controls {
