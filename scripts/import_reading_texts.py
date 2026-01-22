@@ -23,6 +23,8 @@ TOKEN_RE = re.compile(r"[A-Za-z\u0400-\u04FF]+(?:['\u2019][A-Za-z\u0400-\u04FF]+
 DIGIT_RE = re.compile(r"\d")
 NUM_TOKEN_RE = re.compile(r"\b\d+\b")
 LETTER_RE = re.compile(r"[A-Za-z\u0400-\u04FF]")
+SENTENCE_RE = re.compile(r"(?<=[.!?])\s+")
+NON_LETTER_RE = re.compile(r"[^A-Za-z\u0400-\u04FF\s]")
 NOISE_MARKERS = [
     "table of contents",
     "contents",
@@ -76,13 +78,33 @@ def is_noisy_paragraph(text: str) -> bool:
     if letters < 20:
         return True
     digit_ratio = len(DIGIT_RE.findall(text)) / max(len(text), 1)
-    if digit_ratio > 0.08:
+    if digit_ratio > 0.06:
+        return True
+    non_letters = len(NON_LETTER_RE.findall(text))
+    if non_letters / max(len(text), 1) > 0.35:
         return True
     tokens = tokenize_words(text)
     if len(tokens) < 6:
         return True
     numeric_tokens = len(NUM_TOKEN_RE.findall(text))
-    if numeric_tokens / max(len(tokens), 1) > 0.2:
+    if numeric_tokens / max(len(tokens), 1) > 0.12:
+        return True
+    return False
+
+
+def split_sentences(text: str) -> list[str]:
+    parts = SENTENCE_RE.split(text)
+    return [part.strip() for part in parts if part.strip()]
+
+
+def is_noisy_sentence(text: str) -> bool:
+    if len(text.split()) < 5:
+        return True
+    letters = len(LETTER_RE.findall(text))
+    if letters < 20:
+        return True
+    digit_ratio = len(DIGIT_RE.findall(text)) / max(len(text), 1)
+    if digit_ratio > 0.1:
         return True
     return False
 
@@ -116,20 +138,27 @@ def build_passages(paragraphs: list[str], min_words: int, max_words: int) -> lis
     buffer: list[str] = []
     buffer_words = 0
     for paragraph in paragraphs:
-        tokens = tokenize_words(paragraph)
-        if not tokens:
+        sentences = split_sentences(paragraph)
+        if not sentences:
             continue
-        if buffer_words + len(tokens) > max_words and buffer:
-            passages.append(" ".join(buffer))
-            buffer = [paragraph]
-            buffer_words = len(tokens)
-        else:
-            buffer.append(paragraph)
-            buffer_words += len(tokens)
-        if buffer_words >= min_words:
-            passages.append(" ".join(buffer))
-            buffer = []
-            buffer_words = 0
+        clean_sentences = [item for item in sentences if not is_noisy_sentence(item)]
+        if len(clean_sentences) < 2:
+            continue
+        for sentence in clean_sentences:
+            tokens = tokenize_words(sentence)
+            if not tokens:
+                continue
+            if buffer_words + len(tokens) > max_words and buffer:
+                passages.append(" ".join(buffer))
+                buffer = [sentence]
+                buffer_words = len(tokens)
+            else:
+                buffer.append(sentence)
+                buffer_words += len(tokens)
+            if buffer_words >= min_words:
+                passages.append(" ".join(buffer))
+                buffer = []
+                buffer_words = 0
     if buffer:
         passages.append(" ".join(buffer))
     return passages
