@@ -122,43 +122,45 @@ async def collect_target_tokens(
     return target_tokens
 
 
-def expand_passages(
-    passages_by_pos: dict[int, ReadingPassage],
-    base_pos: int,
+def build_bundle(
+    base: ReadingPassage,
+    passages: list[ReadingPassage],
+    token_map: dict[int, set[str]],
     min_words: int,
     max_words: int,
-) -> list[int]:
-    selected = [base_pos]
-    total_words = passages_by_pos[base_pos].word_count
-    left = base_pos - 1
-    right = base_pos + 1
+) -> tuple[list[ReadingPassage], int, set[str]]:
+    selected: list[ReadingPassage] = [base]
+    covered = set(token_map.get(base.id, set()))
+    total_words = base.word_count
+    remaining = [item for item in passages if item.id != base.id]
 
-    while total_words < min_words and (left in passages_by_pos or right in passages_by_pos):
-        options: list[tuple[str, ReadingPassage]] = []
-        if left in passages_by_pos:
-            options.append(("left", passages_by_pos[left]))
-        if right in passages_by_pos:
-            options.append(("right", passages_by_pos[right]))
-        options.sort(key=lambda item: item[1].word_count)
+    while True:
+        best = None
+        best_gain = 0
+        for passage in remaining:
+            if total_words + passage.word_count > max_words:
+                continue
+            new_tokens = token_map.get(passage.id, set()) - covered
+            gain = len(new_tokens)
+            if gain > best_gain:
+                best = passage
+                best_gain = gain
+            elif gain == best_gain and gain > 0 and best is not None:
+                if passage.word_count < best.word_count:
+                    best = passage
+        if best is None:
+            break
+        if best_gain == 0 and total_words >= min_words:
+            break
+        if best_gain == 0 and total_words < min_words:
+            break
+        selected.append(best)
+        covered.update(token_map.get(best.id, set()))
+        total_words += best.word_count
+        remaining = [item for item in remaining if item.id != best.id]
 
-        chosen = None
-        for side, passage in options:
-            if total_words + passage.word_count <= max_words:
-                chosen = (side, passage)
-                break
-        if chosen is None:
-            chosen = options[0]
-
-        side, passage = chosen
-        if side == "left":
-            selected.append(left)
-            left -= 1
-        else:
-            selected.append(right)
-            right += 1
-        total_words += passage.word_count
-
-    return sorted(selected)
+    selected_sorted = sorted(selected, key=lambda item: item.position)
+    return selected_sorted, total_words, covered
 
 
 @router.post("", response_model=ReadingPreviewOut)
@@ -230,50 +232,73 @@ async def preview_reading(
             ReadingPassage.word_count,
         )
         .order_by(hits_expr.desc(), ReadingPassage.word_count.asc())
-        .limit(12)
+        .limit(80)
     )
-    candidates = candidate_result.fetchall()
-    if not candidates:
+    candidate_rows = candidate_result.fetchall()
+    if not candidate_rows:
         return ReadingPreviewOut(
             target_words_requested=target_words_requested,
             target_words=len(target_tokens),
             message="No matching passages found.",
         )
-    candidate = candidates[variant % len(candidates)]
 
-    min_words, max_words = reading_target_range(target_words_requested)
-    span = max(6, int(max_words / 80) + 2)
-    range_result = await db.execute(
-        select(ReadingPassage)
-        .where(
-            ReadingPassage.source_id == candidate.source_id,
-            ReadingPassage.position.between(candidate.position - span, candidate.position + span),
-        )
-        .order_by(ReadingPassage.position)
-    )
-    passages = range_result.scalars().all()
-    passages_by_pos = {item.position: item for item in passages}
-
-    selected_positions = expand_passages(passages_by_pos, candidate.position, min_words, max_words)
-    selected_passages = [passages_by_pos[pos] for pos in selected_positions if pos in passages_by_pos]
-    text_parts = [item.text.strip() for item in selected_passages if item.text]
-    passage_text = "\n\n".join(text_parts)
-    word_count = sum(item.word_count for item in selected_passages)
+    passage_ids = [row.id for row in candidate_rows]
+    passages_result = await db.execute(select(ReadingPassage).where(ReadingPassage.id.in_(passage_ids)))
+    passages_map = {item.id: item for item in passages_result.scalars().all()}
 
     token_result = await db.execute(
-        select(ReadingPassageToken.token).where(
-            ReadingPassageToken.passage_id.in_([item.id for item in selected_passages])
+        select(ReadingPassageToken.passage_id, ReadingPassageToken.token).where(
+            ReadingPassageToken.passage_id.in_(passage_ids)
         )
     )
-    passage_tokens = {row.token for row in token_result.fetchall()}
-    hits = len(set(target_tokens) & passage_tokens)
-    coverage = hits / len(target_tokens) if target_tokens else 0.0
-    highlight_tokens = sorted(set(target_tokens) & passage_tokens)
+    token_map: dict[int, set[str]] = {}
+    for passage_id, token in token_result.fetchall():
+        token_map.setdefault(passage_id, set()).add(token)
+
+    min_words, max_words = reading_target_range(target_words_requested)
+    passages_by_source: dict[int, list[ReadingPassage]] = {}
+    for row in candidate_rows:
+        passage = passages_map.get(row.id)
+        if passage is None:
+            continue
+        passages_by_source.setdefault(passage.source_id, []).append(passage)
+
+    bundles: list[tuple[list[ReadingPassage], int, set[str]]] = []
+    for source_id, source_passages in passages_by_source.items():
+        sorted_passages = sorted(
+            source_passages,
+            key=lambda item: (-len(token_map.get(item.id, set())), item.word_count),
+        )
+        for base in sorted_passages[:5]:
+            bundle = build_bundle(base, sorted_passages, token_map, min_words, max_words)
+            bundles.append(bundle)
+
+    if not bundles:
+        return ReadingPreviewOut(
+            target_words_requested=target_words_requested,
+            target_words=len(target_tokens),
+            message="No matching passages found.",
+        )
+
+    target_token_set = set(target_tokens)
+    scored_bundles = []
+    for selected_passages, total_words, covered_tokens in bundles:
+        hits = len(target_token_set & covered_tokens)
+        coverage = hits / len(target_token_set) if target_token_set else 0.0
+        scored_bundles.append((coverage, hits, total_words, selected_passages, covered_tokens))
+
+    scored_bundles.sort(key=lambda item: (-item[0], -item[1], item[2]))
+    chosen = scored_bundles[variant % len(scored_bundles)]
+    coverage, hits, word_count, selected_passages, covered_tokens = chosen
+    highlight_tokens = sorted(target_token_set & covered_tokens)
+
+    text_parts = [item.text.strip() for item in selected_passages if item.text]
+    passage_text = "\n\n".join(text_parts)
 
     source_row = await db.execute(
         select(ReadingSource, Corpus.name)
         .outerjoin(Corpus, Corpus.id == ReadingSource.corpus_id)
-        .where(ReadingSource.id == candidate.source_id)
+        .where(ReadingSource.id == selected_passages[0].source_id)
     )
     source_data = source_row.first()
     source = source_data[0] if source_data else None
