@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.auth import get_active_learning_profile, get_current_user
@@ -12,6 +13,7 @@ from app.db.session import get_db
 from app.models import (
     Corpus,
     ReadingPassage,
+    ReadingPassageBlock,
     ReadingPassageToken,
     ReadingSource,
     Translation,
@@ -20,7 +22,7 @@ from app.models import (
     UserCustomWord,
     UserWord,
 )
-from app.schemas.reading import ReadingPreviewOut, ReadingPreviewRequest
+from app.schemas.reading import ReadingFlagOut, ReadingFlagRequest, ReadingPreviewOut, ReadingPreviewRequest
 
 router = APIRouter(prefix="/reading", tags=["reading"])
 
@@ -159,7 +161,11 @@ def build_bundle(
         total_words += best.word_count
         remaining = [item for item in remaining if item.id != best.id]
 
-    selected_sorted = sorted(selected, key=lambda item: item.position)
+    source_ids = {item.source_id for item in selected}
+    if len(source_ids) == 1:
+        selected_sorted = sorted(selected, key=lambda item: item.position)
+    else:
+        selected_sorted = selected
     return selected_sorted, total_words, covered
 
 
@@ -210,6 +216,9 @@ async def preview_reading(
             message="No reading sources found.",
         )
 
+    blocked_subquery = select(ReadingPassageBlock.passage_id).where(
+        ReadingPassageBlock.profile_id == profile.id
+    )
     hits_expr = func.count(func.distinct(ReadingPassageToken.token)).label("hits")
     candidate_result = await db.execute(
         select(
@@ -224,6 +233,7 @@ async def preview_reading(
         .where(
             ReadingPassage.source_id.in_(source_ids),
             ReadingPassageToken.token.in_(target_tokens),
+            ReadingPassage.id.notin_(blocked_subquery),
         )
         .group_by(
             ReadingPassage.id,
@@ -256,22 +266,20 @@ async def preview_reading(
         token_map.setdefault(passage_id, set()).add(token)
 
     min_words, max_words = reading_target_range(target_words_requested)
-    passages_by_source: dict[int, list[ReadingPassage]] = {}
+    candidate_passages: list[ReadingPassage] = []
     for row in candidate_rows:
         passage = passages_map.get(row.id)
-        if passage is None:
-            continue
-        passages_by_source.setdefault(passage.source_id, []).append(passage)
+        if passage is not None:
+            candidate_passages.append(passage)
 
     bundles: list[tuple[list[ReadingPassage], int, set[str]]] = []
-    for source_id, source_passages in passages_by_source.items():
-        sorted_passages = sorted(
-            source_passages,
-            key=lambda item: (-len(token_map.get(item.id, set())), item.word_count),
-        )
-        for base in sorted_passages[:5]:
-            bundle = build_bundle(base, sorted_passages, token_map, min_words, max_words)
-            bundles.append(bundle)
+    sorted_passages = sorted(
+        candidate_passages,
+        key=lambda item: (-len(token_map.get(item.id, set())), item.word_count),
+    )
+    for base in sorted_passages[:10]:
+        bundle = build_bundle(base, sorted_passages, token_map, min_words, max_words)
+        bundles.append(bundle)
 
     if not bundles:
         return ReadingPreviewOut(
@@ -295,20 +303,35 @@ async def preview_reading(
     text_parts = [item.text.strip() for item in selected_passages if item.text]
     passage_text = "\n\n".join(text_parts)
 
-    source_row = await db.execute(
-        select(ReadingSource, Corpus.name)
+    selected_source_ids = {item.source_id for item in selected_passages}
+    source_result = await db.execute(
+        select(ReadingSource.id, ReadingSource.title, Corpus.name)
         .outerjoin(Corpus, Corpus.id == ReadingSource.corpus_id)
-        .where(ReadingSource.id == selected_passages[0].source_id)
+        .where(ReadingSource.id.in_(selected_source_ids))
     )
-    source_data = source_row.first()
-    source = source_data[0] if source_data else None
-    corpus_name = source_data[1] if source_data else None
+    source_map = {
+        row.id: (row.title, row.name)
+        for row in source_result.fetchall()
+    }
+    source_titles: list[str] = []
+    corpus_names: list[str] = []
+    for passage in selected_passages:
+        title, corpus = source_map.get(passage.source_id, (None, None))
+        if title and title not in source_titles:
+            source_titles.append(title)
+        if corpus and corpus not in corpus_names:
+            corpus_names.append(corpus)
+    source_title = source_titles[0] if len(source_titles) == 1 else None
+    corpus_name = corpus_names[0] if len(corpus_names) == 1 else None
 
     return ReadingPreviewOut(
-        title=source.title if source else "",
+        title=source_titles[0] if source_titles else "",
         text=passage_text,
-        source_title=source.title if source else None,
+        source_title=source_title,
+        source_titles=source_titles,
         corpus_name=corpus_name,
+        corpus_names=corpus_names,
+        passage_ids=[item.id for item in selected_passages],
         word_count=word_count,
         target_words=len(target_tokens),
         target_words_requested=target_words_requested,
@@ -316,3 +339,25 @@ async def preview_reading(
         coverage=coverage,
         highlight_tokens=highlight_tokens,
     )
+
+
+@router.post("/flag", response_model=ReadingFlagOut)
+async def flag_reading(
+    data: ReadingFlagRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ReadingFlagOut:
+    profile = await get_active_learning_profile(user.id, db, require_onboarding=True)
+    passage_ids = [int(item) for item in data.passage_ids if isinstance(item, int) or str(item).isdigit()]
+    if not passage_ids:
+        return ReadingFlagOut(blocked=0)
+
+    values = [
+        {"profile_id": profile.id, "user_id": user.id, "passage_id": passage_id}
+        for passage_id in set(passage_ids)
+    ]
+    stmt = insert(ReadingPassageBlock).values(values)
+    stmt = stmt.on_conflict_do_nothing(index_elements=["profile_id", "passage_id"])
+    result = await db.execute(stmt)
+    await db.commit()
+    return ReadingFlagOut(blocked=result.rowcount or 0)

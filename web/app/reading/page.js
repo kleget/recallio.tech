@@ -16,6 +16,7 @@ const TEXT = {
     daysLabel: "За сколько дней",
     action: "Собрать текст",
     regenerate: "Еще вариант",
+    badText: "Плохой текст",
     highlightOn: "Подсветить слова",
     highlightOff: "Убрать подсветку",
     loading: "Собираем...",
@@ -24,6 +25,7 @@ const TEXT = {
     words: "слов",
     length: "Длина",
     source: "Источник",
+    sources: "Источники",
     requested: "Цель",
     error: "Не удалось собрать текст"
   },
@@ -35,6 +37,7 @@ const TEXT = {
     daysLabel: "Days back",
     action: "Build text",
     regenerate: "New variant",
+    badText: "Bad text",
     highlightOn: "Highlight words",
     highlightOff: "Hide highlights",
     loading: "Building...",
@@ -43,6 +46,7 @@ const TEXT = {
     words: "words",
     length: "Length",
     source: "Source",
+    sources: "Sources",
     requested: "Target",
     error: "Failed to build text"
   }
@@ -74,6 +78,7 @@ export default function ReadingPage() {
   const [reading, setReading] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [flagging, setFlagging] = useState(false);
   const [targetWords, setTargetWords] = useState(10);
   const [days, setDays] = useState(3);
   const [variant, setVariant] = useState(0);
@@ -112,16 +117,46 @@ export default function ReadingPage() {
     }
   };
 
+  const flagReading = async () => {
+    if (!reading?.passage_ids?.length) {
+      return;
+    }
+    const token = getCookie("token");
+    if (!token) {
+      window.location.href = "/auth";
+      return;
+    }
+    setError("");
+    setFlagging(true);
+    try {
+      await postJson("/reading/flag", { passage_ids: reading.passage_ids }, token);
+      await loadReading(0, true);
+    } catch (err) {
+      setError(err.message || t.error);
+    } finally {
+      setFlagging(false);
+    }
+  };
+
   const coveragePct =
     reading && reading.target_words ? Math.round((reading.coverage || 0) * 100) : 0;
   const coverageLabel =
     reading && reading.target_words ? `${reading.hits}/${reading.target_words}` : "";
   const lengthLabel =
     reading && reading.word_count ? `${reading.word_count} ${t.words}` : "";
-  const sourceLabel =
-    reading && (reading.source_title || reading.corpus_name)
-      ? reading.source_title || reading.corpus_name
-      : "";
+  const sourceTitles = reading?.source_titles?.length
+    ? reading.source_titles
+    : reading?.source_title
+      ? [reading.source_title]
+      : [];
+  const corpusTitles = reading?.corpus_names?.length
+    ? reading.corpus_names
+    : reading?.corpus_name
+      ? [reading.corpus_name]
+      : [];
+  const sourceItems = sourceTitles.length ? sourceTitles : corpusTitles;
+  const sourceLabel = sourceItems.length ? sourceItems.join(" · ") : "";
+  const sourceLabelText = sourceItems.length > 1 ? t.sources || t.source : t.source;
   const requestedLabel =
     reading && reading.target_words_requested
       ? `${reading.target_words_requested} ${t.words}`
@@ -130,7 +165,10 @@ export default function ReadingPage() {
     (reading?.highlight_tokens || []).map((item) => String(item).toLowerCase())
   );
   const highlightLabel = highlightOn ? t.highlightOff : t.highlightOn;
+  const badTextLabel = t.badText || "Bad text";
   const hasReading = Boolean(reading && reading.text);
+  const canFlag = Boolean(hasReading && reading?.passage_ids?.length);
+  const busy = loading || flagging;
 
   const renderHighlightedText = () => {
     if (!reading || !reading.text) {
@@ -208,14 +246,14 @@ export default function ReadingPage() {
           </label>
         </div>
         <div className="reading-actions">
-          <button type="button" onClick={() => loadReading(0, true)} disabled={loading}>
+          <button type="button" onClick={() => loadReading(0, true)} disabled={busy}>
             {loading ? t.loading : t.action}
           </button>
           <button
             type="button"
             className="button-secondary"
             onClick={() => loadReading(variant + 1, true)}
-            disabled={loading || !hasReading}
+            disabled={busy || !hasReading}
           >
             {t.regenerate}
           </button>
@@ -223,9 +261,17 @@ export default function ReadingPage() {
             type="button"
             className="button-secondary"
             onClick={() => setHighlightOn((prev) => !prev)}
-            disabled={!hasReading}
+            disabled={busy || !hasReading}
           >
             {highlightLabel}
+          </button>
+          <button
+            type="button"
+            className="button-danger"
+            onClick={flagReading}
+            disabled={busy || !canFlag}
+          >
+            {badTextLabel}
           </button>
         </div>
         {error ? <div className="error">{error}</div> : null}
@@ -249,7 +295,7 @@ export default function ReadingPage() {
               ) : null}
               {sourceLabel ? (
                 <span>
-                  {t.source}: {sourceLabel}
+                  {sourceLabelText}: {sourceLabel}
                 </span>
               ) : null}
             </div>

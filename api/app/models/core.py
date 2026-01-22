@@ -504,6 +504,29 @@ class ReadingPassageToken(Base):
     count: Mapped[int] = mapped_column(Integer, default=1)
 
 
+class ReadingPassageBlock(Base):
+    __tablename__ = "reading_passage_blocks"
+    __table_args__ = (
+        Index("ix_reading_passage_blocks_profile", "profile_id"),
+        Index("ix_reading_passage_blocks_passage", "passage_id"),
+    )
+
+    profile_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("learning_profiles.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    passage_id: Mapped[int] = mapped_column(
+        ForeignKey("reading_passages.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class ContentReport(Base):
     __tablename__ = "content_reports"
     __table_args__ = (
