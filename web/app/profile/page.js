@@ -506,9 +506,9 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="panel">
+          <div className="panel profile-learning">
             <div className="panel-title">{t.sections.learning}</div>
-            <div className="profile-grid profile-grid-top">
+            <div className="profile-grid profile-grid-top profile-learning-grid">
               <div className="profile-cell">
                 <div className="profile-label">{t.nativeLang}</div>
                 <div className="profile-value">{langLabel(profile.native_lang)}</div>
@@ -517,13 +517,13 @@ export default function ProfilePage() {
                 <div className="profile-label">{t.targetLang}</div>
                 <div className="profile-value">{langLabel(profile.target_lang)}</div>
               </div>
-              <div className="profile-actions full">
+              <div className="profile-actions">
                 <button type="button" className="button-secondary" onClick={goOnboarding}>
                   {t.actions.onboarding}
                 </button>
               </div>
             </div>
-            <p className="muted">{t.learningHint}</p>
+            <p className="muted profile-learning-hint">{t.learningHint}</p>
           </div>
 
           <div className="panel">

@@ -882,6 +882,22 @@ button[disabled] {
   justify-content: flex-end;
 }
 
+.profile-learning-grid {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  align-items: center;
+}
+
+.profile-learning-grid .profile-actions {
+  justify-content: flex-start;
+  align-self: center;
+  justify-self: end;
+}
+
+.profile-learning-hint {
+  margin-top: 8px;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -1489,6 +1505,14 @@ html[data-theme="dark"] .input-status.wrong {
     justify-content: flex-start;
   }
 
+  .profile-learning-grid .profile-actions {
+    justify-self: stretch;
+  }
+
+  .profile-learning-grid .profile-actions button {
+    width: 100%;
+  }
+
   .landing-hero-grid {
     grid-template-columns: 1fr;
   }
@@ -1670,6 +1694,10 @@ html[data-theme="dark"] .input-status.wrong {
 
   .profile-avatar-actions {
     width: 100%;
+  }
+
+  .profile-learning-grid {
+    grid-template-columns: 1fr;
   }
 
   .social-avatar {
