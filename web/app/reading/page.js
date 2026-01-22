@@ -172,7 +172,7 @@ export default function ReadingPage() {
   const canFlag = Boolean(hasReading && reading?.passage_ids?.length);
   const busy = loading || flagging;
 
-  const truncateSource = (value) => {
+  function truncateSource(value) {
     const trimmed = String(value || "").trim();
     if (!trimmed) {
       return "";
@@ -181,9 +181,9 @@ export default function ReadingPage() {
       return trimmed;
     }
     return `${trimmed.slice(0, Math.max(0, MAX_SOURCE_TITLE - 3))}...`;
-  };
+  }
 
-  const formatSources = (items) => {
+  function formatSources(items) {
     const list = Array.isArray(items) ? items : items ? [items] : [];
     if (!list.length) {
       return "";
@@ -194,7 +194,7 @@ export default function ReadingPage() {
       return `${limited.join(" · ")} · +${extra}`;
     }
     return limited.join(" · ");
-  };
+  }
 
   const renderHighlightedText = () => {
     if (!reading || !reading.text) {
