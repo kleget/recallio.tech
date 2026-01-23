@@ -1439,6 +1439,46 @@ html[data-theme="dark"] .input-status.wrong {
   gap: 12px;
 }
 
+.progress-panel.compact {
+  padding: 14px 16px;
+}
+
+.progress-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.progress-panel.compact .panel-title {
+  margin: 0;
+}
+
+.progress-panel.compact .progress-row {
+  gap: 10px;
+}
+
+.progress-panel.compact .progress-text {
+  min-width: 0;
+  font-weight: 600;
+  color: var(--text);
+  text-align: right;
+}
+
+.progress-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.progress-actions .tip {
+  margin: 0;
+  font-size: 12px;
+}
+
 .progress-bar {
   flex: 1;
   height: 10px;
@@ -1693,6 +1733,24 @@ html[data-theme="dark"] .input-status.wrong {
   .nav-theme svg {
     width: 18px;
     height: 18px;
+  }
+
+  .progress-panel.compact {
+    padding: 12px;
+  }
+
+  .progress-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .progress-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .progress-actions button {
+    width: 100%;
   }
 
   .card-actions {

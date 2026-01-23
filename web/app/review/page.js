@@ -379,18 +379,6 @@ export default function ReviewPage() {
 
   return (
     <main>
-      <div className="page-header">
-        <div>
-          <h1>{t.title}</h1>
-          <p>{t.tagline}</p>
-        </div>
-        <div className="page-header-actions">
-          <button type="button" className="button-secondary" onClick={goHome}>
-            {t.home}
-          </button>
-        </div>
-      </div>
-
       {loading ? <p className="muted">{t.loading}</p> : null}
       {error ? <p className="error">{error}</p> : null}
 
@@ -415,8 +403,13 @@ export default function ReviewPage() {
 
       {words.length > 0 ? (
         <>
-          <div className="panel progress-panel">
-            <div className="panel-title">{t.progress}</div>
+          <div className="panel progress-panel compact">
+            <div className="progress-top">
+              <div className="panel-title">{t.progress}</div>
+              <div className="progress-text">
+                {cardsDone} / {words.length}
+              </div>
+            </div>
             <div className="progress-row">
               <div className="progress-bar">
                 <span
@@ -425,11 +418,10 @@ export default function ReviewPage() {
                   }}
                 />
               </div>
-              <div className="progress-text">
-                {cardsDone} / {words.length}
-              </div>
             </div>
-            <p className="muted tip">{t.tip}</p>
+            <div className="progress-actions">
+              <span className="muted tip">{t.tip}</span>
+            </div>
           </div>
           {phase === "cards" ? (
             <>
