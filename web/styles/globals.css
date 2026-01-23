@@ -1048,6 +1048,21 @@ button[disabled] {
   justify-content: space-between;
   text-align: left;
   gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+  font-weight: 600;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.today-action:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent);
+  background: var(--accent-gradient-soft);
+  box-shadow: var(--shadow-md);
 }
 
 .today-action-count {
@@ -1055,8 +1070,9 @@ button[disabled] {
   font-weight: 700;
   padding: 4px 10px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: var(--accent-soft);
+  border: 1px solid var(--border);
+  color: var(--text);
 }
 
 .card-list {
@@ -1765,6 +1781,14 @@ html[data-theme="dark"] .input-status.wrong {
     font-size: 12px;
     white-space: normal;
     text-align: center;
+  }
+
+  .today-action {
+    padding: 12px 14px;
+  }
+
+  .today-action-count {
+    font-size: 11px;
   }
 }
 
