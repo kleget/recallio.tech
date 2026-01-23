@@ -460,12 +460,6 @@ export default function ProfilePage() {
       <div className="page-header">
         <div>
           <h1>{t.title}</h1>
-          <p>{t.tagline}</p>
-        </div>
-        <div className="page-header-actions">
-          <button type="button" className="button-secondary" onClick={logout}>
-            {t.actions.logout}
-          </button>
         </div>
       </div>
 
@@ -475,32 +469,26 @@ export default function ProfilePage() {
       {profile ? (
         <>
           <div className="panel profile-hero">
-            <div className="profile-avatar">
+            <label className="profile-avatar profile-avatar-upload">
               {profile.avatar_url ? (
                 <img src={resolveAvatarUrl(profile.avatar_url)} alt="Avatar" />
               ) : (
                 initials
               )}
-            </div>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={handleAvatarChange}
+                disabled={avatarUploading}
+              />
+              <span className="profile-avatar-overlay">{avatarText.upload}</span>
+            </label>
             <div className="profile-details">
               <div className="profile-name">{profile.email}</div>
               <div className="profile-meta">{t.email}</div>
               <span className={`status-pill ${onboardingReady ? "ok" : "warn"}`}>
                 {t.onboarding}: {onboardingReady ? t.onboardingReady : t.onboardingPending}
               </span>
-            </div>
-            <div className="profile-avatar-actions">
-              <div className="profile-label">{avatarText.title}</div>
-              <label className="button-secondary profile-upload">
-                {avatarText.upload}
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  onChange={handleAvatarChange}
-                  disabled={avatarUploading}
-                />
-              </label>
-              <div className="muted profile-avatar-hint">{avatarText.hint}</div>
               {avatarUploading ? <span className="muted">{avatarText.uploading}</span> : null}
               {avatarError ? <span className="error">{avatarError}</span> : null}
             </div>
@@ -508,16 +496,19 @@ export default function ProfilePage() {
 
           <div className="panel profile-learning">
             <div className="panel-title">{t.sections.learning}</div>
-            <div className="profile-grid profile-grid-top profile-learning-grid">
-              <div className="profile-cell">
-                <div className="profile-label">{t.nativeLang}</div>
-                <div className="profile-value">{langLabel(profile.native_lang)}</div>
+            <div className="profile-learning-row">
+              <div className="profile-learning-pair">
+                <div className="profile-learning-item">
+                  <span className="profile-learning-label">{t.nativeLang}</span>
+                  <span className="profile-learning-value">{langLabel(profile.native_lang)}</span>
+                </div>
+                <span className="profile-learning-arrow">→</span>
+                <div className="profile-learning-item">
+                  <span className="profile-learning-label">{t.targetLang}</span>
+                  <span className="profile-learning-value">{langLabel(profile.target_lang)}</span>
+                </div>
               </div>
-              <div className="profile-cell">
-                <div className="profile-label">{t.targetLang}</div>
-                <div className="profile-value">{langLabel(profile.target_lang)}</div>
-              </div>
-              <div className="profile-actions">
+              <div className="profile-learning-actions">
                 <button type="button" className="button-secondary" onClick={goOnboarding}>
                   {t.actions.onboarding}
                 </button>
@@ -588,6 +579,9 @@ export default function ProfilePage() {
           <div className="panel">
             <div className="panel-title">{t.danger.title}</div>
             <div className="actions">
+              <button type="button" className="button-secondary" onClick={logout}>
+                {t.actions.logout}
+              </button>
               <button type="button" className="button-danger" onClick={openDelete}>
                 {t.danger.start}
               </button>
