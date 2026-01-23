@@ -16,9 +16,9 @@ const TEXT = {
     stats: {
       known: "Слов знаю",
       days: "Дней учимся",
-      learnToday: "Учить сегодня",
-      reviewToday: "Повторить сегодня",
-      readingToday: "Читать сегодня",
+      learnToday: "Учить",
+      reviewToday: "Повторять",
+      readingToday: "Читать",
       availableLearn: "К обучению",
       availableReview: "К повтору"
     },
@@ -116,9 +116,9 @@ const TEXT = {
     stats: {
       known: "Words known",
       days: "Days learning",
-      learnToday: "Learn today",
-      reviewToday: "Review today",
-      readingToday: "Read today",
+      learnToday: "Learn",
+      reviewToday: "Review",
+      readingToday: "Read",
       availableLearn: "To learn",
       availableReview: "To review"
     },
@@ -240,11 +240,6 @@ export default function Home() {
   const t = TEXT[interfaceLang] || TEXT.ru;
   const locale = interfaceLang === "en" ? "en-US" : "ru-RU";
   const wordsLabel = interfaceLang === "en" ? "words" : "слов";
-  const heroTitle = t.title;
-  const heroSubtitle = dashboard
-    ? `${t.stats.learnToday}: ${dashboard.learn_today} ${wordsLabel} · ${t.stats.reviewToday}: ${dashboard.review_today} ${wordsLabel}`
-    : t.tagline;
-
   const goLearn = () => {
     window.location.href = "/learn";
   };
@@ -469,13 +464,6 @@ export default function Home() {
 
   return (
     <main>
-      <div className="page-header">
-        <div>
-          <h1>{heroTitle}</h1>
-          <p>{heroSubtitle}</p>
-        </div>
-      </div>
-
       {loading ? <p className="muted">{t.loading}</p> : null}
       {error ? <p className="error">{error}</p> : null}
 
@@ -501,7 +489,6 @@ export default function Home() {
           </div>
 
             <div className="panel" data-tour="today">
-              <div className="panel-title">{t.today}</div>
               <div className="today-actions">
                 <button type="button" className="today-action" onClick={goLearn}>
                   <span className="today-action-label">{t.stats.learnToday}</span>
