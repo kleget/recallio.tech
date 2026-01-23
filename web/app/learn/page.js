@@ -412,7 +412,6 @@ export default function LearnPage() {
               <button type="button" className="button-secondary" onClick={openWordList}>
                 {t.wordList}
               </button>
-              <span className="muted tip">{t.tip}</span>
             </div>
           </div>
           {phase === "cards" ? (

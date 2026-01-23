@@ -419,9 +419,7 @@ export default function ReviewPage() {
                 />
               </div>
             </div>
-            <div className="progress-actions">
-              <span className="muted tip">{t.tip}</span>
-            </div>
+            <div className="progress-actions" />
           </div>
           {phase === "cards" ? (
             <>
