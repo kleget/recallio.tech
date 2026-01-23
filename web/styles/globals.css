@@ -1191,6 +1191,11 @@ button[disabled] {
   margin-top: 12px;
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
+}
+
+.card-actions button {
+  white-space: nowrap;
 }
 
 .check-list {
@@ -1688,6 +1693,26 @@ html[data-theme="dark"] .input-status.wrong {
   .nav-theme svg {
     width: 18px;
     height: 18px;
+  }
+
+  .card-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .card-actions button {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 12px;
+    white-space: normal;
+    text-align: center;
+  }
+}
+
+@media (max-width: 420px) {
+  .card-actions {
+    grid-template-columns: 1fr;
   }
 }
 
