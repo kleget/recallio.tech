@@ -173,13 +173,14 @@ async def apply_missing_translations(
 
         moved = 0
         merged = 0
-        missing = 0
+        missing_pairs = 0
+        translations_added = 0
 
         for en_lemma, ru_lemma in pairs:
             en_id = en_map.get(en_lemma)
             ru_id = ru_map.get(ru_lemma)
-            if not en_id or not ru_id:
-                missing += 1
+            if not en_id:
+                missing_pairs += 1
                 continue
 
             if apply:
@@ -197,7 +198,7 @@ async def apply_missing_translations(
                     insert(UserWordTranslation)
                     .values(
                         profile_id=profile.id,
-                        user_id=ru_user.user_id,
+                        user_id=profile.user_id,
                         word_id=en_id,
                         target_lang=profile.native_lang,
                         translation=ru_lemma,
@@ -207,6 +208,10 @@ async def apply_missing_translations(
                         index_elements=["profile_id", "word_id", "target_lang", "translation"]
                     )
                 )
+                translations_added += 1
+
+            if not ru_id:
+                continue
 
             user_result = await session.execute(
                 select(UserWord)
@@ -248,7 +253,9 @@ async def apply_missing_translations(
         if apply:
             await session.commit()
 
-    print(f"Moved: {moved}, merged: {merged}, missing pairs: {missing}")
+    print(
+        f"Translations added: {translations_added}, moved: {moved}, merged: {merged}, missing pairs: {missing_pairs}"
+    )
     if not apply:
         print("Dry run. Re-run with --apply to make changes.")
 
