@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.auth import get_active_learning_profile, get_current_user
 from app.db.session import get_db
-from app.models import Translation, User, UserCustomWord, UserWord, Word
+from app.models import Translation, User, UserCustomWord, UserWord, UserWordTranslation, Word
 from app.schemas.custom_words import (
     CustomWordIn,
     CustomWordOut,
@@ -401,6 +401,21 @@ async def mark_custom_word_known(
             source="custom",
         )
         .on_conflict_do_nothing(index_elements=["word_id", "target_lang", "translation"])
+    )
+
+    await db.execute(
+        insert(UserWordTranslation)
+        .values(
+            profile_id=profile.id,
+            user_id=user.id,
+            word_id=word_id,
+            target_lang=profile.native_lang,
+            translation=row[0].translation,
+            source="custom",
+        )
+        .on_conflict_do_nothing(
+            index_elements=["profile_id", "word_id", "target_lang", "translation"]
+        )
     )
 
     await db.execute(

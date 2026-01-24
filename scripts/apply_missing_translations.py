@@ -23,6 +23,7 @@ from app.models import (  # noqa: E402
     User,
     UserProfile,
     UserWord,
+    UserWordTranslation,
     Word,
 )
 
@@ -191,6 +192,20 @@ async def apply_missing_translations(
                         source="csv",
                     )
                     .on_conflict_do_nothing(index_elements=["word_id", "target_lang", "translation"])
+                )
+                await session.execute(
+                    insert(UserWordTranslation)
+                    .values(
+                        profile_id=profile.id,
+                        user_id=ru_user.user_id,
+                        word_id=en_id,
+                        target_lang=profile.native_lang,
+                        translation=ru_lemma,
+                        source="csv",
+                    )
+                    .on_conflict_do_nothing(
+                        index_elements=["profile_id", "word_id", "target_lang", "translation"]
+                    )
                 )
 
             user_result = await session.execute(

@@ -522,6 +522,38 @@ class UserCustomWord(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class UserWordTranslation(Base):
+    __tablename__ = "user_word_translations"
+    __table_args__ = (
+        UniqueConstraint(
+            "profile_id",
+            "word_id",
+            "target_lang",
+            "translation",
+            name="uq_user_word_translations",
+        ),
+        Index("ix_user_word_translations_profile", "profile_id"),
+        Index("ix_user_word_translations_word", "word_id"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    profile_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("learning_profiles.id", ondelete="CASCADE"),
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+    )
+    word_id: Mapped[int] = mapped_column(
+        ForeignKey("words.id", ondelete="CASCADE"),
+    )
+    target_lang: Mapped[str] = mapped_column(String(2))
+    translation: Mapped[str] = mapped_column(Text)
+    source: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class UserWord(Base):
     __tablename__ = "user_words"
     __table_args__ = (

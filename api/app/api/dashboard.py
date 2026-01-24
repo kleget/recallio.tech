@@ -19,6 +19,7 @@ from app.models import (
     UserProfile,
     UserSettings,
     UserWord,
+    UserWordTranslation,
     Word,
 )
 from app.schemas.dashboard import DashboardOut, LearnedSeriesPoint
@@ -191,6 +192,14 @@ async def get_dashboard(
             Translation.target_lang == learning_profile.native_lang,
         )
     )
+    user_translation_subq = (
+        select(UserWordTranslation.word_id)
+        .where(
+            UserWordTranslation.profile_id == learning_profile.id,
+            UserWordTranslation.word_id.in_(select(due_words_subq.c.word_id)),
+            UserWordTranslation.target_lang == learning_profile.native_lang,
+        )
+    )
     custom_subq = (
         select(UserCustomWord.word_id)
         .where(
@@ -200,7 +209,9 @@ async def get_dashboard(
         )
     )
     review_available_result = await db.execute(
-        select(func.count()).select_from(translation_subq.union(custom_subq).subquery())
+        select(func.count()).select_from(
+            translation_subq.union(user_translation_subq, custom_subq).subquery()
+        )
     )
     review_available = int(review_available_result.scalar() or 0)
 

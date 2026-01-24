@@ -62,6 +62,7 @@ from app.models import (  # noqa: E402
     UserProfile,
     UserCustomWord,
     UserWord,
+    UserWordTranslation,
 )
 
 import import_sqlite  # noqa: E402
@@ -189,19 +190,29 @@ async def process_send_review_notifications(session, job: BackgroundJob) -> dict
             select(Translation.word_id)
             .where(
                 Translation.word_id.in_(select(due_subq.c.word_id)),
-                Translation.target_lang == learning_profile.target_lang,
+                Translation.target_lang == learning_profile.native_lang,
+            )
+        )
+        user_translation_subq = (
+            select(UserWordTranslation.word_id)
+            .where(
+                UserWordTranslation.profile_id == settings.profile_id,
+                UserWordTranslation.word_id.in_(select(due_subq.c.word_id)),
+                UserWordTranslation.target_lang == learning_profile.native_lang,
             )
         )
         custom_subq = (
             select(UserCustomWord.word_id)
             .where(
                 UserCustomWord.profile_id == settings.profile_id,
-                UserCustomWord.target_lang == learning_profile.target_lang,
+                UserCustomWord.target_lang == learning_profile.native_lang,
                 UserCustomWord.word_id.in_(select(due_subq.c.word_id)),
             )
         )
         review_result = await session.execute(
-            select(func.count()).select_from(translation_subq.union(custom_subq).subquery())
+            select(func.count()).select_from(
+                translation_subq.union(user_translation_subq, custom_subq).subquery()
+            )
         )
         review_due = int(review_result.scalar() or 0)
         if review_due == 0:
