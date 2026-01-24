@@ -16,7 +16,14 @@ API_DIR = BASE_DIR / "api"
 sys.path.append(str(API_DIR))
 
 from app.db.session import AsyncSessionLocal  # noqa: E402
-from app.models import LearningProfile, ReviewEvent, UserCustomWord, UserWord, Word  # noqa: E402
+from app.models import (  # noqa: E402
+    LearningProfile,
+    ReviewEvent,
+    Translation,
+    UserCustomWord,
+    UserWord,
+    Word,
+)
 
 
 STATUS_PRIORITY = {"known": 3, "learned": 2, "new": 1}
@@ -65,6 +72,15 @@ def build_translation_options(text: str) -> list[str]:
     return options
 
 
+def pick_primary_translation(values: list[str]) -> str | None:
+    for text in values:
+        for part in SPLIT_RE.split(text or ""):
+            cleaned = normalize_text(part)
+            if cleaned:
+                return cleaned
+    return None
+
+
 def merge_translations(existing: str, new_value: str) -> str:
     existing_options = build_translation_options(existing)
     new_options = build_translation_options(new_value)
@@ -94,7 +110,8 @@ async def fetch_target_word_map(session, lemmas: list[str], lang: str) -> dict[s
 
 
 async def ensure_words(session, lemmas: list[str], lang: str) -> None:
-    for batch in chunked(lemmas, 1000):
+    filtered = [lemma for lemma in lemmas if 0 < len(lemma) <= 255]
+    for batch in chunked(filtered, 1000):
         rows = [{"lemma": lemma, "lang": lang} for lemma in batch]
         stmt = insert(Word).values(rows)
         stmt = stmt.on_conflict_do_nothing(index_elements=["lemma", "lang"])
@@ -128,16 +145,53 @@ async def migrate_profile(profile: LearningProfile, apply: bool) -> None:
 
         target_word_map = await fetch_target_word_map(session, lemmas_list, profile.target_lang)
 
+        source_word_ids = [row.UserWord.word_id for row in user_rows if row.lang != profile.target_lang]
+        translation_map: dict[int, list[str]] = {}
+        if source_word_ids:
+            translations_result = await session.execute(
+                select(Translation.word_id, Translation.translation)
+                .where(
+                    Translation.word_id.in_(source_word_ids),
+                    Translation.target_lang == profile.target_lang,
+                )
+                .order_by(Translation.word_id, Translation.id)
+            )
+            for word_id, translation in translations_result.fetchall():
+                if translation:
+                    translation_map.setdefault(word_id, []).append(str(translation))
+
+        custom_translation_map: dict[int, list[str]] = {}
+        if source_word_ids:
+            custom_translation_result = await session.execute(
+                select(UserCustomWord.word_id, UserCustomWord.translation)
+                .where(
+                    UserCustomWord.profile_id == profile.id,
+                    UserCustomWord.word_id.in_(source_word_ids),
+                )
+                .order_by(UserCustomWord.word_id, UserCustomWord.created_at)
+            )
+            for word_id, translation in custom_translation_result.fetchall():
+                if translation:
+                    custom_translation_map.setdefault(word_id, []).append(str(translation))
+
         if apply:
-            missing_for_custom = [
+            missing_lemmas = [
                 row.lemma
                 for row in custom_rows
                 if row.lang != profile.target_lang and row.lemma not in target_word_map
             ]
-            if missing_for_custom:
-                await ensure_words(session, sorted(set(missing_for_custom)), profile.target_lang)
+            translation_lemmas = []
+            for word_id in source_word_ids:
+                primary = pick_primary_translation(translation_map.get(word_id, []))
+                if not primary:
+                    primary = pick_primary_translation(custom_translation_map.get(word_id, []))
+                if primary and primary not in target_word_map:
+                    translation_lemmas.append(primary)
+            ensure_lemmas = sorted(set(missing_lemmas + translation_lemmas))
+            if ensure_lemmas:
+                await ensure_words(session, ensure_lemmas, profile.target_lang)
                 target_word_map = await fetch_target_word_map(
-                    session, lemmas_list, profile.target_lang
+                    session, lemmas_list + ensure_lemmas, profile.target_lang
                 )
 
         moved_user = 0
@@ -157,6 +211,12 @@ async def migrate_profile(profile: LearningProfile, apply: bool) -> None:
             if word_lang == profile.target_lang:
                 continue
             target_id = target_word_map.get(lemma)
+            if not target_id:
+                primary = pick_primary_translation(translation_map.get(user_word.word_id, []))
+                if not primary:
+                    primary = pick_primary_translation(custom_translation_map.get(user_word.word_id, []))
+                if primary:
+                    target_id = target_word_map.get(primary)
             if not target_id:
                 missing_user += 1
                 continue
@@ -199,6 +259,10 @@ async def migrate_profile(profile: LearningProfile, apply: bool) -> None:
                 if word_lang == profile.target_lang
                 else target_word_map.get(lemma)
             )
+            if not target_word_id:
+                primary = pick_primary_translation([custom_word.translation or ""])
+                if primary:
+                    target_word_id = target_word_map.get(primary)
             if not target_word_id:
                 missing_custom += 1
                 continue
