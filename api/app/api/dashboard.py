@@ -160,7 +160,7 @@ async def get_dashboard(
         .where(
             UserWord.profile_id == learning_profile.id,
             UserWord.status.in_(KNOWN_STATUSES),
-            Word.lang == learning_profile.native_lang,
+            Word.lang == learning_profile.target_lang,
         )
     )
     known_result = await db.execute(known_stmt)
@@ -168,7 +168,7 @@ async def get_dashboard(
 
     days_learning = await count_learning_days(
         learning_profile.id,
-        learning_profile.native_lang,
+        learning_profile.target_lang,
         db,
     )
 
@@ -180,7 +180,7 @@ async def get_dashboard(
             UserWord.profile_id == learning_profile.id,
             UserWord.next_review_at.is_not(None),
             UserWord.next_review_at <= now,
-            Word.lang == learning_profile.native_lang,
+            Word.lang == learning_profile.target_lang,
         )
         .subquery()
     )
@@ -188,7 +188,7 @@ async def get_dashboard(
         select(Translation.word_id)
         .where(
             Translation.word_id.in_(select(due_words_subq.c.word_id)),
-            Translation.target_lang == learning_profile.target_lang,
+            Translation.target_lang == learning_profile.native_lang,
         )
     )
     custom_subq = (
@@ -196,7 +196,7 @@ async def get_dashboard(
         .where(
             UserCustomWord.profile_id == learning_profile.id,
             UserCustomWord.word_id.in_(select(due_words_subq.c.word_id)),
-            UserCustomWord.target_lang == learning_profile.target_lang,
+            UserCustomWord.target_lang == learning_profile.native_lang,
         )
     )
     review_available_result = await db.execute(
@@ -206,8 +206,8 @@ async def get_dashboard(
 
     learn_available = await count_available_new_words(
         learning_profile.id,
-        learning_profile.native_lang,
         learning_profile.target_lang,
+        learning_profile.native_lang,
         db,
     )
     learn_today = min(settings.daily_new_words, learn_available)
@@ -224,7 +224,7 @@ async def get_dashboard(
                 UserWord.profile_id == learning_profile.id,
                 UserWord.learned_at.is_not(None),
                 UserWord.status.in_(KNOWN_STATUSES),
-                Word.lang == learning_profile.native_lang,
+                Word.lang == learning_profile.target_lang,
             )
         )
         first_learned_at = first_learned_result.scalar_one_or_none()
@@ -245,7 +245,7 @@ async def get_dashboard(
                 UserWord.learned_at.is_not(None),
                 UserWord.learned_at >= datetime.combine(start_date, datetime.min.time(), tzinfo=timezone.utc),
                 UserWord.status.in_(KNOWN_STATUSES),
-                Word.lang == learning_profile.native_lang,
+                Word.lang == learning_profile.target_lang,
             )
             .group_by("day")
             .order_by("day")

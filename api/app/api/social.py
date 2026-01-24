@@ -206,7 +206,7 @@ async def get_profile_stats(profile: LearningProfile, db: AsyncSession) -> Publi
             UserWord.profile_id == profile.id,
             UserWord.learned_at.is_not(None),
             UserWord.status.in_(KNOWN_STATUSES),
-            Word.lang == profile.native_lang,
+            Word.lang == profile.target_lang,
         )
     )
     days_learning = int(days_result.scalar() or 0)

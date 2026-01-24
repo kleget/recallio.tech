@@ -317,7 +317,7 @@ async def import_known_words(
     word_id_map: dict[str, int] = {}
     for batch in chunked(unique_lemmas, 1000):
         result = await db.execute(
-            select(Word.id, Word.lemma).where(Word.lang == profile.native_lang, Word.lemma.in_(batch))
+            select(Word.id, Word.lemma).where(Word.lang == profile.target_lang, Word.lemma.in_(batch))
         )
         for word_id, lemma in result.fetchall():
             word_id_map[lemma] = word_id

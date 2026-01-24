@@ -55,7 +55,7 @@ def maybe_swap(word: str, translation: str, native_lang: str, target_lang: str) 
         return word, translation
     word_lang = detect_lang(word)
     translation_lang = detect_lang(translation)
-    if word_lang == target_lang and translation_lang == native_lang:
+    if word_lang == native_lang and translation_lang == target_lang:
         return translation, word
     return word, translation
 
@@ -108,8 +108,8 @@ async def list_custom_words(
         .join(Word, Word.id == UserCustomWord.word_id)
         .where(
             UserCustomWord.profile_id == profile.id,
-            UserCustomWord.target_lang == profile.target_lang,
-            Word.lang == profile.native_lang,
+            UserCustomWord.target_lang == profile.native_lang,
+            Word.lang == profile.target_lang,
         )
         .order_by(UserCustomWord.created_at.desc(), UserCustomWord.word_id.desc())
         .limit(limit)
@@ -138,8 +138,8 @@ async def count_custom_words(
         .join(Word, Word.id == UserCustomWord.word_id)
         .where(
             UserCustomWord.profile_id == profile.id,
-            UserCustomWord.target_lang == profile.target_lang,
-            Word.lang == profile.native_lang,
+            UserCustomWord.target_lang == profile.native_lang,
+            Word.lang == profile.target_lang,
         )
     )
     total = int(result.scalar() or 0)
@@ -164,11 +164,11 @@ async def add_custom_word(
 
     await db.execute(
         insert(Word)
-        .values(lemma=word, lang=profile.native_lang)
+        .values(lemma=word, lang=profile.target_lang)
         .on_conflict_do_nothing(index_elements=["lemma", "lang"])
     )
     word_result = await db.execute(
-        select(Word.id).where(Word.lemma == word, Word.lang == profile.native_lang)
+        select(Word.id).where(Word.lemma == word, Word.lang == profile.target_lang)
     )
     word_id = word_result.scalar_one()
 
@@ -184,7 +184,7 @@ async def add_custom_word(
         profile_id=profile.id,
         user_id=user.id,
         word_id=word_id,
-        target_lang=profile.target_lang,
+        target_lang=profile.native_lang,
         translation=translation,
     )
     stmt = stmt.on_conflict_do_update(
@@ -198,7 +198,7 @@ async def add_custom_word(
         select(UserCustomWord).where(
             UserCustomWord.profile_id == profile.id,
             UserCustomWord.word_id == word_id,
-            UserCustomWord.target_lang == profile.target_lang,
+            UserCustomWord.target_lang == profile.native_lang,
         )
     )
     row = row_result.scalar_one()
@@ -234,8 +234,8 @@ async def update_custom_word(
         .where(
             UserCustomWord.profile_id == profile.id,
             UserCustomWord.word_id == word_id,
-            UserCustomWord.target_lang == profile.target_lang,
-            Word.lang == profile.native_lang,
+            UserCustomWord.target_lang == profile.native_lang,
+            Word.lang == profile.target_lang,
         )
     )
     row = result.first()
@@ -260,11 +260,11 @@ async def update_custom_word(
 
         await db.execute(
             insert(Word)
-            .values(lemma=word, lang=profile.native_lang)
+            .values(lemma=word, lang=profile.target_lang)
             .on_conflict_do_nothing(index_elements=["lemma", "lang"])
         )
         new_word_result = await db.execute(
-            select(Word.id).where(Word.lemma == word, Word.lang == profile.native_lang)
+            select(Word.id).where(Word.lemma == word, Word.lang == profile.target_lang)
         )
         new_word_id = new_word_result.scalar_one()
 
@@ -281,7 +281,7 @@ async def update_custom_word(
             profile_id=profile.id,
             user_id=user.id,
             word_id=new_word_id,
-            target_lang=profile.target_lang,
+            target_lang=profile.native_lang,
             translation=translation,
         )
         stmt = stmt.on_conflict_do_update(
@@ -297,7 +297,7 @@ async def update_custom_word(
             select(UserCustomWord).where(
                 UserCustomWord.profile_id == profile.id,
                 UserCustomWord.word_id == new_word_id,
-                UserCustomWord.target_lang == profile.target_lang,
+                UserCustomWord.target_lang == profile.native_lang,
             )
         )
         updated = updated_result.scalar_one()
@@ -329,7 +329,7 @@ async def delete_custom_word(
         delete(UserCustomWord).where(
             UserCustomWord.profile_id == profile.id,
             UserCustomWord.word_id == word_id,
-            UserCustomWord.target_lang == profile.target_lang,
+            UserCustomWord.target_lang == profile.native_lang,
         )
     )
     if result.rowcount == 0:
@@ -351,8 +351,8 @@ async def mark_custom_word_known(
         .where(
             UserCustomWord.profile_id == profile.id,
             UserCustomWord.word_id == word_id,
-            UserCustomWord.target_lang == profile.target_lang,
-            Word.lang == profile.native_lang,
+            UserCustomWord.target_lang == profile.native_lang,
+            Word.lang == profile.target_lang,
         )
     )
     row = result.first()
@@ -396,7 +396,7 @@ async def mark_custom_word_known(
         delete(UserCustomWord).where(
             UserCustomWord.profile_id == profile.id,
             UserCustomWord.word_id == word_id,
-            UserCustomWord.target_lang == profile.target_lang,
+            UserCustomWord.target_lang == profile.native_lang,
         )
     )
     await db.commit()
@@ -425,7 +425,7 @@ async def import_custom_words(
 
     lemmas = list(entries_map.keys())
     for batch in chunked(lemmas, 1000):
-        rows = [{"lemma": lemma, "lang": profile.native_lang} for lemma in batch]
+        rows = [{"lemma": lemma, "lang": profile.target_lang} for lemma in batch]
         stmt = insert(Word).values(rows)
         stmt = stmt.on_conflict_do_nothing(index_elements=["lemma", "lang"])
         await db.execute(stmt)
@@ -433,7 +433,7 @@ async def import_custom_words(
     word_id_map: dict[str, int] = {}
     for batch in chunked(lemmas, 1000):
         result = await db.execute(
-            select(Word.id, Word.lemma).where(Word.lang == profile.native_lang, Word.lemma.in_(batch))
+            select(Word.id, Word.lemma).where(Word.lang == profile.target_lang, Word.lemma.in_(batch))
         )
         for word_id, lemma in result.fetchall():
             word_id_map[lemma] = word_id
@@ -441,7 +441,7 @@ async def import_custom_words(
     existing_result = await db.execute(
         select(UserCustomWord.word_id, UserCustomWord.translation).where(
             UserCustomWord.profile_id == profile.id,
-            UserCustomWord.target_lang == profile.target_lang,
+            UserCustomWord.target_lang == profile.native_lang,
             UserCustomWord.word_id.in_(word_id_map.values()),
         )
     )
@@ -467,7 +467,7 @@ async def import_custom_words(
                 "profile_id": profile.id,
                 "user_id": user.id,
                 "word_id": word_id,
-                "target_lang": profile.target_lang,
+                "target_lang": profile.native_lang,
                 "translation": translation,
             }
         )

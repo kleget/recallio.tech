@@ -16,11 +16,10 @@ from app.models import (
     ReadingPassageBlock,
     ReadingPassageToken,
     ReadingSource,
-    Translation,
     User,
     UserCorpus,
-    UserCustomWord,
     UserWord,
+    Word,
 )
 from app.schemas.reading import ReadingFlagOut, ReadingFlagRequest, ReadingPreviewOut, ReadingPreviewRequest
 
@@ -89,7 +88,6 @@ def matches_target_language(text: str, lang: str) -> bool:
 
 async def collect_target_tokens(
     profile_id,
-    target_lang: str,
     target_words: int,
     days: int,
     db: AsyncSession,
@@ -110,29 +108,17 @@ async def collect_target_tokens(
     if not word_ids:
         return []
 
-    translations_map: dict[int, list[str]] = {}
-    translation_result = await db.execute(
-        select(Translation.word_id, Translation.translation)
-        .where(Translation.word_id.in_(word_ids), Translation.target_lang == target_lang)
-    )
-    for word_id, translation in translation_result.fetchall():
-        translations_map.setdefault(word_id, []).append(translation)
-
-    custom_result = await db.execute(
-        select(UserCustomWord.word_id, UserCustomWord.translation)
-        .where(
-            UserCustomWord.profile_id == profile_id,
-            UserCustomWord.word_id.in_(word_ids),
-            UserCustomWord.target_lang == target_lang,
-        )
-    )
-    for word_id, translation in custom_result.fetchall():
-        translations_map.setdefault(word_id, []).append(translation)
-
     target_tokens: list[str] = []
     seen = set()
+    word_result = await db.execute(
+        select(Word.id, Word.lemma).where(Word.id.in_(word_ids))
+    )
+    lemma_map = {row.id: row.lemma for row in word_result.fetchall()}
     for word_id in word_ids:
-        tokens = extract_translation_tokens(translations_map.get(word_id, []))
+        lemma = lemma_map.get(word_id)
+        if not lemma:
+            continue
+        tokens = extract_translation_tokens([lemma])
         for token in tokens:
             if token in seen:
                 continue
@@ -201,7 +187,6 @@ async def preview_reading(
 
     target_tokens = await collect_target_tokens(
         profile.id,
-        profile.target_lang,
         target_words_requested,
         days,
         db,

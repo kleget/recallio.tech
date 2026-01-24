@@ -68,12 +68,13 @@ async def weak_words(
             UserWord,
             and_(UserWord.profile_id == profile.id, UserWord.word_id == stats_subq.c.word_id),
         )
+        .where(Word.lang == profile.target_lang)
         .order_by(stats_subq.c.wrong_count.desc(), stats_subq.c.correct_count.asc())
         .limit(limit)
     )
     rows = (await db.execute(stmt)).all()
     word_ids = [row.word_id for row in rows]
-    translation_map = await fetch_user_translation_map(profile.id, word_ids, profile.target_lang, db)
+    translation_map = await fetch_user_translation_map(profile.id, word_ids, profile.native_lang, db)
 
     results = []
     for row in rows:
@@ -132,7 +133,7 @@ async def review_plan(
         .where(
             UserWord.profile_id == profile.id,
             UserWord.next_review_at.is_not(None),
-            Word.lang == profile.native_lang,
+            Word.lang == profile.target_lang,
         )
         .order_by(UserWord.next_review_at.asc(), Word.lemma.asc())
     )
@@ -143,7 +144,7 @@ async def review_plan(
         .where(
             UserWord.profile_id == profile.id,
             UserWord.next_review_at.is_not(None),
-            Word.lang == profile.native_lang,
+            Word.lang == profile.target_lang,
         )
     )
     total_result = await db.execute(count_stmt)
@@ -155,7 +156,7 @@ async def review_plan(
 
     rows = (await db.execute(stmt)).all()
     word_ids = [row.word_id for row in rows]
-    translation_map = await fetch_user_translation_map(profile.id, word_ids, profile.target_lang, db)
+    translation_map = await fetch_user_translation_map(profile.id, word_ids, profile.native_lang, db)
 
     items = [
         ReviewPlanItemOut(

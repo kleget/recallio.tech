@@ -908,8 +908,8 @@ async def start_learn(
 
     words = await fetch_learn_words(
         profile.id,
-        profile.native_lang,
         profile.target_lang,
+        profile.native_lang,
         batch_size,
         db,
     )
@@ -931,7 +931,7 @@ async def start_learn(
     reading = await build_reading_block(
         profile.id,
         [item.word_id for item in words],
-        profile.target_lang,
+        profile.native_lang,
         interface_lang,
         db,
         session.id,
@@ -956,7 +956,7 @@ async def submit_learn(
     word_ids = [item.word_id for item in data.words]
     if len(set(word_ids)) != len(word_ids):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Duplicate word ids")
-    translation_map = await fetch_user_translation_map(profile.id, word_ids, profile.target_lang, db)
+    translation_map = await fetch_user_translation_map(profile.id, word_ids, profile.native_lang, db)
 
     session = None
     if data.session_id is not None:
@@ -1051,8 +1051,8 @@ async def start_review(
     now = datetime.now(timezone.utc)
     words = await fetch_review_words(
         profile.id,
-        profile.native_lang,
         profile.target_lang,
+        profile.native_lang,
         batch_size,
         now,
         db,
@@ -1109,7 +1109,7 @@ async def submit_review(
     if len(user_words) != len(word_ids):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Word not found")
 
-    translation_map = await fetch_user_translation_map(profile.id, word_ids, profile.target_lang, db)
+    translation_map = await fetch_user_translation_map(profile.id, word_ids, profile.native_lang, db)
 
     now = datetime.now(timezone.utc)
     words_total = len(data.words)
@@ -1217,5 +1217,5 @@ async def seed_review(
     profile, _settings = await load_profile_settings(user.id, db)
     if limit <= 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid limit")
-    seeded = await seed_review_words(profile.id, profile.native_lang, limit, db)
+    seeded = await seed_review_words(profile.id, profile.target_lang, limit, db)
     return ReviewSeedOut(seeded=seeded)
