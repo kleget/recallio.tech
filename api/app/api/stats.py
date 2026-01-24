@@ -11,7 +11,7 @@ from app.api.auth import get_current_user
 from app.api.study import fetch_user_translation_map, load_profile_settings
 from app.db.session import get_db
 from app.models import ReviewEvent, User, UserWord, WeakWordsCache, Word
-from app.schemas.stats import WeakWordOut, WeakWordsOut
+from app.schemas.stats import ReviewPlanItemOut, ReviewPlanOut, WeakWordOut, WeakWordsOut
 
 router = APIRouter(tags=["stats"])
 DEFAULT_LIMIT = 20
@@ -106,3 +106,68 @@ async def weak_words(
             db.add(WeakWordsCache(profile_id=profile.id, data=data, updated_at=now))
         await db.commit()
     return payload
+
+
+@router.get("/stats/review-plan", response_model=ReviewPlanOut)
+async def review_plan(
+    limit: int | None = None,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ReviewPlanOut:
+    if limit is not None and (limit < 1 or limit > 5000):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid limit")
+
+    profile, _settings = await load_profile_settings(user.id, db)
+
+    base_stmt = (
+        select(
+            UserWord.word_id,
+            Word.lemma,
+            UserWord.learned_at,
+            UserWord.next_review_at,
+            UserWord.stage,
+        )
+        .select_from(UserWord)
+        .join(Word, Word.id == UserWord.word_id)
+        .where(
+            UserWord.profile_id == profile.id,
+            UserWord.next_review_at.is_not(None),
+            Word.lang == profile.native_lang,
+        )
+        .order_by(UserWord.next_review_at.asc(), Word.lemma.asc())
+    )
+    count_stmt = (
+        select(func.count())
+        .select_from(UserWord)
+        .join(Word, Word.id == UserWord.word_id)
+        .where(
+            UserWord.profile_id == profile.id,
+            UserWord.next_review_at.is_not(None),
+            Word.lang == profile.native_lang,
+        )
+    )
+    total_result = await db.execute(count_stmt)
+    total = int(total_result.scalar() or 0)
+
+    stmt = base_stmt
+    if limit:
+        stmt = stmt.limit(limit)
+
+    rows = (await db.execute(stmt)).all()
+    word_ids = [row.word_id for row in rows]
+    translation_map = await fetch_user_translation_map(profile.id, word_ids, profile.target_lang, db)
+
+    items = [
+        ReviewPlanItemOut(
+            word_id=row.word_id,
+            word=row.lemma,
+            translations=translation_map.get(row.word_id, []),
+            learned_at=row.learned_at,
+            next_review_at=row.next_review_at,
+            stage=row.stage,
+        )
+        for row in rows
+        if row.next_review_at is not None
+    ]
+
+    return ReviewPlanOut(total=total, items=items)

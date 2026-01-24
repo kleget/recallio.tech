@@ -63,6 +63,8 @@ const TEXT = {
       title: "Разделы",
       weakTitle: "Слабые слова",
       weakDesc: "Слова, в которых чаще всего ошибаешься.",
+      planTitle: "План повторений",
+      planDesc: "Когда и какие слова будут повторяться.",
       customTitle: "Мои слова",
       customDesc: "Личный список слов для изучения.",
       reportTitle: "Сообщить о проблеме",
@@ -163,6 +165,8 @@ const TEXT = {
       title: "Sections",
       weakTitle: "Weak words",
       weakDesc: "Words where you make the most mistakes.",
+      planTitle: "Review plan",
+      planDesc: "See upcoming review dates for your words.",
       customTitle: "My words",
       customDesc: "Your personal words to learn.",
       reportTitle: "Report an issue",
@@ -264,6 +268,11 @@ export default function Home() {
 
 
   const sections = [
+    {
+      href: "/review-plan",
+      title: t.sections.planTitle,
+      desc: t.sections.planDesc
+    },
     {
       href: "/stats",
       title: t.sections.weakTitle,

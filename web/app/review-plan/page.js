@@ -1,0 +1,183 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+import { getCookie } from "../lib/client-cookies";
+import { useUiLang } from "../ui-lang-context";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
+
+const TEXT = {
+  ru: {
+    title: "План повторений",
+    tagline: "Когда и какие слова будут повторяться.",
+    loading: "Загрузка...",
+    error: "Не удалось загрузить план повторений",
+    empty: "Пока нет слов для повторения.",
+    refresh: "Обновить",
+    total: "Всего",
+    shown: "Показано",
+    columns: {
+      date: "Дата",
+      word: "Слово",
+      translation: "Перевод"
+    },
+    due: "Надо сегодня"
+  },
+  en: {
+    title: "Review plan",
+    tagline: "See when each word will be reviewed.",
+    loading: "Loading...",
+    error: "Failed to load review plan",
+    empty: "No words scheduled for review yet.",
+    refresh: "Refresh",
+    total: "Total",
+    shown: "Shown",
+    columns: {
+      date: "Date",
+      word: "Word",
+      translation: "Translation"
+    },
+    due: "Due today"
+  }
+};
+
+function formatDate(value, locale) {
+  if (!value) {
+    return "-";
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  return date.toLocaleDateString(locale);
+}
+
+async function getJson(path, token) {
+  const headers = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  const response = await fetch(`${API_BASE}${path}`, { headers });
+  if (!response.ok) {
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      const data = await response.json();
+      throw new Error(data.detail || "Request failed");
+    }
+    const message = await response.text();
+    throw new Error(message || "Request failed");
+  }
+  return response.json();
+}
+
+export default function ReviewPlanPage() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [items, setItems] = useState([]);
+  const [total, setTotal] = useState(0);
+  const { lang } = useUiLang();
+  const uiLang = lang === "en" ? "en" : "ru";
+  const t = TEXT[uiLang] || TEXT.ru;
+  const locale = uiLang === "en" ? "en-US" : "ru-RU";
+
+  const loadPlan = async () => {
+    setLoading(true);
+    setError("");
+    const token = getCookie("token");
+    if (!token) {
+      window.location.href = "/auth";
+      return;
+    }
+    try {
+      const data = await getJson("/stats/review-plan", token);
+      const list = Array.isArray(data?.items) ? data.items : [];
+      setItems(list);
+      setTotal(Number.isFinite(data?.total) ? data.total : list.length);
+    } catch (err) {
+      setError(err.message || t.error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPlan();
+  }, []);
+
+  const now = new Date();
+
+  return (
+    <main>
+      <div className="page-header">
+        <div>
+          <h1>{t.title}</h1>
+          <p>{t.tagline}</p>
+        </div>
+        <div className="page-header-actions">
+          <button type="button" className="button-secondary" onClick={loadPlan}>
+            {t.refresh}
+          </button>
+        </div>
+      </div>
+
+      {loading ? <p className="muted">{t.loading}</p> : null}
+      {error ? <p className="error">{error}</p> : null}
+
+      {!loading && !error && items.length === 0 ? (
+        <div className="panel">
+          <p className="muted">{t.empty}</p>
+        </div>
+      ) : null}
+
+      {!loading && !error && items.length > 0 ? (
+        <div className="panel">
+          <div className="weak-count schedule-summary">
+            <span>
+              {t.total}: <strong>{total}</strong>
+            </span>
+            <span>
+              {t.shown}: <strong>{items.length}</strong>
+            </span>
+          </div>
+          <div className="schedule-table-wrap">
+            <table className="schedule-table">
+              <thead>
+                <tr>
+                  <th>{t.columns.date}</th>
+                  <th>{t.columns.word}</th>
+                  <th>{t.columns.translation}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item) => {
+                  const reviewDate = item.next_review_at ? new Date(item.next_review_at) : null;
+                  const isDue = reviewDate ? reviewDate <= now : false;
+                  return (
+                    <tr
+                      key={item.word_id}
+                      className={isDue ? "schedule-row is-due" : "schedule-row"}
+                    >
+                      <td data-label={t.columns.date} className="schedule-date">
+                        {formatDate(item.next_review_at, locale)}
+                        {isDue ? <span className="schedule-due">{t.due}</span> : null}
+                      </td>
+                      <td data-label={t.columns.word} className="schedule-word">
+                        {item.word}
+                      </td>
+                      <td data-label={t.columns.translation} className="schedule-translation">
+                        {item.translations && item.translations.length
+                          ? item.translations.join(", ")
+                          : "-"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : null}
+    </main>
+  );
+}

@@ -698,11 +698,6 @@ export default function OnboardingPage() {
                 </div>
               </div>
               <div className="setting-card">
-                <div className="setting-title">{t.settings.dailyReview}</div>
-                <div className="setting-desc">{t.settings.dailyReviewHint}</div>
-                <span className="status-pill ok">{t.settings.dailyReviewValue}</span>
-              </div>
-              <div className="setting-card">
                 <div className="setting-title">{t.settings.batch}</div>
                 <div className="setting-desc">{t.settings.batchHint}</div>
                 <div className="stepper">
