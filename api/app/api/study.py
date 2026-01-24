@@ -42,6 +42,9 @@ from app.schemas.study import (
 
 router = APIRouter(prefix="/study", tags=["study"])
 
+REVIEW_INTERVALS_DAYS = [1, 3, 7, 30, 60, 120]
+REVIEW_SUCCESS_MIN_QUALITY = 3
+
 
 async def load_profile_settings(user_id, db: AsyncSession) -> tuple[LearningProfile, UserSettings]:
     profile = await get_active_learning_profile(user_id, db, require_onboarding=True)
@@ -646,7 +649,7 @@ async def fetch_review_words(
     profile_id,
     source_lang: str,
     target_lang: str,
-    limit: int,
+    limit: int | None,
     now: datetime,
     db: AsyncSession,
 ) -> list[ReviewWordOut]:
@@ -667,8 +670,9 @@ async def fetch_review_words(
             Word.lang == source_lang,
         )
         .order_by(UserWord.next_review_at, UserWord.word_id)
-        .limit(limit)
     )
+    if limit:
+        stmt = stmt.limit(limit)
     result = await db.execute(stmt)
     rows = result.fetchall()
     word_ids = [row.word_id for row in rows]
@@ -806,19 +810,15 @@ def sm2_next(
     now: datetime,
 ) -> tuple[int, int, float, datetime]:
     ef = ease_factor or 2.5
-    ef = max(1.3, ef + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)))
-    if quality < 3:
-        repetitions = 0
-        interval_days = 1
+    stage = max(0, repetitions or 0)
+    intervals = REVIEW_INTERVALS_DAYS
+    is_success = quality >= REVIEW_SUCCESS_MIN_QUALITY
+    if is_success:
+        stage = min(stage + 1, len(intervals) - 1)
     else:
-        if repetitions <= 0:
-            interval_days = 1
-        elif repetitions == 1:
-            interval_days = 6
-        else:
-            interval_days = max(1, round(interval_days * ef))
-        repetitions += 1
-    return repetitions, interval_days, ef, now + timedelta(days=interval_days)
+        stage = 0
+    next_interval = intervals[stage]
+    return stage, next_interval, ef, now + timedelta(days=next_interval)
 
 
 async def seed_review_words(
@@ -977,19 +977,20 @@ async def submit_learn(
 
     learned = 0
     if all_correct:
+        first_interval = REVIEW_INTERVALS_DAYS[0]
         rows = [
             {
                 "profile_id": profile.id,
                 "user_id": user.id,
                 "word_id": item.word_id,
                 "status": "learned",
-                "stage": 1,
-                "repetitions": 1,
-                "interval_days": 1,
+                "stage": 0,
+                "repetitions": 0,
+                "interval_days": first_interval,
                 "ease_factor": 2.5,
                 "learned_at": now,
                 "last_review_at": now,
-                "next_review_at": now + timedelta(days=1),
+                "next_review_at": now + timedelta(days=first_interval),
                 "correct_streak": 1,
                 "wrong_streak": 0,
             }
@@ -1025,10 +1026,8 @@ async def start_review(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ReviewStartOut:
-    profile, settings = await load_profile_settings(user.id, db)
-    batch_size = limit if limit and limit > 0 else settings.daily_review_words
-    if batch_size <= 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid batch size")
+    profile, _settings = await load_profile_settings(user.id, db)
+    batch_size = None
 
     now = datetime.now(timezone.utc)
     words = await fetch_review_words(

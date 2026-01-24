@@ -84,10 +84,11 @@ const TEXT = {
     settings: {
       title: "Ритм обучения",
       dailyNew: "Новых слов в день",
-      dailyReview: "Повторений в день",
+      dailyReview: "Повторы",
       batch: "Размер набора",
       dailyNewHint: "Сколько новых слов добавлять ежедневно.",
-      dailyReviewHint: "Сколько слов повторять ежедневно.",
+      dailyReviewHint: "Повторяем все слова, которые пришли по расписанию.",
+      dailyReviewValue: "Без лимита",
       batchHint: "Сколько карточек в одном подходе."
     },
     corpora: {
@@ -138,10 +139,11 @@ const TEXT = {
     settings: {
       title: "Learning pace",
       dailyNew: "New words per day",
-      dailyReview: "Reviews per day",
+      dailyReview: "Reviews",
       batch: "Batch size",
       dailyNewHint: "How many new words to add daily.",
-      dailyReviewHint: "How many words to review daily.",
+      dailyReviewHint: "All due words are shown for review.",
+      dailyReviewValue: "Unlimited",
       batchHint: "How many cards in one session."
     },
     corpora: {
@@ -698,29 +700,7 @@ export default function OnboardingPage() {
               <div className="setting-card">
                 <div className="setting-title">{t.settings.dailyReview}</div>
                 <div className="setting-desc">{t.settings.dailyReviewHint}</div>
-                <div className="stepper">
-                  <button
-                    type="button"
-                    className="button-secondary stepper-button"
-                    onClick={() => adjustValue(setDailyReview, dailyReview, -1, 1, 200)}
-                  >
-                    -
-                  </button>
-                  <input
-                    type="number"
-                    min="1"
-                    max="200"
-                    value={dailyReview}
-                    onChange={(event) => handleInputChange(setDailyReview, event, 1, 200)}
-                  />
-                  <button
-                    type="button"
-                    className="button-secondary stepper-button"
-                    onClick={() => adjustValue(setDailyReview, dailyReview, 1, 1, 200)}
-                  >
-                    +
-                  </button>
-                </div>
+                <span className="status-pill ok">{t.settings.dailyReviewValue}</span>
               </div>
               <div className="setting-card">
                 <div className="setting-title">{t.settings.batch}</div>

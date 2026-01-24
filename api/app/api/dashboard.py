@@ -211,7 +211,7 @@ async def get_dashboard(
         db,
     )
     learn_today = min(settings.daily_new_words, learn_available)
-    review_today = min(settings.daily_review_words, review_available)
+    review_today = review_available
 
     learned_series: list[LearnedSeriesPoint] = []
     start_date = None
