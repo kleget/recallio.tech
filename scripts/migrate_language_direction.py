@@ -144,6 +144,23 @@ async def migrate_profile(profile: LearningProfile, apply: bool) -> None:
         lemmas_list = sorted(lemmas_needed)
 
         target_word_map = await fetch_target_word_map(session, lemmas_list, profile.target_lang)
+        reverse_translation_map: dict[str, int] = {}
+        if lemmas_list:
+            reverse_result = await session.execute(
+                select(Translation.translation, Translation.word_id)
+                .select_from(Translation)
+                .join(Word, Word.id == Translation.word_id)
+                .where(
+                    Translation.target_lang == profile.native_lang,
+                    Translation.translation.in_(lemmas_list),
+                    Word.lang == profile.target_lang,
+                )
+            )
+            for translation, word_id in reverse_result.fetchall():
+                key = normalize_text(str(translation or ""))
+                if not key:
+                    continue
+                reverse_translation_map.setdefault(key, word_id)
 
         source_word_ids = [row.UserWord.word_id for row in user_rows if row.lang != profile.target_lang]
         translation_map: dict[int, list[str]] = {}
@@ -217,6 +234,8 @@ async def migrate_profile(profile: LearningProfile, apply: bool) -> None:
                     primary = pick_primary_translation(custom_translation_map.get(user_word.word_id, []))
                 if primary:
                     target_id = target_word_map.get(primary)
+            if not target_id:
+                target_id = reverse_translation_map.get(normalize_text(lemma))
             if not target_id:
                 missing_user += 1
                 continue
