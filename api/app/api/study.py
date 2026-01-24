@@ -613,8 +613,8 @@ async def fetch_corpus_words(
             LearnWordOut(
                 word_id=row.word_id,
                 word=row.lemma,
-                translation=sorted(translations)[0],
-                translations=sorted(translations),
+                translation=translations[0],
+                translations=translations,
                 rank=row.rank,
                 count=row.count,
             )
@@ -686,8 +686,8 @@ async def fetch_review_words(
             ReviewWordOut(
                 word_id=row.word_id,
                 word=row.lemma,
-                translation=sorted(translations)[0],
-                translations=sorted(translations),
+                translation=translations[0],
+                translations=translations,
                 learned_at=row.learned_at,
                 next_review_at=row.next_review_at,
                 stage=row.stage,
@@ -756,28 +756,47 @@ async def fetch_user_translation_map(
     if not word_ids:
         return {}
     mapping: dict[int, list[str]] = {}
-    custom_result = await db.execute(
-        select(UserCustomWord.word_id, UserCustomWord.translation).where(
-            UserCustomWord.profile_id == profile_id,
-            UserCustomWord.word_id.in_(word_ids),
-            UserCustomWord.target_lang == target_lang,
+    seen: dict[int, set[str]] = {}
+
+    def add_translation(word_id: int, value: str | None) -> None:
+        if value is None:
+            return
+        cleaned = value.strip()
+        if not cleaned:
+            return
+        key = cleaned.lower()
+        bucket = seen.setdefault(word_id, set())
+        if key in bucket:
+            return
+        bucket.add(key)
+        mapping.setdefault(word_id, []).append(cleaned)
+
+    result = await db.execute(
+        select(Translation.word_id, Translation.translation)
+        .where(
+            Translation.word_id.in_(word_ids),
+            Translation.target_lang == target_lang,
         )
+        .order_by(Translation.word_id, Translation.id)
     )
-    for word_id, translation in custom_result.fetchall():
-        mapping.setdefault(word_id, []).append(translation)
+    for word_id, translation in result.fetchall():
+        add_translation(word_id, translation)
 
     remaining = [word_id for word_id in word_ids if word_id not in mapping]
     if not remaining:
         return mapping
 
-    result = await db.execute(
-        select(Translation.word_id, Translation.translation).where(
-            Translation.word_id.in_(remaining),
-            Translation.target_lang == target_lang,
+    custom_result = await db.execute(
+        select(UserCustomWord.word_id, UserCustomWord.translation)
+        .where(
+            UserCustomWord.profile_id == profile_id,
+            UserCustomWord.word_id.in_(remaining),
+            UserCustomWord.target_lang == target_lang,
         )
+        .order_by(UserCustomWord.word_id, UserCustomWord.created_at)
     )
-    for word_id, translation in result.fetchall():
-        mapping.setdefault(word_id, []).append(translation)
+    for word_id, translation in custom_result.fetchall():
+        add_translation(word_id, translation)
     return mapping
 
 
