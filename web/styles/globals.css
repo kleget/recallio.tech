@@ -3364,6 +3364,37 @@ html[data-theme="dark"] .input-status.wrong {
   flex-wrap: wrap;
 }
 
+@media (max-width: 720px) {
+  .admin-word-card {
+    padding: 12px;
+  }
+
+  .admin-word-header {
+    gap: 10px;
+  }
+
+  .admin-word-actions {
+    width: 100%;
+  }
+
+  .admin-word-actions button {
+    flex: 1 1 140px;
+  }
+
+  .admin-translation-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .admin-translation-row input {
+    grid-column: 1 / -1;
+  }
+
+  .admin-translation-row button {
+    width: 100%;
+  }
+}
+
 .social-meta {
   font-size: 12px;
   color: var(--muted);
