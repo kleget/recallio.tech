@@ -10,6 +10,10 @@ export default function ThemeClient() {
     if (storedTheme) {
       document.documentElement.dataset.theme = storedTheme;
     }
+    const storedPalette = localStorage.getItem("palette") || getCookie("palette");
+    if (storedPalette) {
+      document.documentElement.dataset.palette = storedPalette;
+    }
   }, []);
 
   return null;

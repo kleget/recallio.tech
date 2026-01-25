@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { deleteCookie, getCookie } from "../lib/client-cookies";
+import { deleteCookie, getCookie, setCookie } from "../lib/client-cookies";
 import { useUiLang } from "../ui-lang-context";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
@@ -28,6 +28,8 @@ const TEXT = {
     interfaceLang: "Язык интерфейса",
     theme: "Тема",
     themeHint: "Переключается в верхней панели.",
+    palette: "Палитра",
+    paletteHint: "Можно переключать, чтобы выбрать самый приятный цвет.",
     nativeLang: "Мой язык",
     targetLang: "Изучаемый язык",
     onboarding: "Настройка обучения",
@@ -76,6 +78,12 @@ const TEXT = {
     },
     themeLight: "Светлая",
     themeDark: "Темная",
+    paletteOptions: {
+      slate: "Slate + Teal",
+      graphite: "Graphite + Lime",
+      ash: "Ash + Blue",
+      ink: "Ink + Sand"
+    },
     langRu: "Русский",
     langEn: "English"
   },
@@ -89,6 +97,8 @@ const TEXT = {
     interfaceLang: "Interface language",
     theme: "Theme",
     themeHint: "Toggle in the top bar.",
+    palette: "Palette",
+    paletteHint: "Switch to find the most comfortable colors.",
     nativeLang: "Native language",
     targetLang: "Learning",
     onboarding: "Learning setup",
@@ -137,6 +147,12 @@ const TEXT = {
     },
     themeLight: "Light",
     themeDark: "Dark",
+    paletteOptions: {
+      slate: "Slate + Teal",
+      graphite: "Graphite + Lime",
+      ash: "Ash + Blue",
+      ink: "Ink + Sand"
+    },
     langRu: "Russian",
     langEn: "English"
   }
@@ -213,6 +229,7 @@ export default function ProfilePage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [palette, setPalette] = useState("slate");
   const { lang } = useUiLang();
   const uiLang = lang || "ru";
 
@@ -341,6 +358,33 @@ export default function ProfilePage() {
     return "-";
   };
 
+  const paletteOptions = [
+    { value: "slate", label: t.paletteOptions?.slate || "Slate + Teal", swatch: "#2aa7a0" },
+    { value: "graphite", label: t.paletteOptions?.graphite || "Graphite + Lime", swatch: "#9fe870" },
+    { value: "ash", label: t.paletteOptions?.ash || "Ash + Blue", swatch: "#4c83ff" },
+    { value: "ink", label: t.paletteOptions?.ink || "Ink + Sand", swatch: "#d18a52" }
+  ];
+
+  const applyPalette = (nextPalette) => {
+    const normalized = ["slate", "graphite", "ash", "ink"].includes(nextPalette)
+      ? nextPalette
+      : "slate";
+    setPalette(normalized);
+    document.documentElement.dataset.palette = normalized;
+    localStorage.setItem("palette", normalized);
+    setCookie("palette", normalized);
+  };
+
+  useEffect(() => {
+    const stored =
+      localStorage.getItem("palette") ||
+      getCookie("palette") ||
+      document.documentElement.dataset.palette;
+    if (stored) {
+      applyPalette(stored);
+    }
+  }, []);
+
   const initials = profile?.email ? profile.email.slice(0, 1).toUpperCase() : "?";
   const onboardingReady = Boolean(profile?.onboarding_done);
   return (
@@ -410,6 +454,24 @@ export default function ProfilePage() {
             </div>
 
             <div className="section-stack">
+              <div className="panel">
+                <div className="panel-title">{t.palette}</div>
+                <p className="muted">{t.paletteHint}</p>
+                <div className="segmented palette-switcher" role="group" aria-label={t.palette}>
+                  {paletteOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      className={palette === option.value ? "is-active" : ""}
+                      onClick={() => applyPalette(option.value)}
+                    >
+                      <span className="palette-dot" style={{ background: option.swatch }} />
+                      <span>{option.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="panel">
                 <div className="panel-title">{t.sections.tech}</div>
                 <p className="muted">{t.techHint}</p>
