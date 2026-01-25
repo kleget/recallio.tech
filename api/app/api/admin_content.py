@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import delete, exists, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import DataError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
@@ -511,6 +511,8 @@ async def update_word(
     lemma = (data.lemma or "").strip()
     if not lemma:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Lemma required")
+    if len(lemma) > 255:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Lemma too long")
 
     word = await db.get(Word, word_id)
     if word is None:
@@ -579,6 +581,9 @@ async def update_word(
     except IntegrityError as exc:
         await db.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Word already exists") from exc
+    except DataError as exc:
+        await db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid lemma") from exc
 
     await log_audit_event(
         "admin.word.update",

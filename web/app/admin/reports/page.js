@@ -271,6 +271,7 @@ export default function AdminReportsPage() {
       window.location.href = "/auth";
       return;
     }
+    setError("");
     const nextStatus = statusMap[report.id] || report.status;
     const nextNote = noteMap[report.id];
     setSavingId(report.id);
@@ -303,6 +304,7 @@ export default function AdminReportsPage() {
       window.location.href = "/auth";
       return;
     }
+    setError("");
     const value = (wordMap[report.id] ?? report.word_value ?? report.word_text ?? "").trim();
     if (!value) {
       setError(t.error);
@@ -336,6 +338,7 @@ export default function AdminReportsPage() {
       window.location.href = "/auth";
       return;
     }
+    setError("");
     const value = (translationMap[report.id] ?? report.translation_value ?? report.translation_text ?? "").trim();
     if (!value) {
       setError(t.error);
@@ -372,6 +375,7 @@ export default function AdminReportsPage() {
       window.location.href = "/auth";
       return;
     }
+    setError("");
     setDeletingWordId(report.id);
     try {
       await deleteJson(`/admin/content/words/${report.word_id}`, token);
@@ -402,6 +406,7 @@ export default function AdminReportsPage() {
       window.location.href = "/auth";
       return;
     }
+    setError("");
     setDeletingTranslationId(report.id);
     try {
       await deleteJson(`/admin/content/translations/${report.translation_id}`, token);
