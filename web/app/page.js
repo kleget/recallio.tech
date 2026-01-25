@@ -43,7 +43,6 @@ const TEXT = {
     },
     tips: {
       title: "Как учить слова эффективнее",
-      intro: "Короткие методы, которые реально работают.",
       items: [
         {
           title: "Метод 7 строк (листок + ручка)",
@@ -60,6 +59,10 @@ const TEXT = {
         {
           title: "Метод «Гармошка»",
           desc: "Напишите столбик английских слов, затем перевод. Согните лист по линии, чтобы видеть только перевод, и пишите английские слова по памяти. Повторяйте, пока не запомните."
+        },
+        {
+          title: "Метод Quizlet",
+          desc: "Экспортируй слова в Quizlet и повторяй с телефона в свободные минуты — это удобно для закрепления."
         }
       ]
     },
@@ -151,7 +154,6 @@ const TEXT = {
     },
     tips: {
       title: "How to learn words effectively",
-      intro: "Short methods that work in practice.",
       items: [
         {
           title: "7-line method (paper + pen)",
@@ -168,6 +170,10 @@ const TEXT = {
         {
           title: "Accordion method",
           desc: "Write a column of words and translations, fold the sheet to hide the words, and recall them from the translations. Repeat until memorized."
+        },
+        {
+          title: "Quizlet method",
+          desc: "Export words to Quizlet and review on your phone during short breaks to reinforce memory."
         }
       ]
     },
@@ -551,7 +557,6 @@ export default function Home() {
           <div className="section-grid">
             <div className="panel">
               <div className="panel-title">{t.tips.title}</div>
-              <p className="muted">{t.tips.intro}</p>
               <div className="feature-grid">
                 {tips.map((item) => (
                   <div key={item.title} className="feature-card">
