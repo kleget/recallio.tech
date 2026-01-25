@@ -190,9 +190,9 @@ export default function KnownWordsPage() {
   return (
     <main>
       <div className="page-header">
-        <div>
-          <h1>{t.title}</h1>
-          <p className="muted">{t.tagline}</p>
+        <div className="page-hero-main">
+          <h1 className="page-title">{t.title}</h1>
+          <p className="page-tagline">{t.tagline}</p>
         </div>
       </div>
 
@@ -200,33 +200,36 @@ export default function KnownWordsPage() {
       {error ? <p className="error">{error}</p> : null}
 
       {profile ? (
-        <div className="panel">
-          <div className="panel-title">{t.known.title}</div>
-          <p className="muted">{t.known.hint}</p>
-          {!onboardingReady ? <p className="error">{t.known.disabled}</p> : null}
-          <div className="import-sample">
-            <div className="import-sample-title">{t.known.exampleTitle}</div>
-            <pre>{t.known.example}</pre>
-            <div className="import-sample-hint">{t.known.format}</div>
+        <div className="section-grid">
+          <div className="panel">
+            <div className="panel-title">{t.known.title}</div>
+            <p className="muted">{t.known.hint}</p>
+            {!onboardingReady ? <p className="error">{t.known.disabled}</p> : null}
+            <div className="import-sample">
+              <div className="import-sample-title">{t.known.exampleTitle}</div>
+              <pre>{t.known.example}</pre>
+              <div className="import-sample-hint">{t.known.format}</div>
+            </div>
+            <textarea
+              value={knownText}
+              onChange={(event) => setKnownText(event.target.value)}
+              placeholder={t.known.example}
+            />
+            <div className="actions">
+              <button
+                type="button"
+                onClick={importKnownWords}
+                disabled={knownImporting || !knownText.trim() || !onboardingReady}
+              >
+                {knownImporting ? t.known.importing : t.known.import}
+              </button>
+              {knownError ? <span className="error">{knownError}</span> : null}
+            </div>
           </div>
-          <textarea
-            value={knownText}
-            onChange={(event) => setKnownText(event.target.value)}
-            placeholder={t.known.example}
-          />
-          <div className="actions">
-            <button
-              type="button"
-              onClick={importKnownWords}
-              disabled={knownImporting || !knownText.trim() || !onboardingReady}
-            >
-              {knownImporting ? t.known.importing : t.known.import}
-            </button>
-            {knownError ? <span className="error">{knownError}</span> : null}
-          </div>
-          {knownStats.length ? (
-            <>
-              <div className="panel-title">{t.known.result}</div>
+
+          <div className="panel">
+            <div className="panel-title">{t.known.result}</div>
+            {knownStats.length ? (
               <div className="import-grid">
                 {knownStats.map((item) => (
                   <div key={item.label} className="import-card">
@@ -235,8 +238,10 @@ export default function KnownWordsPage() {
                   </div>
                 ))}
               </div>
-            </>
-          ) : null}
+            ) : (
+              <p className="muted">{t.known.format}</p>
+            )}
+          </div>
         </div>
       ) : null}
     </main>

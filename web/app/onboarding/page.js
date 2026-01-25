@@ -787,11 +787,6 @@ export default function OnboardingPage() {
                     </button>
                   </div>
                 </div>
-                <div className="setting-card">
-                  <div className="setting-title">{t.settings.dailyReview}</div>
-                  <div className="setting-desc">{t.settings.dailyReviewHint}</div>
-                  <div className="setting-readonly">{t.settings.dailyReviewValue}</div>
-                </div>
               </div>
             </div>
 

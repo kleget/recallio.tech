@@ -516,9 +516,9 @@ export default function CustomWordsPage() {
   return (
     <main>
       <div className="page-header">
-        <div>
-          <h1>{t.title}</h1>
-          <p>{t.tagline}</p>
+        <div className="page-hero-main">
+          <h1 className="page-title">{t.title}</h1>
+          <p className="page-tagline">{t.tagline}</p>
         </div>
         <div className="page-header-actions">
           <button type="button" className="button-secondary" onClick={goHome}>
@@ -532,77 +532,85 @@ export default function CustomWordsPage() {
 
       {!loading && !error ? (
         <>
-          <div className="panel">
-            <div className="panel-title">{t.title}</div>
-            <p className="muted">{t.hint}</p>
-            <div className="custom-inline muted">
-              <span>{t.direction}:</span>
-              <strong>{direction}</strong>
+          <div className="section-grid">
+            <div className="panel">
+              <div className="panel-title">{t.title}</div>
+              <p className="muted">{t.hint}</p>
+              <div className="custom-inline muted">
+                <span>{t.direction}:</span>
+                <strong>{direction}</strong>
+              </div>
+              <form className="custom-form" onSubmit={addWord}>
+                <div className="custom-form-row">
+                  <div>
+                    <label>{t.wordLabel}</label>
+                    <input
+                      type="text"
+                      value={form.word}
+                      onChange={(event) =>
+                        setForm((prev) => ({ ...prev, word: event.target.value }))
+                      }
+                      placeholder={t.wordPlaceholder}
+                    />
+                  </div>
+                  <div>
+                    <label>{t.translationLabel}</label>
+                    <input
+                      type="text"
+                      value={form.translation}
+                      onChange={(event) =>
+                        setForm((prev) => ({ ...prev, translation: event.target.value }))
+                      }
+                      placeholder={t.translationPlaceholder}
+                    />
+                  </div>
+                </div>
+                <div className="actions">
+                  <button type="submit" disabled={saving}>
+                    {saving ? t.adding : t.add}
+                  </button>
+                  {status ? <span className="success">{status}</span> : null}
+                  {saveError ? <span className="error">{saveError}</span> : null}
+                </div>
+              </form>
             </div>
-            <form className="custom-form" onSubmit={addWord}>
-              <div className="custom-form-row">
-                <div>
-                  <label>{t.wordLabel}</label>
-                  <input
-                    type="text"
-                    value={form.word}
-                    onChange={(event) => setForm((prev) => ({ ...prev, word: event.target.value }))}
-                    placeholder={t.wordPlaceholder}
-                  />
-                </div>
-                <div>
-                  <label>{t.translationLabel}</label>
-                  <input
-                    type="text"
-                    value={form.translation}
-                    onChange={(event) =>
-                      setForm((prev) => ({ ...prev, translation: event.target.value }))
-                    }
-                    placeholder={t.translationPlaceholder}
-                  />
-                </div>
-              </div>
-              <div className="actions">
-                <button type="submit" disabled={saving}>
-                  {saving ? t.adding : t.add}
-                </button>
-                {status ? <span className="success">{status}</span> : null}
-                {saveError ? <span className="error">{saveError}</span> : null}
-              </div>
-            </form>
-          </div>
 
-          <div className="panel">
-            <div className="panel-title">{t.importTitle}</div>
-            <p className="muted">{t.importHint}</p>
-            <div className="import-sample">
-              <div className="import-sample-title">{t.importExampleTitle}</div>
-              <pre>{t.importExample}</pre>
+            <div className="panel">
+              <div className="panel-title">{t.importTitle}</div>
+              <p className="muted">{t.importHint}</p>
+              <div className="import-sample">
+                <div className="import-sample-title">{t.importExampleTitle}</div>
+                <pre>{t.importExample}</pre>
+              </div>
+              <textarea
+                value={importText}
+                onChange={(event) => setImportText(event.target.value)}
+                placeholder={t.importExample}
+              />
+              <div className="actions">
+                <button
+                  type="button"
+                  onClick={importList}
+                  disabled={importing || !importText.trim()}
+                >
+                  {importing ? t.importing : t.importAction}
+                </button>
+                {importError ? <span className="error">{importError}</span> : null}
+              </div>
+              {importStats.length ? (
+                <>
+                  <div className="panel-title">{t.importResult}</div>
+                  <div className="import-grid">
+                    {importStats.map((item) => (
+                      <div key={item.label} className="import-card">
+                        <div className="import-title">{item.label}</div>
+                        <div className="import-value">{item.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : null}
             </div>
-            <textarea
-              value={importText}
-              onChange={(event) => setImportText(event.target.value)}
-              placeholder={t.importExample}
-            />
-            <div className="actions">
-              <button type="button" onClick={importList} disabled={importing || !importText.trim()}>
-                {importing ? t.importing : t.importAction}
-              </button>
-              {importError ? <span className="error">{importError}</span> : null}
-            </div>
-            {importStats.length ? (
-              <>
-                <div className="panel-title">{t.importResult}</div>
-                <div className="import-grid">
-                  {importStats.map((item) => (
-                    <div key={item.label} className="import-card">
-                      <div className="import-title">{item.label}</div>
-                      <div className="import-value">{item.value}</div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : null}
           </div>
 
           <div className="panel">
@@ -731,4 +739,3 @@ export default function CustomWordsPage() {
     </main>
   );
 }
-
