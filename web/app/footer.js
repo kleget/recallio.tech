@@ -5,52 +5,64 @@ import { useUiLang } from "./ui-lang-context";
 const TEXT = {
   ru: {
     title: "Recallio",
-    description:
-      "Изучение слов без перегруза: карточки, тесты и повторения по уму.",
-    tagline: "Небольшие ежедневные сессии, которые дают стабильный прогресс.",
-    navigation: "Навигация",
-    contactsTitle: "Контакты",
-    nav: {
-      home: "Главная",
+    description: "Умный словарь по сферам с регулярными повторениями.",
+    tagline: "Короткие сессии, видимый прогресс и фокус на нужной лексике.",
+    ctaPrimary: "Начать учить",
+    ctaSecondary: "Мой профиль",
+    sections: {
+      learning: "Обучение",
+      library: "Слова",
+      support: "Поддержка"
+    },
+    links: {
       learn: "Учить",
       review: "Повторять",
       reading: "Читать",
       reviewPlan: "План повторений",
-      profile: "Профиль"
+      customWords: "Мои слова",
+      knownWords: "Известные слова",
+      weakWords: "Слабые слова",
+      community: "Сообщество",
+      support: "Поддержка",
+      reports: "Репорты",
+      server: "О сервере",
+      tech: "Тех-настройки",
+      github: "GitHub",
+      telegram: "Telegram",
+      email: "Email"
     },
     developer: "Разработчик: Kleget",
-    support: "Поддержка",
-    reports: "Репорты",
-    server: "О сервере",
-    github: "GitHub",
-    telegram: "Telegram",
-    email: "Email",
-    vk: "VK",
     rights: "Все права защищены"
   },
   en: {
     title: "Recallio",
-    description:
-      "Learn words without overload: cards, recall tests, and smart reviews.",
-    tagline: "Short daily sessions that keep your progress steady.",
-    navigation: "Navigation",
-    contactsTitle: "Contacts",
-    nav: {
-      home: "Home",
+    description: "Domain-focused vocabulary with smart reviews.",
+    tagline: "Short sessions, visible progress, and the right words.",
+    ctaPrimary: "Start learning",
+    ctaSecondary: "My profile",
+    sections: {
+      learning: "Learning",
+      library: "Library",
+      support: "Support"
+    },
+    links: {
       learn: "Learn",
       review: "Review",
-      reading: "Read",
+      reading: "Reading",
       reviewPlan: "Review plan",
-      profile: "Profile"
+      customWords: "My words",
+      knownWords: "Known words",
+      weakWords: "Weak words",
+      community: "Community",
+      support: "Support",
+      reports: "Reports",
+      server: "Server info",
+      tech: "Tech settings",
+      github: "GitHub",
+      telegram: "Telegram",
+      email: "Email"
     },
     developer: "Developer: Kleget",
-    support: "Support",
-    reports: "Reports",
-    server: "Server info",
-    github: "GitHub",
-    telegram: "Telegram",
-    email: "Email",
-    vk: "VK",
     rights: "All rights reserved"
   }
 };
@@ -67,37 +79,53 @@ export default function Footer() {
         <div className="footer-brand">
           <div className="footer-title">{t.title}</div>
           <p className="footer-desc">{t.description}</p>
+          <div className="footer-cta">
+            <a className="footer-pill" href="/learn">
+              {t.ctaPrimary}
+            </a>
+            <a className="footer-pill is-ghost" href="/profile">
+              {t.ctaSecondary}
+            </a>
+          </div>
           <p className="footer-meta">{t.tagline}</p>
-          <p className="footer-meta">{t.developer}</p>
         </div>
-        <div className="footer-columns">
+        <div className="footer-grid">
           <div className="footer-col">
-            <div className="footer-links-title">{t.navigation}</div>
+            <div className="footer-links-title">{t.sections.learning}</div>
             <div className="footer-link-list">
-              <a href="/">{t.nav.home}</a>
-              <a href="/learn">{t.nav.learn}</a>
-              <a href="/review">{t.nav.review}</a>
-              <a href="/reading">{t.nav.reading}</a>
-              <a href="/review-plan">{t.nav.reviewPlan}</a>
-              <a href="/profile">{t.nav.profile}</a>
+              <a href="/learn">{t.links.learn}</a>
+              <a href="/review">{t.links.review}</a>
+              <a href="/reading">{t.links.reading}</a>
+              <a href="/review-plan">{t.links.reviewPlan}</a>
             </div>
           </div>
           <div className="footer-col">
-            <div className="footer-links-title">{t.contactsTitle}</div>
+            <div className="footer-links-title">{t.sections.library}</div>
             <div className="footer-link-list">
-              <a href="/support">{t.support}</a>
-              <a href="/reports">{t.reports}</a>
-              <a href="/server">{t.server}</a>
-              <a href="https://github.com/kleget/recallio.tech" target="_blank" rel="noopener noreferrer">
-                {t.github}
+              <a href="/custom-words">{t.links.customWords}</a>
+              <a href="/known-words">{t.links.knownWords}</a>
+              <a href="/stats">{t.links.weakWords}</a>
+              <a href="/community">{t.links.community}</a>
+            </div>
+          </div>
+          <div className="footer-col">
+            <div className="footer-links-title">{t.sections.support}</div>
+            <div className="footer-link-list">
+              <a href="/support">{t.links.support}</a>
+              <a href="/reports">{t.links.reports}</a>
+              <a href="/server">{t.links.server}</a>
+              <a href="/tech">{t.links.tech}</a>
+              <a
+                href="https://github.com/kleget/recallio.tech"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {t.links.github}
               </a>
               <a href="https://t.me/kleget" target="_blank" rel="noopener noreferrer">
-                {t.telegram}
+                {t.links.telegram}
               </a>
-              <a href="mailto:kleget_dev@mail.ru">{t.email}</a>
-              <a href="https://vk.com/kleget" target="_blank" rel="noopener noreferrer">
-                {t.vk}
-              </a>
+              <a href="mailto:kleget_dev@mail.ru">{t.links.email}</a>
             </div>
           </div>
         </div>
@@ -106,6 +134,7 @@ export default function Footer() {
         <div className="footer-rights">
           © {year} {t.title}. {t.rights}.
         </div>
+        <div className="footer-meta">{t.developer}</div>
       </div>
     </footer>
   );
