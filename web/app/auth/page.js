@@ -5,6 +5,7 @@ import { useUiLang } from "../ui-lang-context";
 const TEXT = {
   ru: {
     title: "Recallio — тематические слова без перегруза",
+    phrase: "Умный словарь по сферам с регулярными повторениями.",
     subtitle:
       "Сферы для биологов, математиков, айтишников и других. Карточки, тесты на вспоминание и прогресс за 10-15 минут в день.",
     why: "Зачем: учишь только нужное по своей сфере и тратишь минимум времени.",
@@ -96,6 +97,7 @@ const TEXT = {
   },
   en: {
     title: "Recallio — themed words without overload",
+    phrase: "Domain-focused vocabulary with smart reviews.",
     subtitle:
       "Domains for biologists, engineers, IT and more. Flashcards, recall tests, and progress in 10-15 minutes a day.",
     why: "Why: learn only what you need for your domain and spend minimal time.",
@@ -206,6 +208,7 @@ export default function AuthLandingPage() {
         <div className="landing-hero-grid">
           <div className="landing-hero-text">
             <p className="landing-eyebrow">Recallio</p>
+            <p className="landing-phrase">{t.phrase}</p>
             <h1>{t.title}</h1>
             <p className="landing-lead">{t.subtitle}</p>
             <p className="landing-why">{t.why}</p>

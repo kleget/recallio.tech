@@ -7,13 +7,6 @@ const TEXT = {
     title: "Recallio",
     description: "Умный словарь по сферам с регулярными повторениями.",
     tagline: "Короткие сессии, видимый прогресс и фокус на нужной лексике.",
-    ctaPrimary: "Начать учить",
-    ctaSecondary: "Мой профиль",
-    sections: {
-      learning: "Обучение",
-      library: "Слова",
-      support: "Поддержка"
-    },
     links: {
       learn: "Учить",
       review: "Повторять",
@@ -38,13 +31,6 @@ const TEXT = {
     title: "Recallio",
     description: "Domain-focused vocabulary with smart reviews.",
     tagline: "Short sessions, visible progress, and the right words.",
-    ctaPrimary: "Start learning",
-    ctaSecondary: "My profile",
-    sections: {
-      learning: "Learning",
-      library: "Library",
-      support: "Support"
-    },
     links: {
       learn: "Learn",
       review: "Review",
@@ -79,55 +65,32 @@ export default function Footer() {
         <div className="footer-brand">
           <div className="footer-title">{t.title}</div>
           <p className="footer-desc">{t.description}</p>
-          <div className="footer-cta">
-            <a className="footer-pill" href="/learn">
-              {t.ctaPrimary}
-            </a>
-            <a className="footer-pill is-ghost" href="/profile">
-              {t.ctaSecondary}
-            </a>
-          </div>
           <p className="footer-meta">{t.tagline}</p>
         </div>
-        <div className="footer-grid">
-          <div className="footer-col">
-            <div className="footer-links-title">{t.sections.learning}</div>
-            <div className="footer-link-list">
-              <a href="/learn">{t.links.learn}</a>
-              <a href="/review">{t.links.review}</a>
-              <a href="/reading">{t.links.reading}</a>
-              <a href="/review-plan">{t.links.reviewPlan}</a>
-            </div>
-          </div>
-          <div className="footer-col">
-            <div className="footer-links-title">{t.sections.library}</div>
-            <div className="footer-link-list">
-              <a href="/custom-words">{t.links.customWords}</a>
-              <a href="/known-words">{t.links.knownWords}</a>
-              <a href="/stats">{t.links.weakWords}</a>
-              <a href="/community">{t.links.community}</a>
-            </div>
-          </div>
-          <div className="footer-col">
-            <div className="footer-links-title">{t.sections.support}</div>
-            <div className="footer-link-list">
-              <a href="/support">{t.links.support}</a>
-              <a href="/reports">{t.links.reports}</a>
-              <a href="/server">{t.links.server}</a>
-              <a href="/tech">{t.links.tech}</a>
-              <a
-                href="https://github.com/kleget/recallio.tech"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {t.links.github}
-              </a>
-              <a href="https://t.me/kleget" target="_blank" rel="noopener noreferrer">
-                {t.links.telegram}
-              </a>
-              <a href="mailto:kleget_dev@mail.ru">{t.links.email}</a>
-            </div>
-          </div>
+        <div className="footer-links">
+          <a href="/learn">{t.links.learn}</a>
+          <a href="/review">{t.links.review}</a>
+          <a href="/reading">{t.links.reading}</a>
+          <a href="/review-plan">{t.links.reviewPlan}</a>
+          <a href="/custom-words">{t.links.customWords}</a>
+          <a href="/known-words">{t.links.knownWords}</a>
+          <a href="/stats">{t.links.weakWords}</a>
+          <a href="/community">{t.links.community}</a>
+          <a href="/support">{t.links.support}</a>
+          <a href="/reports">{t.links.reports}</a>
+          <a href="/server">{t.links.server}</a>
+          <a href="/tech">{t.links.tech}</a>
+          <a
+            href="https://github.com/kleget/recallio.tech"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {t.links.github}
+          </a>
+          <a href="https://t.me/kleget" target="_blank" rel="noopener noreferrer">
+            {t.links.telegram}
+          </a>
+          <a href="mailto:kleget_dev@mail.ru">{t.links.email}</a>
         </div>
       </div>
       <div className="footer-bottom">

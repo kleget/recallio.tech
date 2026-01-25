@@ -7,19 +7,19 @@ import Footer from "./footer";
 import { UiLangProvider } from "./ui-lang-context";
 import OnboardingGate from "./onboarding-gate";
 
+const META_DESCRIPTION = "Умный словарь по сферам с регулярными повторениями.";
+
 export const metadata = {
   metadataBase: new URL(process.env.APP_BASE_URL || "https://recallio.tech"),
   title: "Recallio",
-  description:
-    "Recallio — сервис для изучения слов по тематическим сферам с короткими ежедневными сессиями и видимым прогрессом.",
+  description: META_DESCRIPTION,
   icons: {
     icon: "/brand/R_main.png",
     apple: "/brand/R_main.png"
   },
   openGraph: {
     title: "Recallio",
-    description:
-      "Recallio — сервис для изучения слов по тематическим сферам с короткими ежедневными сессиями и видимым прогрессом.",
+    description: META_DESCRIPTION,
     url: "/",
     siteName: "Recallio",
     type: "website",
@@ -35,8 +35,7 @@ export const metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Recallio",
-    description:
-      "Recallio — сервис для изучения слов по тематическим сферам с короткими ежедневными сессиями и видимым прогрессом.",
+    description: META_DESCRIPTION,
     images: ["/brand/Recallio_main.png"]
   }
 };
