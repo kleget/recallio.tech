@@ -7,6 +7,7 @@ import { useUiLang } from "../ui-lang-context";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 const DEFAULT_LIMIT = 100;
+const CUSTOM_REVIEW_STORAGE_KEY = "review_custom_word_ids";
 
 const TEXT = {
   ru: {
@@ -16,6 +17,8 @@ const TEXT = {
     error: "Не удалось загрузить статистику",
     empty: "Пока нет ошибок для статистики.",
     refresh: "Обновить",
+    reviewAction: "Повторить слабые слова",
+    exportAction: "Экспорт в Quizlet",
     accuracy: "Точность",
     wrong: "Ошибки",
     correct: "Верно",
@@ -29,7 +32,15 @@ const TEXT = {
     sortAsc: "По возрастанию",
     sortDesc: "По убыванию",
     total: "Всего",
-    shown: "Показано"
+    shown: "Показано",
+    export: {
+      title: "Экспорт в Quizlet",
+      hint: "Формат: слово TAB перевод. Подходит для импорта в Quizlet.",
+      copy: "Скопировать",
+      download: "Скачать файл",
+      close: "Закрыть",
+      empty: "Нет слов для экспорта."
+    }
   },
   en: {
     title: "Weak words",
@@ -38,6 +49,8 @@ const TEXT = {
     error: "Failed to load stats",
     empty: "No error stats yet.",
     refresh: "Refresh",
+    reviewAction: "Review weak words",
+    exportAction: "Export to Quizlet",
     accuracy: "Accuracy",
     wrong: "Wrong",
     correct: "Correct",
@@ -51,7 +64,15 @@ const TEXT = {
     sortAsc: "Ascending",
     sortDesc: "Descending",
     total: "Total",
-    shown: "Shown"
+    shown: "Shown",
+    export: {
+      title: "Export to Quizlet",
+      hint: "Format: term TAB definition. Suitable for Quizlet import.",
+      copy: "Copy",
+      download: "Download file",
+      close: "Close",
+      empty: "No words to export."
+    }
   }
 };
 
@@ -84,6 +105,44 @@ async function getJson(path, token) {
   return response.json();
 }
 
+const collectTranslations = (item) => {
+  const list = Array.isArray(item?.translations) ? item.translations : [];
+  const seen = new Set();
+  const result = [];
+  list.forEach((value) => {
+    const trimmed = (value || "").trim();
+    if (!trimmed) {
+      return;
+    }
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) {
+      return;
+    }
+    seen.add(key);
+    result.push(trimmed);
+  });
+  return result;
+};
+
+const getTranslationLine = (item) => collectTranslations(item).join(", ");
+
+const buildQuizletText = (items) =>
+  (items || [])
+    .map((item) => `${item.word}\t${getTranslationLine(item)}`)
+    .join("\n");
+
+const downloadTextFile = (filename, text) => {
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+};
+
 export default function StatsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -91,6 +150,13 @@ export default function StatsPage() {
   const [total, setTotal] = useState(0);
   const [sortKey, setSortKey] = useState("wrong");
   const [sortDir, setSortDir] = useState("desc");
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportError, setExportError] = useState("");
+  const [exportPayload, setExportPayload] = useState({
+    text: "",
+    count: 0,
+    filename: ""
+  });
   const { lang } = useUiLang();
   const uiLang = lang === "en" ? "en" : "ru";
   const t = TEXT[uiLang] || TEXT.ru;
@@ -164,6 +230,42 @@ export default function StatsPage() {
     setSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
   };
 
+  const startWeakReview = () => {
+    const ids = sortedItems.map((item) => item.word_id).filter(Boolean);
+    if (!ids.length) {
+      return;
+    }
+    localStorage.setItem(CUSTOM_REVIEW_STORAGE_KEY, JSON.stringify(ids));
+    window.location.href = "/review?source=weak";
+  };
+
+  const openExport = () => {
+    const text = buildQuizletText(sortedItems);
+    setExportPayload({
+      text,
+      count: sortedItems.length,
+      filename: "weak-words.txt"
+    });
+    setExportError("");
+    setExportOpen(true);
+  };
+
+  const closeExport = () => {
+    setExportOpen(false);
+    setExportError("");
+  };
+
+  const copyExport = async () => {
+    if (!exportPayload.text) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(exportPayload.text);
+    } catch (err) {
+      setExportError(err.message || "Copy failed");
+    }
+  };
+
   const showToolbar = !loading && !error && (total > 0 || items.length > 0);
 
   return (
@@ -191,13 +293,33 @@ export default function StatsPage() {
 
       {showToolbar ? (
         <div className="weak-toolbar">
-          <div className="weak-count">
-            <span>
-              {t.total}: <strong>{total}</strong>
-            </span>
-            <span>
-              {t.shown}: <strong>{sortedItems.length}</strong>
-            </span>
+          <div className="weak-toolbar-main">
+            <div className="weak-count">
+              <span>
+                {t.total}: <strong>{total}</strong>
+              </span>
+              <span>
+                {t.shown}: <strong>{sortedItems.length}</strong>
+              </span>
+            </div>
+            <div className="weak-actions">
+              <button
+                type="button"
+                className="button-primary"
+                onClick={startWeakReview}
+                disabled={sortedItems.length === 0}
+              >
+                {t.reviewAction}
+              </button>
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={openExport}
+                disabled={sortedItems.length === 0}
+              >
+                {t.exportAction}
+              </button>
+            </div>
           </div>
           <div className="weak-sorts">
             <div className="weak-sort-field">
@@ -250,6 +372,46 @@ export default function StatsPage() {
               </div>
             </div>
           ))}
+        </div>
+      ) : null}
+
+      {exportOpen ? (
+        <div className="modal-overlay" onClick={closeExport}>
+          <div className="modal-card export-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <div className="modal-title">{t.export.title}</div>
+                <div className="modal-sub">
+                  {exportPayload.count} / {sortedItems.length}
+                </div>
+              </div>
+              <button type="button" className="button-secondary modal-close" onClick={closeExport}>
+                {t.export.close}
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="muted">{t.export.hint}</p>
+              {exportPayload.text ? (
+                <textarea className="export-textarea" readOnly value={exportPayload.text} />
+              ) : (
+                <p className="muted">{t.export.empty}</p>
+              )}
+              {exportError ? <p className="error">{exportError}</p> : null}
+            </div>
+            <div className="modal-footer">
+              <button type="button" onClick={copyExport} disabled={!exportPayload.text}>
+                {t.export.copy}
+              </button>
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => downloadTextFile(exportPayload.filename, exportPayload.text)}
+                disabled={!exportPayload.text}
+              >
+                {t.export.download}
+              </button>
+            </div>
+          </div>
         </div>
       ) : null}
     </main>

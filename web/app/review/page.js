@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { getCookie } from "../lib/client-cookies";
 import { useUiLang } from "../ui-lang-context";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 const READ_SECONDS = 30;
+const CUSTOM_REVIEW_STORAGE_KEY = "review_custom_word_ids";
 
 const TEXT = {
   ru: {
@@ -211,6 +213,7 @@ export default function ReviewPage() {
     filename: ""
   });
   const { lang } = useUiLang();
+  const searchParams = useSearchParams();
   const uiLang = lang === "en" ? "en" : "ru";
   const t = TEXT[uiLang] || TEXT.ru;
   const locale = uiLang === "en" ? "en-US" : "ru-RU";
@@ -226,7 +229,7 @@ export default function ReviewPage() {
     return date.toLocaleDateString(locale);
   };
 
-  const loadWords = async () => {
+  const loadWords = async (customIds) => {
     setLoading(true);
     setError("");
     setResult(null);
@@ -236,7 +239,10 @@ export default function ReviewPage() {
       return;
     }
     try {
-      const data = await postJson("/study/review/start", {}, token);
+      const data =
+        Array.isArray(customIds) && customIds.length
+          ? await postJson("/study/review/start/custom", { word_ids: customIds }, token)
+          : await postJson("/study/review/start", {}, token);
       setWords(data.words || []);
       setSessionId(data.session_id);
       const initialAnswers = {};
@@ -286,8 +292,28 @@ export default function ReviewPage() {
   };
 
   useEffect(() => {
+    const source = searchParams?.get("source");
+    if (source === "weak") {
+      let ids = [];
+      const raw = localStorage.getItem(CUSTOM_REVIEW_STORAGE_KEY);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            ids = parsed.map((value) => Number(value)).filter((value) => Number.isFinite(value));
+          }
+        } catch (err) {
+          ids = [];
+        }
+      }
+      localStorage.removeItem(CUSTOM_REVIEW_STORAGE_KEY);
+      if (ids.length) {
+        loadWords(ids);
+        return;
+      }
+    }
     loadWords();
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     if (phase !== "cards") {

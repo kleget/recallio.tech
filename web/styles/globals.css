@@ -3083,6 +3083,13 @@ html[data-theme="dark"] .input-status.wrong {
   margin: 16px 0;
 }
 
+.weak-toolbar-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
 .weak-count {
   display: flex;
   gap: 12px;
@@ -3094,6 +3101,12 @@ html[data-theme="dark"] .input-status.wrong {
 .weak-count strong {
   color: var(--text);
   font-weight: 600;
+}
+
+.weak-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .weak-sorts {

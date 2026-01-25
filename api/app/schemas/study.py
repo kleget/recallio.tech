@@ -64,6 +64,10 @@ class ReviewStartOut(BaseModel):
     words: list[ReviewWordOut]
 
 
+class ReviewStartCustomRequest(BaseModel):
+    word_ids: list[int]
+
+
 class ReviewSubmitWord(BaseModel):
     word_id: int
     answer: str = ""

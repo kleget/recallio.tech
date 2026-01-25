@@ -39,18 +39,30 @@ async def weak_words(
         if cache and cache.updated_at and now - cache.updated_at <= timedelta(seconds=CACHE_TTL_SECONDS):
             return WeakWordsOut(**cache.data)
 
+    wrong_count_expr = func.sum(case((ReviewEvent.result == "wrong", 1), else_=0))
+    correct_count_expr = func.sum(case((ReviewEvent.result == "correct", 1), else_=0))
     stats_subq = (
         select(
             ReviewEvent.word_id.label("word_id"),
-            func.sum(case((ReviewEvent.result == "wrong", 1), else_=0)).label("wrong_count"),
-            func.sum(case((ReviewEvent.result == "correct", 1), else_=0)).label("correct_count"),
+            wrong_count_expr.label("wrong_count"),
+            correct_count_expr.label("correct_count"),
         )
         .where(ReviewEvent.profile_id == profile.id)
         .group_by(ReviewEvent.word_id)
+        .having(wrong_count_expr > 0)
         .subquery()
     )
 
-    total_result = await db.execute(select(func.count()).select_from(stats_subq))
+    total_result = await db.execute(
+        select(func.count())
+        .select_from(stats_subq)
+        .join(Word, Word.id == stats_subq.c.word_id)
+        .join(
+            UserWord,
+            and_(UserWord.profile_id == profile.id, UserWord.word_id == stats_subq.c.word_id),
+        )
+        .where(Word.lang == profile.target_lang)
+    )
     total_count = int(total_result.scalar_one() or 0)
 
     stmt = (

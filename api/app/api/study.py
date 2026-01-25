@@ -35,6 +35,7 @@ from app.schemas.study import (
     LearnSubmitRequest,
     LearnWordOut,
     ReviewSeedOut,
+    ReviewStartCustomRequest,
     ReviewStartOut,
     ReviewSubmitOut,
     ReviewSubmitRequest,
@@ -697,6 +698,71 @@ async def fetch_review_words(
     return results
 
 
+async def fetch_review_words_by_ids(
+    profile_id,
+    source_lang: str,
+    target_lang: str,
+    word_ids: list[int],
+    db: AsyncSession,
+) -> list[ReviewWordOut]:
+    if not word_ids:
+        return []
+    unique_ids = []
+    seen = set()
+    for word_id in word_ids:
+        try:
+            value = int(word_id)
+        except (TypeError, ValueError):
+            continue
+        if value in seen:
+            continue
+        seen.add(value)
+        unique_ids.append(value)
+    if not unique_ids:
+        return []
+
+    stmt = (
+        select(
+            UserWord.word_id,
+            Word.lemma,
+            UserWord.learned_at,
+            UserWord.next_review_at,
+            UserWord.stage,
+        )
+        .select_from(UserWord)
+        .join(Word, Word.id == UserWord.word_id)
+        .where(
+            UserWord.profile_id == profile_id,
+            UserWord.word_id.in_(unique_ids),
+            Word.lang == source_lang,
+        )
+    )
+    result = await db.execute(stmt)
+    rows = result.fetchall()
+    rows_by_id = {row.word_id: row for row in rows}
+    translation_map = await fetch_user_translation_map(profile_id, list(rows_by_id), target_lang, db)
+    results: list[ReviewWordOut] = []
+    for word_id in unique_ids:
+        row = rows_by_id.get(word_id)
+        if row is None:
+            continue
+        translations = translation_map.get(word_id, [])
+        if not translations:
+            continue
+        results.append(
+            ReviewWordOut(
+                word_id=row.word_id,
+                word=row.lemma,
+                translation=translations[0],
+                translations=translations,
+                learned_at=row.learned_at,
+                next_review_at=row.next_review_at,
+                stage=row.stage,
+            )
+        )
+    return results
+
+
 def normalize_text(value: str) -> str:
     return " ".join(value.lower().split())
 
@@ -1142,6 +1208,41 @@ async def start_review(
         profile.native_lang,
         batch_size,
         now,
+        db,
+    )
+    if not words:
+        return ReviewStartOut(session_id=None, words=[])
+
+    session = StudySession(
+        profile_id=profile.id,
+        user_id=user.id,
+        session_type="review",
+        words_total=len(words),
+    )
+    db.add(session)
+    await db.flush()
+    await db.commit()
+
+    return ReviewStartOut(session_id=session.id, words=words)
+
+
+@router.post("/review/start/custom", response_model=ReviewStartOut)
+async def start_review_custom(
+    data: ReviewStartCustomRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ReviewStartOut:
+    profile, _settings = await load_profile_settings(user.id, db)
+    if not data.word_ids:
+        return ReviewStartOut(session_id=None, words=[])
+    if len(data.word_ids) > 500:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Too many words")
+
+    words = await fetch_review_words_by_ids(
+        profile.id,
+        profile.target_lang,
+        profile.native_lang,
+        data.word_ids,
         db,
     )
     if not words:
