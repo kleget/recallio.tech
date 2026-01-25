@@ -65,6 +65,8 @@ const TEXT = {
       weakDesc: "Слова, в которых чаще всего ошибаешься.",
       planTitle: "План повторений",
       planDesc: "Когда и какие слова будут повторяться.",
+      knownTitle: "Известные слова",
+      knownDesc: "Импорт слов, которые ты уже знаешь.",
       customTitle: "Мои слова",
       customDesc: "Личный список слов для изучения.",
       reportTitle: "Сообщить о проблеме",
@@ -167,6 +169,8 @@ const TEXT = {
       weakDesc: "Words where you make the most mistakes.",
       planTitle: "Review plan",
       planDesc: "See upcoming review dates for your words.",
+      knownTitle: "Known words",
+      knownDesc: "Import words you already know.",
       customTitle: "My words",
       customDesc: "Your personal words to learn.",
       reportTitle: "Report an issue",
@@ -282,6 +286,11 @@ export default function Home() {
       href: "/custom-words",
       title: t.sections.customTitle,
       desc: t.sections.customDesc
+    },
+    {
+      href: "/known-words",
+      title: t.sections.knownTitle,
+      desc: t.sections.knownDesc
     },
     {
       href: "/reports",

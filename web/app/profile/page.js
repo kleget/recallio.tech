@@ -61,28 +61,6 @@ const TEXT = {
       tech: "Открыть тех-настройки",
       help: "Открыть инструкцию"
     },
-    known: {
-      title: "Известные слова",
-      hint:
-        "Слова, которые ты уже знаешь. Импорт отмечает их как известные и не предлагает в изучении.",
-      disabled: "Сначала нужно пройти настройку обучения.",
-      format: "Формат: слово - перевод",
-      exampleTitle: "Пример",
-      example:
-        "dog - собака\nclock - часы\nwarm - тепло\nокно - window\nмышь - mouse",
-      import: "Импортировать",
-      importing: "Импорт...",
-      result: "Результат импорта",
-      stats: {
-        totalLines: "Всего строк",
-        parsedLines: "Распознано",
-        invalidLines: "Ошибка формата",
-        wordsFound: "Найдено",
-        wordsMissing: "Не найдено",
-        inserted: "Добавлено",
-        skipped: "Пропущено"
-      }
-    },
     danger: {
       title: "Удаление аккаунта",
       subtitle: "Подтвердите удаление аккаунта.",
@@ -144,28 +122,6 @@ const TEXT = {
       tech: "Open tech settings",
       help: "Open help"
     },
-    known: {
-      title: "Known words",
-      hint:
-        "Words you already know. Import marks them as known and removes them from learning.",
-      disabled: "Complete learning setup first.",
-      format: "Format: word - translation",
-      exampleTitle: "Example",
-      example:
-        "dog - собака\nclock - часы\nwarm - тепло\nокно - window\nмышь - mouse",
-      import: "Import",
-      importing: "Importing...",
-      result: "Import result",
-      stats: {
-        totalLines: "Total lines",
-        parsedLines: "Parsed",
-        invalidLines: "Invalid",
-        wordsFound: "Found",
-        wordsMissing: "Missing",
-        inserted: "Inserted",
-        skipped: "Skipped"
-      }
-    },
     danger: {
       title: "Delete account",
       subtitle: "Confirm account deletion.",
@@ -192,28 +148,6 @@ async function getJson(path, token) {
     headers.Authorization = `Bearer ${token}`;
   }
   const response = await fetch(`${API_BASE}${path}`, { headers });
-  if (!response.ok) {
-    const contentType = response.headers.get("content-type") || "";
-    if (contentType.includes("application/json")) {
-      const data = await response.json();
-      throw new Error(data.detail || "Request failed");
-    }
-    const message = await response.text();
-    throw new Error(message || "Request failed");
-  }
-  return response.json();
-}
-
-async function postJson(path, payload, token) {
-  const headers = { "Content-Type": "application/json" };
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-  const response = await fetch(`${API_BASE}${path}`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(payload)
-  });
   if (!response.ok) {
     const contentType = response.headers.get("content-type") || "";
     if (contentType.includes("application/json")) {
@@ -273,10 +207,6 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [profile, setProfile] = useState(null);
-  const [knownText, setKnownText] = useState("");
-  const [knownResult, setKnownResult] = useState(null);
-  const [knownError, setKnownError] = useState("");
-  const [knownImporting, setKnownImporting] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarError, setAvatarError] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -317,10 +247,6 @@ export default function ProfilePage() {
         setLoading(false);
       });
   }, []);
-
-  useEffect(() => {
-    setKnownError("");
-  }, [knownText]);
 
   const logout = () => {
     deleteCookie("token");
@@ -393,32 +319,6 @@ export default function ProfilePage() {
     event.target.value = "";
   };
 
-  const importKnownWords = async () => {
-    setKnownError("");
-    setKnownResult(null);
-    if (!onboardingReady) {
-      setKnownError(t.known.disabled);
-      return;
-    }
-    const token = getCookie("token");
-    if (!token) {
-      window.location.href = "/auth";
-      return;
-    }
-    if (!knownText.trim()) {
-      return;
-    }
-    setKnownImporting(true);
-    try {
-      const data = await postJson("/onboarding/known-words", { text: knownText }, token);
-      setKnownResult(data);
-    } catch (err) {
-      setKnownError(err.message || t.saveError);
-    } finally {
-      setKnownImporting(false);
-    }
-  };
-
   const goOnboarding = () => {
     window.location.href = "/onboarding";
   };
@@ -443,18 +343,6 @@ export default function ProfilePage() {
 
   const initials = profile?.email ? profile.email.slice(0, 1).toUpperCase() : "?";
   const onboardingReady = Boolean(profile?.onboarding_done);
-  const knownStats = knownResult
-    ? [
-        { label: t.known.stats.totalLines, value: knownResult.total_lines },
-        { label: t.known.stats.parsedLines, value: knownResult.parsed_lines },
-        { label: t.known.stats.invalidLines, value: knownResult.invalid_lines },
-        { label: t.known.stats.wordsFound, value: knownResult.words_found },
-        { label: t.known.stats.wordsMissing, value: knownResult.words_missing },
-        { label: t.known.stats.inserted, value: knownResult.inserted },
-        { label: t.known.stats.skipped, value: knownResult.skipped_existing }
-      ]
-    : [];
-
   return (
     <main>
       <div className="page-header">
@@ -515,45 +403,6 @@ export default function ProfilePage() {
               </div>
             </div>
             <p className="muted profile-learning-hint">{t.learningHint}</p>
-          </div>
-
-          <div className="panel">
-            <div className="panel-title">{t.known.title}</div>
-            <p className="muted">{t.known.hint}</p>
-            {!onboardingReady ? <p className="error">{t.known.disabled}</p> : null}
-            <div className="import-sample">
-              <div className="import-sample-title">{t.known.exampleTitle}</div>
-              <pre>{t.known.example}</pre>
-              <div className="import-sample-hint">{t.known.format}</div>
-            </div>
-            <textarea
-              value={knownText}
-              onChange={(event) => setKnownText(event.target.value)}
-              placeholder={t.known.example}
-            />
-            <div className="actions">
-              <button
-                type="button"
-                onClick={importKnownWords}
-                disabled={knownImporting || !knownText.trim() || !onboardingReady}
-              >
-                {knownImporting ? t.known.importing : t.known.import}
-              </button>
-              {knownError ? <span className="error">{knownError}</span> : null}
-            </div>
-            {knownStats.length ? (
-              <>
-                <div className="panel-title">{t.known.result}</div>
-                <div className="import-grid">
-                  {knownStats.map((item) => (
-                    <div key={item.label} className="import-card">
-                      <div className="import-title">{item.label}</div>
-                      <div className="import-value">{item.value}</div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : null}
           </div>
 
           <div className="panel">
