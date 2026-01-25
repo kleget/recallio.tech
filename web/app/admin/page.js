@@ -303,9 +303,9 @@ export default function AdminPage() {
   return (
     <main>
       <div className="page-header">
-        <div>
-          <h1>{t.title}</h1>
-          <p>{t.tagline}</p>
+        <div className="page-hero-main">
+          <h1 className="page-title">{t.title}</h1>
+          <p className="page-tagline">{t.tagline}</p>
         </div>
         <div className="page-header-actions">
           <button type="button" className="button-secondary" onClick={loadSummary}>

@@ -19,64 +19,64 @@ const resolveAvatarUrl = (value) => {
 
 const TEXT = {
   ru: {
-    title: "Профиль",
-    tagline: "Твои данные и настройки аккаунта.",
-    loading: "Загрузка...",
-    error: "Не удалось загрузить профиль",
+    title: "ÃÅ¸Ã‘â‚¬ÃÂ¾Ã‘â€žÃÂ¸ÃÂ»Ã‘Å’",
+    tagline: "ÃÂ¢ÃÂ²ÃÂ¾ÃÂ¸ ÃÂ´ÃÂ°ÃÂ½ÃÂ½Ã‘â€¹ÃÂµ ÃÂ¸ ÃÂ½ÃÂ°Ã‘ÂÃ‘â€šÃ‘â‚¬ÃÂ¾ÃÂ¹ÃÂºÃÂ¸ ÃÂ°ÃÂºÃÂºÃÂ°Ã‘Æ’ÃÂ½Ã‘â€šÃÂ°.",
+    loading: "Ãâ€”ÃÂ°ÃÂ³Ã‘â‚¬Ã‘Æ’ÃÂ·ÃÂºÃÂ°...",
+    error: "ÃÂÃÂµ Ã‘Æ’ÃÂ´ÃÂ°ÃÂ»ÃÂ¾Ã‘ÂÃ‘Å’ ÃÂ·ÃÂ°ÃÂ³Ã‘â‚¬Ã‘Æ’ÃÂ·ÃÂ¸Ã‘â€šÃ‘Å’ ÃÂ¿Ã‘â‚¬ÃÂ¾Ã‘â€žÃÂ¸ÃÂ»Ã‘Å’",
     email: "Email",
-    interfaceSection: "Интерфейс",
-    interfaceLang: "Язык интерфейса",
-    theme: "Тема",
-    themeHint: "Переключается в верхней панели.",
-    nativeLang: "Мой язык",
-    targetLang: "Изучаемый язык",
-    onboarding: "Настройка обучения",
-    onboardingReady: "Готово",
-    onboardingPending: "Не завершено",
-    save: "Сохранить",
-    saving: "Сохранение...",
-    saved: "Сохранено",
-    saveError: "Не удалось сохранить настройки",
+    interfaceSection: "ÃËœÃÂ½Ã‘â€šÃÂµÃ‘â‚¬Ã‘â€žÃÂµÃÂ¹Ã‘Â",
+    interfaceLang: "ÃÂ¯ÃÂ·Ã‘â€¹ÃÂº ÃÂ¸ÃÂ½Ã‘â€šÃÂµÃ‘â‚¬Ã‘â€žÃÂµÃÂ¹Ã‘ÂÃÂ°",
+    theme: "ÃÂ¢ÃÂµÃÂ¼ÃÂ°",
+    themeHint: "ÃÅ¸ÃÂµÃ‘â‚¬ÃÂµÃÂºÃÂ»Ã‘Å½Ã‘â€¡ÃÂ°ÃÂµÃ‘â€šÃ‘ÂÃ‘Â ÃÂ² ÃÂ²ÃÂµÃ‘â‚¬Ã‘â€¦ÃÂ½ÃÂµÃÂ¹ ÃÂ¿ÃÂ°ÃÂ½ÃÂµÃÂ»ÃÂ¸.",
+    nativeLang: "ÃÅ“ÃÂ¾ÃÂ¹ Ã‘ÂÃÂ·Ã‘â€¹ÃÂº",
+    targetLang: "ÃËœÃÂ·Ã‘Æ’Ã‘â€¡ÃÂ°ÃÂµÃÂ¼Ã‘â€¹ÃÂ¹ Ã‘ÂÃÂ·Ã‘â€¹ÃÂº",
+    onboarding: "ÃÂÃÂ°Ã‘ÂÃ‘â€šÃ‘â‚¬ÃÂ¾ÃÂ¹ÃÂºÃÂ° ÃÂ¾ÃÂ±Ã‘Æ’Ã‘â€¡ÃÂµÃÂ½ÃÂ¸Ã‘Â",
+    onboardingReady: "Ãâ€œÃÂ¾Ã‘â€šÃÂ¾ÃÂ²ÃÂ¾",
+    onboardingPending: "ÃÂÃÂµ ÃÂ·ÃÂ°ÃÂ²ÃÂµÃ‘â‚¬Ã‘Ë†ÃÂµÃÂ½ÃÂ¾",
+    save: "ÃÂ¡ÃÂ¾Ã‘â€¦Ã‘â‚¬ÃÂ°ÃÂ½ÃÂ¸Ã‘â€šÃ‘Å’",
+    saving: "ÃÂ¡ÃÂ¾Ã‘â€¦Ã‘â‚¬ÃÂ°ÃÂ½ÃÂµÃÂ½ÃÂ¸ÃÂµ...",
+    saved: "ÃÂ¡ÃÂ¾Ã‘â€¦Ã‘â‚¬ÃÂ°ÃÂ½ÃÂµÃÂ½ÃÂ¾",
+    saveError: "ÃÂÃÂµ Ã‘Æ’ÃÂ´ÃÂ°ÃÂ»ÃÂ¾Ã‘ÂÃ‘Å’ Ã‘ÂÃÂ¾Ã‘â€¦Ã‘â‚¬ÃÂ°ÃÂ½ÃÂ¸Ã‘â€šÃ‘Å’ ÃÂ½ÃÂ°Ã‘ÂÃ‘â€šÃ‘â‚¬ÃÂ¾ÃÂ¹ÃÂºÃÂ¸",
     sections: {
-      learning: "Обучение",
-      tech: "Тех-настройки",
-      help: "Помощь"
+      learning: "ÃÅ¾ÃÂ±Ã‘Æ’Ã‘â€¡ÃÂµÃÂ½ÃÂ¸ÃÂµ",
+      tech: "ÃÂ¢ÃÂµÃ‘â€¦-ÃÂ½ÃÂ°Ã‘ÂÃ‘â€šÃ‘â‚¬ÃÂ¾ÃÂ¹ÃÂºÃÂ¸",
+      help: "ÃÅ¸ÃÂ¾ÃÂ¼ÃÂ¾Ã‘â€°Ã‘Å’"
     },
-    wordsSection: "Слова",
-    wordsLearnTitle: "Мои слова для изучения",
+    wordsSection: "ÃÂ¡ÃÂ»ÃÂ¾ÃÂ²ÃÂ°",
+    wordsLearnTitle: "ÃÅ“ÃÂ¾ÃÂ¸ Ã‘ÂÃÂ»ÃÂ¾ÃÂ²ÃÂ° ÃÂ´ÃÂ»Ã‘Â ÃÂ¸ÃÂ·Ã‘Æ’Ã‘â€¡ÃÂµÃÂ½ÃÂ¸Ã‘Â",
     wordsLearnDesc:
-      "Добавляй слова, которые хочешь выучить. Они попадают в обучение и повторение.",
-    wordsLearnAction: "Открыть мои слова",
-    learningHint: "Выбор сфер, языков и лимитов доступен в настройке обучения.",
-    techHint: "Уведомления, очередь и фоновые задачи.",
-    helpHint: "Добро пожаловать и быстрый тур по Recallio.",
+      "Ãâ€ÃÂ¾ÃÂ±ÃÂ°ÃÂ²ÃÂ»Ã‘ÂÃÂ¹ Ã‘ÂÃÂ»ÃÂ¾ÃÂ²ÃÂ°, ÃÂºÃÂ¾Ã‘â€šÃÂ¾Ã‘â‚¬Ã‘â€¹ÃÂµ Ã‘â€¦ÃÂ¾Ã‘â€¡ÃÂµÃ‘Ë†Ã‘Å’ ÃÂ²Ã‘â€¹Ã‘Æ’Ã‘â€¡ÃÂ¸Ã‘â€šÃ‘Å’. ÃÅ¾ÃÂ½ÃÂ¸ ÃÂ¿ÃÂ¾ÃÂ¿ÃÂ°ÃÂ´ÃÂ°Ã‘Å½Ã‘â€š ÃÂ² ÃÂ¾ÃÂ±Ã‘Æ’Ã‘â€¡ÃÂµÃÂ½ÃÂ¸ÃÂµ ÃÂ¸ ÃÂ¿ÃÂ¾ÃÂ²Ã‘â€šÃÂ¾Ã‘â‚¬ÃÂµÃÂ½ÃÂ¸ÃÂµ.",
+    wordsLearnAction: "ÃÅ¾Ã‘â€šÃÂºÃ‘â‚¬Ã‘â€¹Ã‘â€šÃ‘Å’ ÃÂ¼ÃÂ¾ÃÂ¸ Ã‘ÂÃÂ»ÃÂ¾ÃÂ²ÃÂ°",
+    learningHint: "Ãâ€™Ã‘â€¹ÃÂ±ÃÂ¾Ã‘â‚¬ Ã‘ÂÃ‘â€žÃÂµÃ‘â‚¬, Ã‘ÂÃÂ·Ã‘â€¹ÃÂºÃÂ¾ÃÂ² ÃÂ¸ ÃÂ»ÃÂ¸ÃÂ¼ÃÂ¸Ã‘â€šÃÂ¾ÃÂ² ÃÂ´ÃÂ¾Ã‘ÂÃ‘â€šÃ‘Æ’ÃÂ¿ÃÂµÃÂ½ ÃÂ² ÃÂ½ÃÂ°Ã‘ÂÃ‘â€šÃ‘â‚¬ÃÂ¾ÃÂ¹ÃÂºÃÂµ ÃÂ¾ÃÂ±Ã‘Æ’Ã‘â€¡ÃÂµÃÂ½ÃÂ¸Ã‘Â.",
+    techHint: "ÃÂ£ÃÂ²ÃÂµÃÂ´ÃÂ¾ÃÂ¼ÃÂ»ÃÂµÃÂ½ÃÂ¸Ã‘Â, ÃÂ¾Ã‘â€¡ÃÂµÃ‘â‚¬ÃÂµÃÂ´Ã‘Å’ ÃÂ¸ Ã‘â€žÃÂ¾ÃÂ½ÃÂ¾ÃÂ²Ã‘â€¹ÃÂµ ÃÂ·ÃÂ°ÃÂ´ÃÂ°Ã‘â€¡ÃÂ¸.",
+    helpHint: "Ãâ€ÃÂ¾ÃÂ±Ã‘â‚¬ÃÂ¾ ÃÂ¿ÃÂ¾ÃÂ¶ÃÂ°ÃÂ»ÃÂ¾ÃÂ²ÃÂ°Ã‘â€šÃ‘Å’ ÃÂ¸ ÃÂ±Ã‘â€¹Ã‘ÂÃ‘â€šÃ‘â‚¬Ã‘â€¹ÃÂ¹ Ã‘â€šÃ‘Æ’Ã‘â‚¬ ÃÂ¿ÃÂ¾ Recallio.",
     support: {
-      title: "Поддержка",
-      hint: "Если нужна помощь или есть вопрос, напиши в поддержку.",
-      action: "Написать в поддержку"
+      title: "ÃÅ¸ÃÂ¾ÃÂ´ÃÂ´ÃÂµÃ‘â‚¬ÃÂ¶ÃÂºÃÂ°",
+      hint: "Ãâ€¢Ã‘ÂÃÂ»ÃÂ¸ ÃÂ½Ã‘Æ’ÃÂ¶ÃÂ½ÃÂ° ÃÂ¿ÃÂ¾ÃÂ¼ÃÂ¾Ã‘â€°Ã‘Å’ ÃÂ¸ÃÂ»ÃÂ¸ ÃÂµÃ‘ÂÃ‘â€šÃ‘Å’ ÃÂ²ÃÂ¾ÃÂ¿Ã‘â‚¬ÃÂ¾Ã‘Â, ÃÂ½ÃÂ°ÃÂ¿ÃÂ¸Ã‘Ë†ÃÂ¸ ÃÂ² ÃÂ¿ÃÂ¾ÃÂ´ÃÂ´ÃÂµÃ‘â‚¬ÃÂ¶ÃÂºÃ‘Æ’.",
+      action: "ÃÂÃÂ°ÃÂ¿ÃÂ¸Ã‘ÂÃÂ°Ã‘â€šÃ‘Å’ ÃÂ² ÃÂ¿ÃÂ¾ÃÂ´ÃÂ´ÃÂµÃ‘â‚¬ÃÂ¶ÃÂºÃ‘Æ’"
     },
     actions: {
-      logout: "Выйти",
-      onboarding: "Открыть настройку обучения",
-      tech: "Открыть тех-настройки",
-      help: "Открыть инструкцию"
+      logout: "Ãâ€™Ã‘â€¹ÃÂ¹Ã‘â€šÃÂ¸",
+      onboarding: "ÃÅ¾Ã‘â€šÃÂºÃ‘â‚¬Ã‘â€¹Ã‘â€šÃ‘Å’ ÃÂ½ÃÂ°Ã‘ÂÃ‘â€šÃ‘â‚¬ÃÂ¾ÃÂ¹ÃÂºÃ‘Æ’ ÃÂ¾ÃÂ±Ã‘Æ’Ã‘â€¡ÃÂµÃÂ½ÃÂ¸Ã‘Â",
+      tech: "ÃÅ¾Ã‘â€šÃÂºÃ‘â‚¬Ã‘â€¹Ã‘â€šÃ‘Å’ Ã‘â€šÃÂµÃ‘â€¦-ÃÂ½ÃÂ°Ã‘ÂÃ‘â€šÃ‘â‚¬ÃÂ¾ÃÂ¹ÃÂºÃÂ¸",
+      help: "ÃÅ¾Ã‘â€šÃÂºÃ‘â‚¬Ã‘â€¹Ã‘â€šÃ‘Å’ ÃÂ¸ÃÂ½Ã‘ÂÃ‘â€šÃ‘â‚¬Ã‘Æ’ÃÂºÃ‘â€ ÃÂ¸Ã‘Å½"
     },
     danger: {
-      title: "Удаление аккаунта",
-      subtitle: "Подтвердите удаление аккаунта.",
+      title: "ÃÂ£ÃÂ´ÃÂ°ÃÂ»ÃÂµÃÂ½ÃÂ¸ÃÂµ ÃÂ°ÃÂºÃÂºÃÂ°Ã‘Æ’ÃÂ½Ã‘â€šÃÂ°",
+      subtitle: "ÃÅ¸ÃÂ¾ÃÂ´Ã‘â€šÃÂ²ÃÂµÃ‘â‚¬ÃÂ´ÃÂ¸Ã‘â€šÃÂµ Ã‘Æ’ÃÂ´ÃÂ°ÃÂ»ÃÂµÃÂ½ÃÂ¸ÃÂµ ÃÂ°ÃÂºÃÂºÃÂ°Ã‘Æ’ÃÂ½Ã‘â€šÃÂ°.",
       warning:
-        "Это действие необратимо: будут удалены настройки, прогресс, слова и история.",
-      confirm: "Да, действительно удалить аккаунт",
-      confirmError: "Подтвердите удаление аккаунта.",
-      cancel: "Отмена",
-      start: "Удалить аккаунт",
-      delete: "Удалить аккаунт",
-      deleting: "Удаление...",
-      error: "Не удалось удалить аккаунт"
+        "ÃÂ­Ã‘â€šÃÂ¾ ÃÂ´ÃÂµÃÂ¹Ã‘ÂÃ‘â€šÃÂ²ÃÂ¸ÃÂµ ÃÂ½ÃÂµÃÂ¾ÃÂ±Ã‘â‚¬ÃÂ°Ã‘â€šÃÂ¸ÃÂ¼ÃÂ¾: ÃÂ±Ã‘Æ’ÃÂ´Ã‘Æ’Ã‘â€š Ã‘Æ’ÃÂ´ÃÂ°ÃÂ»ÃÂµÃÂ½Ã‘â€¹ ÃÂ½ÃÂ°Ã‘ÂÃ‘â€šÃ‘â‚¬ÃÂ¾ÃÂ¹ÃÂºÃÂ¸, ÃÂ¿Ã‘â‚¬ÃÂ¾ÃÂ³Ã‘â‚¬ÃÂµÃ‘ÂÃ‘Â, Ã‘ÂÃÂ»ÃÂ¾ÃÂ²ÃÂ° ÃÂ¸ ÃÂ¸Ã‘ÂÃ‘â€šÃÂ¾Ã‘â‚¬ÃÂ¸Ã‘Â.",
+      confirm: "Ãâ€ÃÂ°, ÃÂ´ÃÂµÃÂ¹Ã‘ÂÃ‘â€šÃÂ²ÃÂ¸Ã‘â€šÃÂµÃÂ»Ã‘Å’ÃÂ½ÃÂ¾ Ã‘Æ’ÃÂ´ÃÂ°ÃÂ»ÃÂ¸Ã‘â€šÃ‘Å’ ÃÂ°ÃÂºÃÂºÃÂ°Ã‘Æ’ÃÂ½Ã‘â€š",
+      confirmError: "ÃÅ¸ÃÂ¾ÃÂ´Ã‘â€šÃÂ²ÃÂµÃ‘â‚¬ÃÂ´ÃÂ¸Ã‘â€šÃÂµ Ã‘Æ’ÃÂ´ÃÂ°ÃÂ»ÃÂµÃÂ½ÃÂ¸ÃÂµ ÃÂ°ÃÂºÃÂºÃÂ°Ã‘Æ’ÃÂ½Ã‘â€šÃÂ°.",
+      cancel: "ÃÅ¾Ã‘â€šÃÂ¼ÃÂµÃÂ½ÃÂ°",
+      start: "ÃÂ£ÃÂ´ÃÂ°ÃÂ»ÃÂ¸Ã‘â€šÃ‘Å’ ÃÂ°ÃÂºÃÂºÃÂ°Ã‘Æ’ÃÂ½Ã‘â€š",
+      delete: "ÃÂ£ÃÂ´ÃÂ°ÃÂ»ÃÂ¸Ã‘â€šÃ‘Å’ ÃÂ°ÃÂºÃÂºÃÂ°Ã‘Æ’ÃÂ½Ã‘â€š",
+      deleting: "ÃÂ£ÃÂ´ÃÂ°ÃÂ»ÃÂµÃÂ½ÃÂ¸ÃÂµ...",
+      error: "ÃÂÃÂµ Ã‘Æ’ÃÂ´ÃÂ°ÃÂ»ÃÂ¾Ã‘ÂÃ‘Å’ Ã‘Æ’ÃÂ´ÃÂ°ÃÂ»ÃÂ¸Ã‘â€šÃ‘Å’ ÃÂ°ÃÂºÃÂºÃÂ°Ã‘Æ’ÃÂ½Ã‘â€š"
     },
-    themeLight: "Светлая",
-    themeDark: "Темная",
-    langRu: "Русский",
+    themeLight: "ÃÂ¡ÃÂ²ÃÂµÃ‘â€šÃÂ»ÃÂ°Ã‘Â",
+    themeDark: "ÃÂ¢ÃÂµÃÂ¼ÃÂ½ÃÂ°Ã‘Â",
+    langRu: "ÃÂ Ã‘Æ’Ã‘ÂÃ‘ÂÃÂºÃÂ¸ÃÂ¹",
     langEn: "English"
   },
   en: {
@@ -346,8 +346,9 @@ export default function ProfilePage() {
   return (
     <main>
       <div className="page-header">
-        <div>
-          <h1>{t.title}</h1>
+        <div className="page-hero-main">
+          <h1 className="page-title">{t.title}</h1>
+          <p className="page-tagline">{t.tagline}</p>
         </div>
       </div>
 
@@ -356,84 +357,90 @@ export default function ProfilePage() {
 
       {profile ? (
         <>
-          <div className="panel profile-hero">
-            <label className="profile-avatar profile-avatar-upload">
-              {profile.avatar_url ? (
-                <img src={resolveAvatarUrl(profile.avatar_url)} alt="Avatar" />
-              ) : (
-                initials
-              )}
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={handleAvatarChange}
-                disabled={avatarUploading}
-              />
-              <span className="profile-avatar-overlay">{avatarText.upload}</span>
-            </label>
-            <div className="profile-details">
-              <div className="profile-name">{profile.email}</div>
-              <div className="profile-meta">{t.email}</div>
-              <span className={`status-pill ${onboardingReady ? "ok" : "warn"}`}>
-                {t.onboarding}: {onboardingReady ? t.onboardingReady : t.onboardingPending}
-              </span>
-              {avatarUploading ? <span className="muted">{avatarText.uploading}</span> : null}
-              {avatarError ? <span className="error">{avatarError}</span> : null}
-            </div>
-          </div>
-
-          <div className="panel profile-learning">
-            <div className="panel-title">{t.sections.learning}</div>
-            <div className="profile-learning-row">
-              <div className="profile-learning-pair">
-                <div className="profile-learning-item">
-                  <span className="profile-learning-label">{t.nativeLang}</span>
-                  <span className="profile-learning-value">{langLabel(profile.native_lang)}</span>
-                </div>
-                <span className="profile-learning-arrow">→</span>
-                <div className="profile-learning-item">
-                  <span className="profile-learning-label">{t.targetLang}</span>
-                  <span className="profile-learning-value">{langLabel(profile.target_lang)}</span>
+          <div className="section-grid">
+            <div className="section-stack">
+              <div className="panel profile-hero">
+                <label className="profile-avatar profile-avatar-upload">
+                  {profile.avatar_url ? (
+                    <img src={resolveAvatarUrl(profile.avatar_url)} alt="Avatar" />
+                  ) : (
+                    initials
+                  )}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handleAvatarChange}
+                    disabled={avatarUploading}
+                  />
+                  <span className="profile-avatar-overlay">{avatarText.upload}</span>
+                </label>
+                <div className="profile-details">
+                  <div className="profile-name">{profile.email}</div>
+                  <div className="profile-meta">{t.email}</div>
+                  <span className={`status-pill ${onboardingReady ? "ok" : "warn"}`}>
+                    {t.onboarding}: {onboardingReady ? t.onboardingReady : t.onboardingPending}
+                  </span>
+                  {avatarUploading ? <span className="muted">{avatarText.uploading}</span> : null}
+                  {avatarError ? <span className="error">{avatarError}</span> : null}
                 </div>
               </div>
-              <div className="profile-learning-actions">
-                <button type="button" className="button-secondary" onClick={goOnboarding}>
-                  {t.actions.onboarding}
-                </button>
+
+              <div className="panel profile-learning">
+                <div className="panel-title">{t.sections.learning}</div>
+                <div className="profile-learning-row">
+                  <div className="profile-learning-pair">
+                    <div className="profile-learning-item">
+                      <span className="profile-learning-label">{t.nativeLang}</span>
+                      <span className="profile-learning-value">{langLabel(profile.native_lang)}</span>
+                    </div>
+                    <span className="profile-learning-arrow">Ã¢â€ â€™</span>
+                    <div className="profile-learning-item">
+                      <span className="profile-learning-label">{t.targetLang}</span>
+                      <span className="profile-learning-value">{langLabel(profile.target_lang)}</span>
+                    </div>
+                  </div>
+                  <div className="profile-learning-actions">
+                    <button type="button" className="button-secondary" onClick={goOnboarding}>
+                      {t.actions.onboarding}
+                    </button>
+                  </div>
+                </div>
+                <p className="muted profile-learning-hint">{t.learningHint}</p>
               </div>
             </div>
-            <p className="muted profile-learning-hint">{t.learningHint}</p>
-          </div>
 
-          <div className="panel">
-            <div className="panel-title">{t.sections.tech}</div>
-            <p className="muted">{t.techHint}</p>
-            <div className="actions">
-              <button type="button" className="button-secondary" onClick={goTech}>
-                {t.actions.tech}
-              </button>
-            </div>
-          </div>
+            <div className="section-stack">
+              <div className="panel">
+                <div className="panel-title">{t.sections.tech}</div>
+                <p className="muted">{t.techHint}</p>
+                <div className="actions">
+                  <button type="button" className="button-secondary" onClick={goTech}>
+                    {t.actions.tech}
+                  </button>
+                </div>
+              </div>
 
-          <div className="panel">
-            <div className="panel-title">{t.support.title}</div>
-            <p className="muted">{t.support.hint}</p>
-            <div className="actions">
-              <button type="button" className="button-secondary" onClick={goSupport}>
-                {t.support.action}
-              </button>
-            </div>
-          </div>
+              <div className="panel">
+                <div className="panel-title">{t.support.title}</div>
+                <p className="muted">{t.support.hint}</p>
+                <div className="actions">
+                  <button type="button" className="button-secondary" onClick={goSupport}>
+                    {t.support.action}
+                  </button>
+                </div>
+              </div>
 
-          <div className="panel">
-            <div className="panel-title">{t.danger.title}</div>
-            <div className="actions">
-              <button type="button" className="button-secondary" onClick={logout}>
-                {t.actions.logout}
-              </button>
-              <button type="button" className="button-danger" onClick={openDelete}>
-                {t.danger.start}
-              </button>
+              <div className="panel">
+                <div className="panel-title">{t.danger.title}</div>
+                <div className="actions">
+                  <button type="button" className="button-secondary" onClick={logout}>
+                    {t.actions.logout}
+                  </button>
+                  <button type="button" className="button-danger" onClick={openDelete}>
+                    {t.danger.start}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </>
