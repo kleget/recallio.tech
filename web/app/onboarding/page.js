@@ -444,6 +444,7 @@ export default function OnboardingPage() {
     }
   }, [previewOpen]);
 
+  const formatLang = (value) => (value === "en" ? t.langEn : t.langRu);
   const selectedCount = useMemo(() => Object.keys(selected).length, [selected]);
   const totalSelectedLimit = useMemo(() => {
     if (!corpora.length) {
@@ -483,8 +484,6 @@ export default function OnboardingPage() {
       value: totalSelectedLimit ? `${totalSelectedLimit} ${t.corpora.words}` : "-"
     }
   ];
-
-  const formatLang = (value) => (value === "en" ? t.langEn : t.langRu);
 
   const updateNative = (value) => {
     const safe = value === "en" ? "en" : "ru";
