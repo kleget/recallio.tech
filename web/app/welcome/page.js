@@ -139,9 +139,9 @@ const TEXT = {
       }
     ],
     habits: [
-      "5??"10 minutes daily beats rare long sessions.",
+      "5-10 minutes daily beats rare long sessions.",
       "Review is more important than new words.",
-      "Switching domains is ok, but keep focus for 2??"3 weeks."
+      "Switching domains is ok, but keep focus for 2-3 weeks."
     ]
   }
 };
