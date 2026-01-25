@@ -350,8 +350,10 @@ export default function Home() {
     if (!dashboard) {
       return;
     }
-    const nextLang = dashboard.interface_lang || interfaceLang || "ru";
-    setLang(nextLang);
+    const cookieLang = getCookie("ui_lang");
+    if (!cookieLang && dashboard.interface_lang) {
+      setLang(dashboard.interface_lang);
+    }
     const nextTheme = dashboard.theme || theme || "light";
     setTheme(nextTheme);
     document.documentElement.dataset.theme = nextTheme;

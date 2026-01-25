@@ -68,14 +68,7 @@ export default function Footer() {
           <p className="footer-meta">{t.tagline}</p>
         </div>
         <div className="footer-links">
-          <a href="/learn">{t.links.learn}</a>
-          <a href="/review">{t.links.review}</a>
-          <a href="/reading">{t.links.reading}</a>
-          <a href="/review-plan">{t.links.reviewPlan}</a>
-          <a href="/custom-words">{t.links.customWords}</a>
-          <a href="/known-words">{t.links.knownWords}</a>
           <a href="/stats">{t.links.weakWords}</a>
-          <a href="/community">{t.links.community}</a>
           <a href="/support">{t.links.support}</a>
           <a href="/reports">{t.links.reports}</a>
           <a href="/server">{t.links.server}</a>
