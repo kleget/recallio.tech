@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, exists, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.auth import get_active_learning_profile, get_current_user
@@ -72,6 +72,12 @@ async def count_available_new_words(
     target_lang: str,
     db: AsyncSession,
 ) -> int:
+    has_translation = exists(
+        select(1).where(
+            Translation.word_id == CorpusWordStat.word_id,
+            Translation.target_lang == target_lang,
+        )
+    )
     corpora_subq = (
         select(CorpusWordStat.word_id.label("word_id"))
         .select_from(CorpusWordStat)
@@ -90,6 +96,7 @@ async def count_available_new_words(
             )
         )
         .where(UserWord.word_id.is_(None))
+        .where(has_translation)
     )
     custom_subq = (
         select(UserCustomWord.word_id.label("word_id"))

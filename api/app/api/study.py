@@ -809,6 +809,43 @@ async def fetch_user_translation_map(
     return mapping
 
 
+async def persist_user_translations(
+    profile_id,
+    user_id,
+    word_ids: list[int],
+    target_lang: str,
+    translation_map: dict[int, list[str]],
+    source: str,
+    db: AsyncSession,
+) -> int:
+    if not word_ids:
+        return 0
+    rows: list[dict] = []
+    for word_id in word_ids:
+        translations = translation_map.get(word_id, [])
+        if not translations:
+            continue
+        for value in translations:
+            rows.append(
+                {
+                    "profile_id": profile_id,
+                    "user_id": user_id,
+                    "word_id": word_id,
+                    "target_lang": target_lang,
+                    "translation": value,
+                    "source": source,
+                }
+            )
+    if not rows:
+        return 0
+    stmt = insert(UserWordTranslation).values(rows)
+    stmt = stmt.on_conflict_do_nothing(
+        index_elements=["profile_id", "word_id", "target_lang", "translation"]
+    )
+    result = await db.execute(stmt)
+    return int(result.rowcount or 0)
+
+
 def score_answer(answer: str, translations: list[str]) -> tuple[bool, int, list[str]]:
     normalized = normalize_text(answer or "")
     options = sorted(build_translation_options(translations))
@@ -851,7 +888,9 @@ def sm2_next(
 
 async def seed_review_words(
     profile_id,
+    user_id,
     source_lang: str,
+    target_lang: str,
     limit: int,
     db: AsyncSession,
 ) -> int:
@@ -900,6 +939,16 @@ async def seed_review_words(
     stmt = insert(UserWord).values(rows)
     stmt = stmt.on_conflict_do_nothing(index_elements=["profile_id", "word_id"])
     result = await db.execute(stmt)
+    translation_map = await fetch_user_translation_map(profile_id, word_ids, target_lang, db)
+    await persist_user_translations(
+        profile_id,
+        user_id,
+        word_ids,
+        target_lang,
+        translation_map,
+        "seed",
+        db,
+    )
     await db.commit()
     return int(result.rowcount or 0)
 
@@ -1028,6 +1077,15 @@ async def submit_learn(
         stmt = stmt.on_conflict_do_nothing(index_elements=["profile_id", "word_id"])
         result = await db.execute(stmt)
         learned = int(result.rowcount or 0)
+        await persist_user_translations(
+            profile.id,
+            user.id,
+            word_ids,
+            profile.native_lang,
+            translation_map,
+            "learn",
+            db,
+        )
 
     await db.commit()
 
@@ -1195,6 +1253,16 @@ async def submit_review(
     if review_events:
         db.add_all(review_events)
 
+    await persist_user_translations(
+        profile.id,
+        user.id,
+        word_ids,
+        profile.native_lang,
+        translation_map,
+        "review",
+        db,
+    )
+
     await db.commit()
 
     await log_audit_event(
@@ -1226,5 +1294,12 @@ async def seed_review(
     profile, _settings = await load_profile_settings(user.id, db)
     if limit <= 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid limit")
-    seeded = await seed_review_words(profile.id, profile.target_lang, limit, db)
+    seeded = await seed_review_words(
+        profile.id,
+        user.id,
+        profile.target_lang,
+        profile.native_lang,
+        limit,
+        db,
+    )
     return ReviewSeedOut(seeded=seeded)

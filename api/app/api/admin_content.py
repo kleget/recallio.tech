@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import delete, exists, func, or_, select, update
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
@@ -18,6 +19,7 @@ from app.models import (
     Translation,
     User,
     UserCustomWord,
+    UserWordTranslation,
     UserWord,
     Word,
 )
@@ -235,6 +237,104 @@ def copy_progress(target: UserWord, source: UserWord) -> None:
     target.wrong_streak = source.wrong_streak
 
 
+async def word_has_user_data(db: AsyncSession, word_id: int) -> bool:
+    stmt = select(
+        or_(
+            exists(select(1).where(UserWord.word_id == word_id)),
+            exists(select(1).where(UserCustomWord.word_id == word_id)),
+            exists(select(1).where(UserWordTranslation.word_id == word_id)),
+            exists(select(1).where(ReviewEvent.word_id == word_id)),
+        )
+    )
+    return bool(await db.scalar(stmt))
+
+
+async def word_has_corpora(db: AsyncSession, word_id: int) -> bool:
+    stmt = select(exists(select(1).where(CorpusWordStat.word_id == word_id)))
+    return bool(await db.scalar(stmt))
+
+
+async def missing_user_translations(db: AsyncSession, word_id: int, target_lang: str) -> bool:
+    missing = exists(
+        select(1)
+        .select_from(UserWord)
+        .where(UserWord.word_id == word_id)
+        .where(
+            ~exists(
+                select(1).where(
+                    UserWordTranslation.profile_id == UserWord.profile_id,
+                    UserWordTranslation.word_id == UserWord.word_id,
+                    UserWordTranslation.target_lang == target_lang,
+                )
+            )
+        )
+    )
+    return bool(await db.scalar(select(missing)))
+
+
+async def detach_word_from_corpora(db: AsyncSession, word_id: int) -> int:
+    result = await db.execute(delete(CorpusWordStat).where(CorpusWordStat.word_id == word_id))
+    return int(result.rowcount or 0)
+
+
+async def copy_translations(db: AsyncSession, source_id: int, target_id: int) -> None:
+    rows = await db.execute(
+        select(Translation.translation, Translation.target_lang, Translation.source).where(
+            Translation.word_id == source_id
+        )
+    )
+    values = [
+        {
+            "word_id": target_id,
+            "translation": row.translation,
+            "target_lang": row.target_lang,
+            "source": row.source,
+        }
+        for row in rows.fetchall()
+    ]
+    if not values:
+        return
+    stmt = insert(Translation).values(values)
+    stmt = stmt.on_conflict_do_nothing(
+        index_elements=["word_id", "target_lang", "translation"]
+    )
+    await db.execute(stmt)
+
+
+async def move_corpus_stats(db: AsyncSession, source_id: int, target_id: int) -> None:
+    stat_target = aliased(CorpusWordStat)
+    await db.execute(
+        update(CorpusWordStat)
+        .where(CorpusWordStat.word_id == source_id)
+        .where(
+            ~exists(
+                select(1).where(
+                    (stat_target.corpus_id == CorpusWordStat.corpus_id)
+                    & (stat_target.word_id == target_id)
+                )
+            )
+        )
+        .values(word_id=target_id)
+    )
+    stat_source = aliased(CorpusWordStat)
+    stat_target = aliased(CorpusWordStat)
+    stat_rows = await db.execute(
+        select(stat_source, stat_target)
+        .join(
+            stat_target,
+            (stat_target.word_id == target_id)
+            & (stat_target.corpus_id == stat_source.corpus_id),
+        )
+        .where(stat_source.word_id == source_id)
+    )
+    for source_row, target_row in stat_rows.all():
+        target_row.count = max(target_row.count or 0, source_row.count or 0)
+        if source_row.rank is not None:
+            if target_row.rank is None or source_row.rank < target_row.rank:
+                target_row.rank = source_row.rank
+        await db.delete(source_row)
+
+
 async def merge_words(db: AsyncSession, source_id: int, target_id: int) -> None:
     if source_id == target_id:
         return
@@ -326,6 +426,38 @@ async def merge_words(db: AsyncSession, source_id: int, target_id: int) -> None:
     for row in custom_rows.scalars().all():
         await db.delete(row)
 
+    trans_target = aliased(UserWordTranslation)
+    await db.execute(
+        update(UserWordTranslation)
+        .where(UserWordTranslation.word_id == source_id)
+        .where(
+            ~exists(
+                select(1).where(
+                    (trans_target.profile_id == UserWordTranslation.profile_id)
+                    & (trans_target.word_id == target_id)
+                    & (trans_target.target_lang == UserWordTranslation.target_lang)
+                    & (trans_target.translation == UserWordTranslation.translation)
+                )
+            )
+        )
+        .values(word_id=target_id)
+    )
+    trans_source = aliased(UserWordTranslation)
+    trans_target = aliased(UserWordTranslation)
+    trans_rows = await db.execute(
+        select(trans_source)
+        .join(
+            trans_target,
+            (trans_target.word_id == target_id)
+            & (trans_target.profile_id == trans_source.profile_id)
+            & (trans_target.target_lang == trans_source.target_lang)
+            & (trans_target.translation == trans_source.translation),
+        )
+        .where(trans_source.word_id == source_id)
+    )
+    for row in trans_rows.scalars().all():
+        await db.delete(row)
+
     user_target = aliased(UserWord)
     await db.execute(
         update(UserWord)
@@ -392,7 +524,23 @@ async def update_word(
         )
     )
     existing_word = existing.scalar_one_or_none()
+    in_use = await word_has_user_data(db, word.id)
+
     if existing_word:
+        if in_use:
+            await copy_translations(db, word.id, existing_word.id)
+            await move_corpus_stats(db, word.id, existing_word.id)
+            await db.commit()
+            await log_audit_event(
+                "admin.word.corpus_reassign",
+                user_id=user.id,
+                meta={"source_word_id": word.id, "target_word_id": existing_word.id},
+                request=request,
+                db=db,
+            )
+            return AdminWordOut(
+                id=existing_word.id, lemma=existing_word.lemma, lang=existing_word.lang
+            )
         await merge_words(db, word.id, existing_word.id)
         await db.commit()
         await log_audit_event(
@@ -403,6 +551,27 @@ async def update_word(
             db=db,
         )
         return AdminWordOut(id=existing_word.id, lemma=existing_word.lemma, lang=existing_word.lang)
+
+    if in_use:
+        if not await word_has_corpora(db, word.id):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Word is already used by learners; create a new word instead.",
+            )
+        new_word = Word(lemma=lemma, lang=word.lang)
+        db.add(new_word)
+        await db.flush()
+        await copy_translations(db, word.id, new_word.id)
+        await move_corpus_stats(db, word.id, new_word.id)
+        await db.commit()
+        await log_audit_event(
+            "admin.word.clone",
+            user_id=user.id,
+            meta={"source_word_id": word.id, "target_word_id": new_word.id},
+            request=request,
+            db=db,
+        )
+        return AdminWordOut(id=new_word.id, lemma=new_word.lemma, lang=new_word.lang)
 
     word.lemma = lemma
     try:
@@ -437,6 +606,12 @@ async def update_translation(
     translation = await db.get(Translation, translation_id)
     if translation is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Translation not found")
+
+    if await missing_user_translations(db, translation.word_id, translation.target_lang):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Translation is used by learners without snapshots.",
+        )
 
     existing = await db.execute(
         select(Translation).where(
@@ -483,6 +658,18 @@ async def delete_word(
     if word is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Word not found")
 
+    if await word_has_user_data(db, word_id):
+        removed = await detach_word_from_corpora(db, word_id)
+        await db.commit()
+        await log_audit_event(
+            "admin.word.detach",
+            user_id=user.id,
+            meta={"word_id": word_id, "removed_from_corpora": removed},
+            request=request,
+            db=db,
+        )
+        return {"status": "detached", "removed_from_corpora": removed}
+
     await db.delete(word)
     await db.commit()
 
@@ -507,6 +694,12 @@ async def delete_translation(
     translation = await db.get(Translation, translation_id)
     if translation is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Translation not found")
+
+    if await missing_user_translations(db, translation.word_id, translation.target_lang):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Translation is used by learners without snapshots.",
+        )
 
     await db.delete(translation)
     await db.commit()
