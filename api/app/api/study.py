@@ -999,6 +999,26 @@ async def start_learn(
     return LearnStartOut(session_id=session.id, words=words, reading=reading)
 
 
+@router.get("/learn/preview", response_model=LearnStartOut)
+async def preview_learn(
+    limit: int | None = None,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> LearnStartOut:
+    profile, settings = await load_profile_settings(user.id, db)
+    batch_size = limit if limit and limit > 0 else settings.daily_new_words
+    if batch_size <= 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid batch size")
+    words = await fetch_learn_words(
+        profile.id,
+        profile.target_lang,
+        profile.native_lang,
+        batch_size,
+        db,
+    )
+    return LearnStartOut(session_id=None, words=words, reading=None)
+
+
 @router.post("/learn/submit", response_model=LearnSubmitOut)
 async def submit_learn(
     data: LearnSubmitRequest,
@@ -1138,6 +1158,25 @@ async def start_review(
     await db.commit()
 
     return ReviewStartOut(session_id=session.id, words=words)
+
+
+@router.get("/review/preview", response_model=ReviewStartOut)
+async def preview_review(
+    limit: int | None = None,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ReviewStartOut:
+    profile, _settings = await load_profile_settings(user.id, db)
+    now = datetime.now(timezone.utc)
+    words = await fetch_review_words(
+        profile.id,
+        profile.target_lang,
+        profile.native_lang,
+        limit,
+        now,
+        db,
+    )
+    return ReviewStartOut(session_id=None, words=words)
 
 
 @router.post("/review/submit", response_model=ReviewSubmitOut)

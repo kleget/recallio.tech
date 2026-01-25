@@ -24,9 +24,12 @@ const TEXT = {
     tapCard: "Нажми на карточку, чтобы открыть перевод",
     wordLabel: "Слово",
     cardProgress: "Карточка {current} из {total}",
+    prevCard: "Назад",
     learnedAt: "Выучено",
     reviewAt: "Повторить",
     next: "Дальше",
+    wordList: "Список слов",
+    closeList: "Закрыть список",
     cardsDone: "Карточки пройдены",
     cardsDoneHint: "Можно переходить к чтению и тесту.",
     goReading: "Перейти к чтению",
@@ -68,9 +71,12 @@ const TEXT = {
     tapCard: "Tap the card to reveal the translation",
     wordLabel: "Word",
     cardProgress: "Card {current} of {total}",
+    prevCard: "Previous",
     learnedAt: "Learned",
     reviewAt: "Review",
     next: "Next",
+    wordList: "Word list",
+    closeList: "Close list",
     cardsDone: "Cards completed",
     cardsDoneHint: "You can proceed to reading and the test.",
     goReading: "Go to reading",
@@ -161,6 +167,7 @@ export default function ReviewPage() {
   const [phase, setPhase] = useState("cards");
   const [readingLeft, setReadingLeft] = useState(READ_SECONDS);
   const [cardIndex, setCardIndex] = useState(0);
+  const [showWordList, setShowWordList] = useState(false);
   const { lang } = useUiLang();
   const uiLang = lang === "en" ? "en" : "ru";
   const t = TEXT[uiLang] || TEXT.ru;
@@ -239,6 +246,27 @@ export default function ReviewPage() {
   useEffect(() => {
     loadWords();
   }, []);
+
+  useEffect(() => {
+    if (phase !== "cards") {
+      return;
+    }
+    const handleKey = (event) => {
+      if (showWordList) {
+        return;
+      }
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        advanceCard();
+      }
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        goPrevCard();
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [phase, showWordList, words.length, cardIndex]);
 
   useEffect(() => {
     if (phase !== "reading") {
@@ -326,6 +354,25 @@ export default function ReviewPage() {
   const advanceCard = () => {
     setCardIndex((prev) => Math.min(prev + 1, words.length));
     setShowTranslation({});
+  };
+
+  const goPrevCard = () => {
+    setCardIndex((prev) => Math.max(prev - 1, 0));
+    setShowTranslation({});
+  };
+
+  const openWordList = () => {
+    setShowWordList(true);
+  };
+
+  const closeWordList = () => {
+    setShowWordList(false);
+  };
+
+  const jumpToCard = (index) => {
+    setCardIndex(index);
+    setShowTranslation({});
+    setShowWordList(false);
   };
 
   const submit = async () => {
@@ -419,7 +466,11 @@ export default function ReviewPage() {
                 />
               </div>
             </div>
-            <div className="progress-actions" />
+            <div className="progress-actions">
+              <button type="button" className="button-secondary" onClick={openWordList}>
+                {t.wordList}
+              </button>
+            </div>
           </div>
           {phase === "cards" ? (
             <>
@@ -466,6 +517,14 @@ export default function ReviewPage() {
                     </span>
                   </div>
                   <div className="card-actions">
+                    <button
+                      type="button"
+                      className="button-secondary"
+                      onClick={goPrevCard}
+                      disabled={cardIndex === 0}
+                    >
+                      {t.prevCard}
+                    </button>
                     <button type="button" onClick={advanceCard}>
                       {t.next}
                     </button>
@@ -493,6 +552,44 @@ export default function ReviewPage() {
                 </div>
               )}
             </>
+          ) : null}
+
+          {showWordList ? (
+            <div className="modal-overlay" onClick={closeWordList}>
+              <div className="modal-card word-list-modal" onClick={(event) => event.stopPropagation()}>
+                <div className="modal-header">
+                  <div>
+                    <div className="modal-title">{t.wordList}</div>
+                    <div className="modal-sub">
+                      {t.cardProgress
+                        .replace("{current}", String(cardIndex + 1))
+                        .replace("{total}", String(cardsTotal))}
+                    </div>
+                  </div>
+                  <button type="button" className="button-secondary modal-close" onClick={closeWordList}>
+                    {t.closeList}
+                  </button>
+                </div>
+                <div className="modal-body">
+                  <div className="word-list">
+                    {words.map((item, index) => (
+                      <button
+                        type="button"
+                        key={item.word_id}
+                        className={`word-list-item${index === cardIndex ? " is-active" : ""}`}
+                        onClick={() => jumpToCard(index)}
+                      >
+                        <span className="word-list-word">{item.word}</span>
+                        <span className="word-list-translation muted">{getTranslationLine(item)}</span>
+                        <span className="word-list-index muted">
+                          {index + 1}/{cardsTotal}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
           ) : null}
 
           {phase === "reading" ? (

@@ -1156,6 +1156,22 @@ button[disabled] {
   color: var(--text);
 }
 
+.today-export {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  gap: 10px;
+}
+
+.today-export-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 .card-list {
   display: grid;
   gap: 14px;
@@ -2649,6 +2665,10 @@ html[data-theme="dark"] .input-status.wrong {
   width: min(820px, 100%);
 }
 
+.export-modal {
+  width: min(820px, 100%);
+}
+
 .modal-header {
   padding: 16px 18px;
   display: flex;
@@ -2674,6 +2694,19 @@ html[data-theme="dark"] .input-status.wrong {
   overflow: auto;
   display: grid;
   gap: 12px;
+}
+
+.export-textarea {
+  width: 100%;
+  min-height: 220px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--panel-strong);
+  color: var(--text);
+  font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+  font-size: 12px;
+  resize: vertical;
 }
 
 .word-list {
