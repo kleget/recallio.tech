@@ -1156,21 +1156,6 @@ button[disabled] {
   color: var(--text);
 }
 
-.today-export {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-  display: grid;
-  gap: 10px;
-}
-
-.today-export-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
 
 .card-list {
   display: grid;

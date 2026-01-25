@@ -74,16 +74,6 @@ const TEXT = {
       helpTitle: "Инструкция",
       helpDesc: "Подсказки и быстрый тур по сервису."
     },
-    export: {
-      title: "Экспорт в Quizlet",
-      learn: "Учить сегодня",
-      review: "Повторить сегодня",
-      hint: "Формат: слово TAB перевод. Подходит для импорта в Quizlet.",
-      copy: "Скопировать",
-      download: "Скачать файл",
-      close: "Закрыть",
-      empty: "Нет слов для экспорта."
-    },
     tour: {
       title: "Быстрый тур",
       stepLabel: "Шаг",
@@ -188,16 +178,6 @@ const TEXT = {
       helpTitle: "Help & tour",
       helpDesc: "Instructions and a quick tour."
     },
-    export: {
-      title: "Export to Quizlet",
-      learn: "Learn today",
-      review: "Review today",
-      hint: "Format: term TAB definition. Suitable for Quizlet import.",
-      copy: "Copy",
-      download: "Download file",
-      close: "Close",
-      empty: "No words to export."
-    },
     tour: {
       title: "Quick tour",
       stepLabel: "Step",
@@ -257,64 +237,12 @@ async function getJson(path, token) {
   return response.json();
 }
 
-const collectTranslations = (item) => {
-  const list = Array.isArray(item?.translations) ? item.translations : [];
-  const fallback = item?.translation ? [item.translation] : [];
-  const combined = [...list, ...fallback];
-  const seen = new Set();
-  const result = [];
-  combined.forEach((value) => {
-    const trimmed = (value || "").trim();
-    if (!trimmed) {
-      return;
-    }
-    const key = trimmed.toLowerCase();
-    if (seen.has(key)) {
-      return;
-    }
-    seen.add(key);
-    result.push(trimmed);
-  });
-  return result;
-};
-
-const getTranslationLine = (item) => collectTranslations(item).join(", ");
-
-const buildQuizletText = (words) =>
-  (words || [])
-    .map((item) => {
-      const translation = getTranslationLine(item);
-      return `${item.word}\t${translation}`;
-    })
-    .join("\n");
-
-const downloadTextFile = (filename, text) => {
-  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-};
-
 export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [dashboard, setDashboard] = useState(null);
   const [chartRange, setChartRange] = useState("14d");
   const [theme, setTheme] = useState(() => getCookie("theme") || "light");
-  const [exportOpen, setExportOpen] = useState(false);
-  const [exportLoading, setExportLoading] = useState(false);
-  const [exportError, setExportError] = useState("");
-  const [exportPayload, setExportPayload] = useState({
-    title: "",
-    text: "",
-    count: 0,
-    filename: ""
-  });
   const { lang, setLang } = useUiLang();
   const interfaceLang = lang || "ru";
   const t = TEXT[interfaceLang] || TEXT.ru;
@@ -330,56 +258,6 @@ export default function Home() {
 
   const goReading = () => {
     window.location.href = "/reading";
-  };
-
-  const closeExport = () => {
-    setExportOpen(false);
-    setExportError("");
-  };
-
-  const copyExport = async () => {
-    if (!exportPayload.text) {
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(exportPayload.text);
-    } catch (err) {
-      setExportError(err.message || "Copy failed");
-    }
-  };
-
-  const startExport = async (mode) => {
-    if (!dashboard) {
-      return;
-    }
-    setExportLoading(true);
-    setExportError("");
-    const token = getCookie("token");
-    if (!token) {
-      window.location.href = "/auth";
-      return;
-    }
-    try {
-      const limit = mode === "learn" ? dashboard.learn_today : undefined;
-      const query = limit ? `?limit=${limit}` : "";
-      const path = mode === "learn" ? `/study/learn/preview${query}` : `/study/review/preview`;
-      const data = await getJson(path, token);
-      const words = data.words || [];
-      const text = buildQuizletText(words);
-      const label = mode === "learn" ? t.export.learn : t.export.review;
-      const filename = mode === "learn" ? "learn-today.txt" : "review-today.txt";
-      setExportPayload({
-        title: label,
-        text,
-        count: words.length,
-        filename
-      });
-      setExportOpen(true);
-    } catch (err) {
-      setExportError(err.message || "Export failed");
-    } finally {
-      setExportLoading(false);
-    }
   };
 
   const continueToCommunity = () => {
@@ -647,28 +525,6 @@ export default function Home() {
                   <span className="today-action-count">10 {wordsLabel}</span>
                 </button>
               </div>
-              <div className="today-export">
-                <div className="today-export-title">{t.export.title}</div>
-                <div className="actions">
-                  <button
-                    type="button"
-                    className="button-secondary"
-                    onClick={() => startExport("learn")}
-                    disabled={exportLoading || dashboard.learn_today === 0}
-                  >
-                    {t.export.learn}
-                  </button>
-                  <button
-                    type="button"
-                    className="button-secondary"
-                    onClick={() => startExport("review")}
-                    disabled={exportLoading || dashboard.review_today === 0}
-                  >
-                    {t.export.review}
-                  </button>
-                </div>
-                {exportError ? <p className="error">{exportError}</p> : null}
-              </div>
             </div>
 
             <div className="panel">
@@ -785,44 +641,6 @@ export default function Home() {
           </div>
           <TourOverlay steps={tourSteps} labels={tourLabels} stage="home" onFinish={continueToCommunity} />
         </>
-      ) : null}
-      {exportOpen ? (
-        <div className="modal-overlay" onClick={closeExport}>
-          <div className="modal-card export-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="modal-header">
-              <div>
-                <div className="modal-title">{exportPayload.title}</div>
-                <div className="modal-sub">
-                  {exportPayload.count} {wordsLabel}
-                </div>
-              </div>
-              <button type="button" className="button-secondary modal-close" onClick={closeExport}>
-                {t.export.close}
-              </button>
-            </div>
-            <div className="modal-body">
-              <p className="muted">{t.export.hint}</p>
-              {exportPayload.text ? (
-                <textarea className="export-textarea" readOnly value={exportPayload.text} />
-              ) : (
-                <p className="muted">{t.export.empty}</p>
-              )}
-            </div>
-            <div className="modal-footer">
-              <button type="button" onClick={copyExport} disabled={!exportPayload.text}>
-                {t.export.copy}
-              </button>
-              <button
-                type="button"
-                className="button-secondary"
-                onClick={() => downloadTextFile(exportPayload.filename, exportPayload.text)}
-                disabled={!exportPayload.text}
-              >
-                {t.export.download}
-              </button>
-            </div>
-          </div>
-        </div>
       ) : null}
     </main>
   );

@@ -26,6 +26,15 @@ const TEXT = {
     learnedNext: "Выучил, дальше",
     wordList: "Список слов",
     closeList: "Закрыть список",
+    export: {
+      title: "Экспорт в Quizlet",
+      action: "Экспортировать",
+      hint: "Формат: слово TAB перевод. Подходит для импорта в Quizlet.",
+      copy: "Скопировать",
+      download: "Скачать файл",
+      close: "Закрыть",
+      empty: "Нет слов для экспорта."
+    },
     cardsDone: "Карточки пройдены",
     cardsDoneHint: "Можно переходить к небольшому чтению и тесту.",
     goReading: "Перейти к чтению",
@@ -68,6 +77,15 @@ const TEXT = {
     learnedNext: "Learned, next",
     wordList: "Word list",
     closeList: "Close list",
+    export: {
+      title: "Export to Quizlet",
+      action: "Export",
+      hint: "Format: term TAB definition. Suitable for Quizlet import.",
+      copy: "Copy",
+      download: "Download file",
+      close: "Close",
+      empty: "No words to export."
+    },
     cardsDone: "Cards completed",
     cardsDoneHint: "You can proceed to short reading and the test.",
     goReading: "Go to reading",
@@ -142,6 +160,23 @@ const getTranslationLine = (item) => collectTranslations(item).join(", ");
 
 const getPrimaryTranslation = (item) => collectTranslations(item)[0] || "";
 
+const buildQuizletText = (items) =>
+  (items || [])
+    .map((item) => `${item.word}\t${getTranslationLine(item)}`)
+    .join("\n");
+
+const downloadTextFile = (filename, text) => {
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+};
+
 export default function LearnPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -157,6 +192,13 @@ export default function LearnPage() {
   const [readingLeft, setReadingLeft] = useState(READ_SECONDS);
   const [cardIndex, setCardIndex] = useState(0);
   const [showWordList, setShowWordList] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportError, setExportError] = useState("");
+  const [exportPayload, setExportPayload] = useState({
+    text: "",
+    count: 0,
+    filename: ""
+  });
   const { lang } = useUiLang();
   const uiLang = lang === "en" ? "en" : "ru";
   const t = TEXT[uiLang] || TEXT.ru;
@@ -330,6 +372,33 @@ export default function LearnPage() {
     setShowWordList(false);
   };
 
+  const openExport = () => {
+    const text = buildQuizletText(words);
+    setExportPayload({
+      text,
+      count: words.length,
+      filename: "learn-words.txt"
+    });
+    setExportError("");
+    setExportOpen(true);
+  };
+
+  const closeExport = () => {
+    setExportOpen(false);
+    setExportError("");
+  };
+
+  const copyExport = async () => {
+    if (!exportPayload.text) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(exportPayload.text);
+    } catch (err) {
+      setExportError(err.message || "Copy failed");
+    }
+  };
+
   const submit = async () => {
     setError("");
     setResult(null);
@@ -411,6 +480,14 @@ export default function LearnPage() {
             <div className="progress-actions">
               <button type="button" className="button-secondary" onClick={openWordList}>
                 {t.wordList}
+              </button>
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={openExport}
+                disabled={words.length === 0}
+              >
+                {t.export.action}
               </button>
             </div>
           </div>
@@ -518,6 +595,46 @@ export default function LearnPage() {
                       </button>
                     ))}
                   </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {exportOpen ? (
+            <div className="modal-overlay" onClick={closeExport}>
+              <div className="modal-card export-modal" onClick={(event) => event.stopPropagation()}>
+                <div className="modal-header">
+                  <div>
+                    <div className="modal-title">{t.export.title}</div>
+                    <div className="modal-sub">
+                      {exportPayload.count} / {words.length}
+                    </div>
+                  </div>
+                  <button type="button" className="button-secondary modal-close" onClick={closeExport}>
+                    {t.export.close}
+                  </button>
+                </div>
+                <div className="modal-body">
+                  <p className="muted">{t.export.hint}</p>
+                  {exportPayload.text ? (
+                    <textarea className="export-textarea" readOnly value={exportPayload.text} />
+                  ) : (
+                    <p className="muted">{t.export.empty}</p>
+                  )}
+                  {exportError ? <p className="error">{exportError}</p> : null}
+                </div>
+                <div className="modal-footer">
+                  <button type="button" onClick={copyExport} disabled={!exportPayload.text}>
+                    {t.export.copy}
+                  </button>
+                  <button
+                    type="button"
+                    className="button-secondary"
+                    onClick={() => downloadTextFile(exportPayload.filename, exportPayload.text)}
+                    disabled={!exportPayload.text}
+                  >
+                    {t.export.download}
+                  </button>
                 </div>
               </div>
             </div>
