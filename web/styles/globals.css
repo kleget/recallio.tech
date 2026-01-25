@@ -659,21 +659,38 @@ main {
 }
 
 .footer-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 16px;
-  align-content: flex-start;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
 }
 
-.footer-links a {
+.footer-group {
+  display: grid;
+  gap: 8px;
+}
+
+.footer-group-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.footer-group-links {
+  display: grid;
+  gap: 6px;
+}
+
+.footer-group-links a {
   color: var(--muted);
   text-decoration: none;
   font-weight: 600;
   font-size: 13px;
-  padding: 4px 0;
+  padding: 2px 0;
 }
 
-.footer-links a:hover {
+.footer-group-links a:hover {
   color: var(--text);
 }
 
