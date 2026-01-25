@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import delete, func, select
@@ -9,6 +9,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.auth import get_active_learning_profile, get_current_user
+from app.api.study import REVIEW_INTERVALS_DAYS
 from app.db.session import get_db
 from app.models import (
     Corpus,
@@ -323,6 +324,8 @@ async def import_known_words(
             word_id_map[lemma] = word_id
 
     now = datetime.now(timezone.utc)
+    first_interval = REVIEW_INTERVALS_DAYS[0]
+    next_review_at = now + timedelta(days=first_interval)
     rows = [
         {
             "profile_id": profile.id,
@@ -330,8 +333,14 @@ async def import_known_words(
             "word_id": word_id,
             "status": "known",
             "stage": 0,
+            "repetitions": 0,
+            "interval_days": first_interval,
+            "ease_factor": 2.5,
             "learned_at": now,
-            "next_review_at": now,
+            "last_review_at": now,
+            "next_review_at": next_review_at,
+            "correct_streak": 0,
+            "wrong_streak": 0,
         }
         for word_id in word_id_map.values()
     ]

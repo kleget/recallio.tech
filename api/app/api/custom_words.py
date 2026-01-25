@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import delete, func, select, update
@@ -8,6 +9,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.auth import get_active_learning_profile, get_current_user
+from app.api.study import REVIEW_INTERVALS_DAYS
 from app.db.session import get_db
 from app.models import Translation, User, UserCustomWord, UserWord, UserWordTranslation, Word
 from app.schemas.custom_words import (
@@ -360,14 +362,16 @@ async def mark_custom_word_known(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Custom word not found")
 
     existing_result = await db.execute(
-        select(UserWord.status).where(
+        select(UserWord).where(
             UserWord.profile_id == profile.id,
             UserWord.word_id == word_id,
         )
     )
-    existing_status = existing_result.scalar_one_or_none()
-    now = func.now()
-    if existing_status is None:
+    existing_word = existing_result.scalar_one_or_none()
+    now = datetime.now(timezone.utc)
+    first_interval = REVIEW_INTERVALS_DAYS[0]
+    next_review_at = now + timedelta(days=first_interval)
+    if existing_word is None:
         stmt = insert(UserWord).values(
             profile_id=profile.id,
             user_id=user.id,
@@ -375,22 +379,31 @@ async def mark_custom_word_known(
             status="known",
             stage=0,
             repetitions=0,
-            interval_days=0,
+            interval_days=first_interval,
             ease_factor=2.5,
             learned_at=now,
             last_review_at=now,
-            next_review_at=None,
+            next_review_at=next_review_at,
             correct_streak=0,
             wrong_streak=0,
         )
         stmt = stmt.on_conflict_do_nothing(index_elements=["profile_id", "word_id"])
         await db.execute(stmt)
-    elif existing_status != "learned":
-        await db.execute(
-            update(UserWord)
-            .where(UserWord.profile_id == profile.id, UserWord.word_id == word_id)
-            .values(status="known", learned_at=now, last_review_at=now, next_review_at=None)
-        )
+    else:
+        if existing_word.status != "learned":
+            existing_word.status = "known"
+        if existing_word.learned_at is None:
+            existing_word.learned_at = now
+        if existing_word.last_review_at is None:
+            existing_word.last_review_at = now
+        if existing_word.next_review_at is None:
+            existing_word.next_review_at = next_review_at
+        if not existing_word.interval_days or existing_word.interval_days < first_interval:
+            existing_word.interval_days = first_interval
+        if existing_word.repetitions is None:
+            existing_word.repetitions = 0
+        if existing_word.stage is None:
+            existing_word.stage = 0
 
     await db.execute(
         insert(Translation)
