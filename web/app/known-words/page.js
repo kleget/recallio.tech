@@ -51,7 +51,7 @@ const TEXT = {
       format: "Format: word - translation",
       exampleTitle: "Example",
       example:
-        "dog - собака\nclock - часы\nwarm - тепло\nокно - window\nмышь - mouse",
+        "dog - ??????\nclock - ?????<\nwarm - ?,????\n???? - window\n??<?^?O - mouse",
       import: "Import",
       importing: "Importing...",
       result: "Import result",

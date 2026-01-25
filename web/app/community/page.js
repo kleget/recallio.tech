@@ -218,7 +218,7 @@ const TEXT = {
           title: "Activity feed",
           desc: "See what other learners are doing.",
           mobileDesc:
-            "The feed shows friends’ activity: learning, reviews, and challenges."
+            "The feed shows friends??T activity: learning, reviews, and challenges."
         },
         {
           key: "community-friends",
@@ -1118,7 +1118,7 @@ export default function CommunityPage() {
                     <div>
                       <strong>{challengeTitle(item.challenge_key)}</strong>
                       <div className="social-meta">
-                        {t.groups.membersCount}: {item.members_count} · {t.groups.ends}{" "}
+                        {t.groups.membersCount}: {item.members_count} • {t.groups.ends}{" "}
                         {formatTime(item.ends_at)}
                       </div>
                       <div className="social-meta">Code: {item.invite_code}</div>

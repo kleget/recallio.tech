@@ -191,9 +191,9 @@ export default function ReadingPage() {
     const limited = list.slice(0, MAX_SOURCE_ITEMS).map(truncateSource).filter(Boolean);
     const extra = list.length - limited.length;
     if (extra > 0) {
-      return `${limited.join(" · ")} · +${extra}`;
+      return `${limited.join(" • ")} • +${extra}`;
     }
-    return limited.join(" · ");
+    return limited.join(" • ");
   }
 
   const renderHighlightedText = () => {
@@ -203,7 +203,7 @@ export default function ReadingPage() {
     if (!highlightOn || highlightTokens.size === 0) {
       return reading.text;
     }
-    const regex = /(\p{L}+(?:['’]\p{L}+)*)/gu;
+    const regex = /(\p{L}+(?:['??T]\p{L}+)*)/gu;
     const parts = [];
     let lastIndex = 0;
     for (const match of reading.text.matchAll(regex)) {
