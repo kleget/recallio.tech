@@ -52,10 +52,17 @@ export default function RootLayout({ children }) {
   const themeCookie = cookieStore.get("theme")?.value;
   const initialTheme = themeCookie === "dark" ? "dark" : "light";
   const paletteCookie = cookieStore.get("palette")?.value;
+  const paletteMap = {
+    slate: "steel",
+    graphite: "ice",
+    ash: "iris",
+    ink: "amber"
+  };
+  const normalizedPalette = paletteCookie ? paletteMap[paletteCookie] || paletteCookie : null;
   const initialPalette =
-    paletteCookie && ["slate", "graphite", "ash", "ink"].includes(paletteCookie)
-      ? paletteCookie
-      : "slate";
+    normalizedPalette && ["ice", "iris", "amber", "steel"].includes(normalizedPalette)
+      ? normalizedPalette
+      : "ice";
   const adminCookie = cookieStore.get("is_admin")?.value;
   const initialIsAdmin = adminCookie === "1";
   return (

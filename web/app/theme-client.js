@@ -12,7 +12,17 @@ export default function ThemeClient() {
     }
     const storedPalette = localStorage.getItem("palette") || getCookie("palette");
     if (storedPalette) {
-      document.documentElement.dataset.palette = storedPalette;
+      const paletteMap = {
+        slate: "steel",
+        graphite: "ice",
+        ash: "iris",
+        ink: "amber"
+      };
+      const candidate = paletteMap[storedPalette] || storedPalette;
+      const normalized = ["ice", "iris", "amber", "steel"].includes(candidate)
+        ? candidate
+        : "ice";
+      document.documentElement.dataset.palette = normalized;
     }
   }, []);
 

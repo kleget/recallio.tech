@@ -79,10 +79,10 @@ const TEXT = {
     themeLight: "Светлая",
     themeDark: "Темная",
     paletteOptions: {
-      slate: "Slate + Teal",
-      graphite: "Graphite + Lime",
-      ash: "Ash + Blue",
-      ink: "Ink + Sand"
+      ice: "Graphite + Ice",
+      iris: "Graphite + Iris",
+      amber: "Graphite + Amber",
+      steel: "Steel + Aqua"
     },
     langRu: "Русский",
     langEn: "English"
@@ -148,10 +148,10 @@ const TEXT = {
     themeLight: "Light",
     themeDark: "Dark",
     paletteOptions: {
-      slate: "Slate + Teal",
-      graphite: "Graphite + Lime",
-      ash: "Ash + Blue",
-      ink: "Ink + Sand"
+      ice: "Graphite + Ice",
+      iris: "Graphite + Iris",
+      amber: "Graphite + Amber",
+      steel: "Steel + Aqua"
     },
     langRu: "Russian",
     langEn: "English"
@@ -229,7 +229,7 @@ export default function ProfilePage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [deleting, setDeleting] = useState(false);
-  const [palette, setPalette] = useState("slate");
+  const [palette, setPalette] = useState("ice");
   const { lang } = useUiLang();
   const uiLang = lang || "ru";
 
@@ -359,16 +359,21 @@ export default function ProfilePage() {
   };
 
   const paletteOptions = [
-    { value: "slate", label: t.paletteOptions?.slate || "Slate + Teal", swatch: "#2aa7a0" },
-    { value: "graphite", label: t.paletteOptions?.graphite || "Graphite + Lime", swatch: "#9fe870" },
-    { value: "ash", label: t.paletteOptions?.ash || "Ash + Blue", swatch: "#4c83ff" },
-    { value: "ink", label: t.paletteOptions?.ink || "Ink + Sand", swatch: "#d18a52" }
+    { value: "ice", label: t.paletteOptions?.ice || "Graphite + Ice", swatch: "#63e5e3" },
+    { value: "iris", label: t.paletteOptions?.iris || "Graphite + Iris", swatch: "#6a7bff" },
+    { value: "amber", label: t.paletteOptions?.amber || "Graphite + Amber", swatch: "#e3a04b" },
+    { value: "steel", label: t.paletteOptions?.steel || "Steel + Aqua", swatch: "#3ac2d6" }
   ];
 
   const applyPalette = (nextPalette) => {
-    const normalized = ["slate", "graphite", "ash", "ink"].includes(nextPalette)
-      ? nextPalette
-      : "slate";
+    const paletteMap = {
+      slate: "steel",
+      graphite: "ice",
+      ash: "iris",
+      ink: "amber"
+    };
+    const candidate = paletteMap[nextPalette] || nextPalette;
+    const normalized = ["ice", "iris", "amber", "steel"].includes(candidate) ? candidate : "ice";
     setPalette(normalized);
     document.documentElement.dataset.palette = normalized;
     localStorage.setItem("palette", normalized);
