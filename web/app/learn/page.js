@@ -473,7 +473,7 @@ export default function LearnPage() {
         </div>
       ) : null}
 
-                  {words.length > 0 ? (
+      {words.length > 0 ? (
         <>
           <div className="study-grid">
             <div className="study-main">
@@ -747,6 +747,6 @@ export default function LearnPage() {
           ) : null}
         </>
       ) : null}
-
+    </main>
   );
 }
