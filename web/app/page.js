@@ -56,6 +56,10 @@ const TEXT = {
         {
           title: "Контекст",
           desc: "Добавляй короткий пример или фразу — так слово цепляется сильнее."
+        },
+        {
+          title: "Метод «Гармошка»",
+          desc: "Напишите столбик английских слов, затем перевод. Согните лист по линии, чтобы видеть только перевод, и пишите английские слова по памяти. Повторяйте, пока не запомните."
         }
       ]
     },
@@ -160,6 +164,10 @@ const TEXT = {
         {
           title: "Context",
           desc: "Add a short example phrase so the word sticks in real usage."
+        },
+        {
+          title: "Accordion method",
+          desc: "Write a column of words and translations, fold the sheet to hide the words, and recall them from the translations. Repeat until memorized."
         }
       ]
     },
