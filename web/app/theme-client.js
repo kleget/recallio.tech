@@ -10,20 +10,7 @@ export default function ThemeClient() {
     if (storedTheme) {
       document.documentElement.dataset.theme = storedTheme;
     }
-    const storedPalette = localStorage.getItem("palette") || getCookie("palette");
-    if (storedPalette) {
-      const paletteMap = {
-        slate: "steel",
-        graphite: "ice",
-        ash: "iris",
-        ink: "amber"
-      };
-      const candidate = paletteMap[storedPalette] || storedPalette;
-      const normalized = ["ice", "iris", "amber", "steel"].includes(candidate)
-        ? candidate
-        : "ice";
-      document.documentElement.dataset.palette = normalized;
-    }
+    document.documentElement.dataset.palette = "iris";
   }, []);
 
   return null;

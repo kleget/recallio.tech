@@ -131,28 +131,28 @@ html[data-theme="dark"][data-palette="ice"] {
 }
 
 html[data-palette="iris"] {
-  --bg: #edf0f4;
-  --bg-2: #e2e7ee;
-  --panel: rgba(248, 249, 252, 0.9);
-  --panel-strong: #f2f4f8;
-  --surface: linear-gradient(180deg, rgba(249, 250, 252, 0.95) 0%, rgba(233, 238, 246, 0.9) 100%);
-  --text: #1d2230;
-  --muted: #66708a;
+  --bg: #e6ebf2;
+  --bg-2: #dde3ee;
+  --panel: rgba(244, 247, 252, 0.92);
+  --panel-strong: #f0f4f9;
+  --surface: linear-gradient(180deg, rgba(246, 248, 252, 0.96) 0%, rgba(232, 238, 246, 0.9) 100%);
+  --text: #1b2230;
+  --muted: #6b7588;
   --border: rgba(29, 34, 48, 0.12);
-  --accent: #6a7bff;
-  --accent-strong: #4c5ed6;
-  --accent-soft: rgba(106, 123, 255, 0.14);
-  --accent-glow: rgba(106, 123, 255, 0.22);
-  --accent-border: rgba(106, 123, 255, 0.3);
+  --accent: #6475ff;
+  --accent-strong: #4a5bd6;
+  --accent-soft: rgba(100, 117, 255, 0.14);
+  --accent-glow: rgba(100, 117, 255, 0.22);
+  --accent-border: rgba(100, 117, 255, 0.3);
   --accent-2: #3f9cf4;
   --accent-3: #9a6dff;
-  --accent-gradient: linear-gradient(135deg, #6a7bff 0%, #3f9cf4 100%);
+  --accent-gradient: linear-gradient(135deg, #6475ff 0%, #3f9cf4 100%);
   --accent-gradient-soft: linear-gradient(
     135deg,
-    rgba(106, 123, 255, 0.14) 0%,
+    rgba(100, 117, 255, 0.14) 0%,
     rgba(63, 156, 244, 0.14) 100%
   );
-  --glow-1: rgba(106, 123, 255, 0.16);
+  --glow-1: rgba(100, 117, 255, 0.16);
   --glow-2: rgba(63, 156, 244, 0.14);
   --glow-3: rgba(154, 109, 255, 0.12);
   --grid-color: rgba(29, 34, 48, 0.06);
