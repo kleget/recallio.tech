@@ -98,7 +98,7 @@ async def get_onboarding_state(
         target_lang=learning_profile.target_lang if learning_profile else None,
         daily_new_words=settings.daily_new_words if settings else 5,
         daily_review_words=settings.daily_review_words if settings else 10,
-        learn_batch_size=settings.learn_batch_size if settings else 5,
+        learn_batch_size=settings.daily_new_words if settings else 5,
         corpora=[
             OnboardingStateCorpusOut(
                 corpus_id=item.corpus_id,
@@ -227,7 +227,7 @@ async def apply_onboarding(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Languages must be different")
     if not data.corpora:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Select at least one corpus")
-    if data.daily_new_words <= 0 or data.daily_review_words <= 0 or data.learn_batch_size <= 0:
+    if data.daily_new_words <= 0 or data.daily_review_words <= 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid daily settings")
 
     corpora_ids = [item.corpus_id for item in data.corpora]
@@ -279,7 +279,7 @@ async def apply_onboarding(
         db.add(settings)
     settings.daily_new_words = data.daily_new_words
     settings.daily_review_words = data.daily_review_words
-    settings.learn_batch_size = data.learn_batch_size
+    settings.learn_batch_size = data.daily_new_words
 
     await db.execute(delete(UserCorpus).where(UserCorpus.profile_id == learning_profile.id))
     for item in data.corpora:

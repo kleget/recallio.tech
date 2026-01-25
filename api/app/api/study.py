@@ -960,7 +960,7 @@ async def start_learn(
     db: AsyncSession = Depends(get_db),
 ) -> LearnStartOut:
     profile, settings = await load_profile_settings(user.id, db)
-    batch_size = limit if limit and limit > 0 else settings.learn_batch_size
+    batch_size = limit if limit and limit > 0 else settings.daily_new_words
     if batch_size <= 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid batch size")
 

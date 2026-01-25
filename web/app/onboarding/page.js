@@ -85,11 +85,9 @@ const TEXT = {
       title: "Ритм обучения",
       dailyNew: "Новых слов в день",
       dailyReview: "Повторы",
-      batch: "Размер набора",
       dailyNewHint: "Сколько новых слов добавлять ежедневно.",
       dailyReviewHint: "Повторяем все слова, которые пришли по расписанию.",
-      dailyReviewValue: "Без лимита",
-      batchHint: "Сколько карточек в одном подходе."
+      dailyReviewValue: "Без лимита"
     },
     corpora: {
       title: "Сферы",
@@ -148,11 +146,9 @@ const TEXT = {
       title: "Learning pace",
       dailyNew: "New words per day",
       dailyReview: "Reviews",
-      batch: "Batch size",
       dailyNewHint: "How many new words to add daily.",
       dailyReviewHint: "All due words are shown for review.",
-      dailyReviewValue: "Unlimited",
-      batchHint: "How many cards in one session."
+      dailyReviewValue: "Unlimited"
     },
     corpora: {
       title: "Corpora",
@@ -314,7 +310,6 @@ export default function OnboardingPage() {
   const [targetLang, setTargetLang] = useState("en");
   const [dailyNew, setDailyNew] = useState(5);
   const [dailyReview, setDailyReview] = useState(10);
-  const [learnBatch, setLearnBatch] = useState(5);
   const [corpora, setCorpora] = useState([]);
   const [selected, setSelected] = useState({});
   const [token, setToken] = useState("");
@@ -359,9 +354,6 @@ export default function OnboardingPage() {
         }
         if (Number.isFinite(onboarding.daily_review_words)) {
           setDailyReview(onboarding.daily_review_words);
-        }
-        if (Number.isFinite(onboarding.learn_batch_size)) {
-          setLearnBatch(onboarding.learn_batch_size);
         }
         if (Array.isArray(onboarding.corpora)) {
           const selectedMap = {};
@@ -433,7 +425,7 @@ export default function OnboardingPage() {
   useEffect(() => {
     setSaveStatus("");
     setSaveError("");
-  }, [nativeLang, targetLang, dailyNew, dailyReview, learnBatch, selected]);
+  }, [nativeLang, targetLang, dailyNew, dailyReview, selected]);
 
   useEffect(() => {
     if (!previewOpen) {
@@ -470,10 +462,6 @@ export default function OnboardingPage() {
     {
       label: t.settings.dailyReview,
       value: t.settings.dailyReviewValue
-    },
-    {
-      label: t.settings.batch,
-      value: `${learnBatch}`
     },
     {
       label: t.corpora.selected,
@@ -567,7 +555,7 @@ export default function OnboardingPage() {
           target_lang: targetLang,
           daily_new_words: dailyNew,
           daily_review_words: dailyReview,
-          learn_batch_size: learnBatch,
+          learn_batch_size: dailyNew,
           corpora: corporaPayload
         },
         token
@@ -755,33 +743,6 @@ export default function OnboardingPage() {
                       type="button"
                       className="button-secondary stepper-button"
                       onClick={() => adjustValue(setDailyNew, dailyNew, 1, 1, 50)}
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-                <div className="setting-card">
-                  <div className="setting-title">{t.settings.batch}</div>
-                  <div className="setting-desc">{t.settings.batchHint}</div>
-                  <div className="stepper">
-                    <button
-                      type="button"
-                      className="button-secondary stepper-button"
-                      onClick={() => adjustValue(setLearnBatch, learnBatch, -1, 1, 20)}
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      min="1"
-                      max="20"
-                      value={learnBatch}
-                      onChange={(event) => handleInputChange(setLearnBatch, event, 1, 20)}
-                    />
-                    <button
-                      type="button"
-                      className="button-secondary stepper-button"
-                      onClick={() => adjustValue(setLearnBatch, learnBatch, 1, 1, 20)}
                     >
                       +
                     </button>

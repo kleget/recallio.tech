@@ -115,7 +115,7 @@ const TEXT = {
     features: [
       {
         title: "Learn & review",
-        desc: "Daily batches with a control test."
+        desc: "Daily sessions with a recall test."
       },
       {
         title: "Weak words",

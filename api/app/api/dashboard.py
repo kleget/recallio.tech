@@ -288,7 +288,7 @@ async def get_dashboard(
         review_available=review_available,
         daily_new_words=settings.daily_new_words,
         daily_review_words=settings.daily_review_words,
-        learn_batch_size=settings.learn_batch_size,
+        learn_batch_size=settings.daily_new_words,
         learned_series=learned_series,
     )
     if use_cache:
