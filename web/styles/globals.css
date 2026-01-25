@@ -24,8 +24,8 @@
   );
   --success: #1e9c6b;
   --danger: #e35b68;
-  --shadow-sm: 0 10px 22px rgba(15, 23, 42, 0.08);
-  --shadow-md: 0 18px 42px rgba(15, 23, 42, 0.14);
+  --shadow-sm: 0 8px 18px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 14px 30px rgba(15, 23, 42, 0.12);
   --radius-lg: 18px;
   --radius-md: 14px;
   --radius-sm: 10px;
@@ -59,8 +59,8 @@ html[data-theme="dark"] {
   );
   --success: #21c187;
   --danger: #ff7d8a;
-  --shadow-sm: 0 14px 34px rgba(0, 0, 0, 0.45);
-  --shadow-md: 0 28px 70px rgba(0, 0, 0, 0.6);
+  --shadow-sm: 0 10px 24px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 18px 40px rgba(0, 0, 0, 0.5);
   --glow-1: rgba(57, 200, 195, 0.16);
   --glow-2: rgba(91, 140, 255, 0.14);
   --glow-3: rgba(167, 139, 250, 0.14);
@@ -244,7 +244,7 @@ body {
   color: #ffffff;
   background: var(--accent);
   border-color: transparent;
-  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.18);
+  box-shadow: var(--shadow-sm);
 }
 
 .nav-icon {
@@ -350,7 +350,7 @@ body {
   color: #ffffff;
   background: var(--accent);
   border-color: transparent;
-  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.18);
+  box-shadow: var(--shadow-sm);
 }
 
 html[data-theme="dark"] body::after {
@@ -366,6 +366,8 @@ main {
   margin: 0 auto;
   padding: 48px 20px 80px;
   animation: page-in 0.6s ease;
+  display: grid;
+  gap: 24px;
 }
 
 .page-header {
@@ -627,12 +629,49 @@ textarea {
   font-size: 14px;
   background: var(--panel-strong);
   color: var(--text);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 10px 24px rgba(15, 23, 42, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 14px rgba(15, 23, 42, 0.06);
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 textarea {
   min-height: 120px;
+}
+
+input[type="checkbox"] {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel-strong);
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+input[type="checkbox"]::after {
+  content: "";
+  width: 8px;
+  height: 4px;
+  border: 2px solid transparent;
+  border-left: 0;
+  border-top: 0;
+  transform: rotate(45deg);
+}
+
+input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+input[type="checkbox"]:checked::after {
+  border-color: #ffffff;
+}
+
+input[type="checkbox"]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 input:focus,
@@ -656,13 +695,13 @@ button {
   justify-content: center;
   gap: 8px;
   transition: transform 0.2s ease, box-shadow 0.25s ease, background 0.2s ease;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+  box-shadow: var(--shadow-sm);
 }
 
 button:hover {
   transform: translateY(-1px);
   background: var(--accent-strong);
-  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.2);
+  box-shadow: var(--shadow-md);
 }
 
 button:active {
@@ -710,11 +749,11 @@ button[disabled] {
 }
 
 .section {
-  margin-top: 24px;
+  margin-top: 0;
 }
 
 .panel {
-  margin-top: 16px;
+  margin-top: 0;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -1005,18 +1044,18 @@ button[disabled] {
 }
 
 .stat-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   box-shadow: var(--shadow-md);
   border-color: rgba(31, 127, 115, 0.3);
 }
 
-  .stat-label {
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
+.stat-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
 
 .stat-value {
   font-size: 26px;
@@ -1103,7 +1142,7 @@ button[disabled] {
   font-weight: 700;
   letter-spacing: -0.02em;
   color: rgb(var(--stat-accent));
-  text-shadow: 0 12px 28px rgba(var(--stat-accent), 0.25);
+  text-shadow: 0 6px 12px rgba(var(--stat-accent), 0.18);
 }
 
 .stats-grid-home .stat-sub {
@@ -1149,7 +1188,7 @@ button[disabled] {
 }
 
 .today-action:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   border-color: var(--accent);
   background: var(--accent-gradient-soft);
   box-shadow: var(--shadow-md);
@@ -3601,8 +3640,17 @@ html[data-theme="dark"] .input-status.wrong {
 .delete-modal .checkbox-row input[type="checkbox"] {
   width: 18px;
   height: 18px;
-  accent-color: var(--danger);
+  border-radius: 6px;
   cursor: pointer;
+}
+
+.delete-modal .checkbox-row input[type="checkbox"]:checked {
+  background: var(--danger);
+  border-color: var(--danger);
+}
+
+.delete-modal .checkbox-row input[type="checkbox"]:focus-visible {
+  box-shadow: 0 0 0 3px rgba(227, 91, 104, 0.25);
 }
 
 .public-profile-card {
