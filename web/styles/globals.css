@@ -624,8 +624,8 @@ main {
   max-width: 980px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 28px;
   align-items: start;
 }
 
@@ -641,9 +641,20 @@ main {
 }
 
 .footer-meta {
-  margin: 0;
+  margin: 0 0 6px;
   color: var(--muted);
   font-size: 13px;
+}
+
+.footer-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 18px;
+}
+
+.footer-col {
+  display: grid;
+  gap: 10px;
 }
 
 .footer-links-title {
@@ -651,26 +662,41 @@ main {
   margin-bottom: 8px;
 }
 
-.footer-links-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 14px;
+.footer-link-list {
+  display: grid;
+  gap: 8px;
 }
 
-.footer-links-list a {
+.footer-link-list a {
   color: var(--text);
   text-decoration: none;
   font-weight: 600;
 }
 
-.footer-links-list a:hover {
+.footer-link-list a:hover {
   color: var(--accent);
 }
 
+.footer-bottom {
+  max-width: 980px;
+  margin: 16px auto 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .footer-rights {
-  margin-top: 10px;
   color: var(--muted);
   font-size: 12px;
+}
+
+@media (max-width: 720px) {
+  .site-footer-inner {
+    grid-template-columns: 1fr;
+  }
 }
 
 h1,
@@ -2494,6 +2520,16 @@ html[data-theme="dark"] .input-status.wrong {
   color: var(--muted);
 }
 
+.setting-readonly {
+  background: var(--panel-strong);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--text);
+}
+
 .stepper {
   display: flex;
   align-items: center;
@@ -2654,6 +2690,50 @@ html[data-theme="dark"] .input-status.wrong {
   border-radius: 999px;
   font-weight: 600;
   margin-top: 12px;
+}
+
+.onboarding-summary .panel-header {
+  align-items: flex-start;
+}
+
+.summary-list {
+  display: grid;
+  gap: 10px;
+}
+
+.summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.summary-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.summary-label {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.summary-value {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.summary-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.summary-actions button {
+  width: 100%;
 }
 
 .import-panel {

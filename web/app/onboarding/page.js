@@ -122,6 +122,14 @@ const TEXT = {
       count: "Частота",
       noTranslation: "Перевод не найден"
     },
+    summary: {
+      title: "Сводка",
+      hint: "Проверь параметры перед сохранением.",
+      pair: "Направление",
+      totalLimit: "Всего слов",
+      statusDone: "Настройка завершена",
+      statusPending: "Нужно завершить настройку"
+    },
     langRu: "Русский",
     langEn: "English",
     errorLoad: "Не удалось загрузить данные."
@@ -176,6 +184,14 @@ const TEXT = {
       more: "Load more",
       count: "Frequency",
       noTranslation: "No translation"
+    },
+    summary: {
+      title: "Summary",
+      hint: "Review settings before saving.",
+      pair: "Direction",
+      totalLimit: "Total words",
+      statusDone: "Setup complete",
+      statusPending: "Setup not completed"
     },
     langRu: "Russian",
     langEn: "English",
@@ -429,6 +445,44 @@ export default function OnboardingPage() {
   }, [previewOpen]);
 
   const selectedCount = useMemo(() => Object.keys(selected).length, [selected]);
+  const totalSelectedLimit = useMemo(() => {
+    if (!corpora.length) {
+      return 0;
+    }
+    const corporaMap = new Map(corpora.map((item) => [item.id, item]));
+    return Object.entries(selected).reduce((sum, [id, item]) => {
+      const corpus = corporaMap.get(Number(id));
+      const total = corpus?.words_total ?? 0;
+      const limit = normalizeLimit(item.target_word_limit, total);
+      return sum + (Number.isFinite(limit) ? limit : 0);
+    }, 0);
+  }, [selected, corpora]);
+  const summaryRows = [
+    {
+      label: t.summary.pair,
+      value: `${formatLang(nativeLang)} → ${formatLang(targetLang)}`
+    },
+    {
+      label: t.settings.dailyNew,
+      value: `${dailyNew}`
+    },
+    {
+      label: t.settings.dailyReview,
+      value: t.settings.dailyReviewValue
+    },
+    {
+      label: t.settings.batch,
+      value: `${learnBatch}`
+    },
+    {
+      label: t.corpora.selected,
+      value: `${selectedCount}`
+    },
+    {
+      label: t.summary.totalLimit,
+      value: totalSelectedLimit ? `${totalSelectedLimit} ${t.corpora.words}` : "-"
+    }
+  ];
 
   const formatLang = (value) => (value === "en" ? t.langEn : t.langRu);
 
@@ -606,9 +660,9 @@ export default function OnboardingPage() {
   return (
     <main>
       <div className="page-header">
-        <div>
-          <h1>{t.title}</h1>
-          <p>{t.tagline}</p>
+        <div className="page-hero-main">
+          <h1 className="page-title">{t.title}</h1>
+          <p className="page-tagline">{t.tagline}</p>
         </div>
         <div className="page-header-actions">
           <button type="button" className="button-secondary" onClick={goHome}>
@@ -621,121 +675,142 @@ export default function OnboardingPage() {
       {error ? <p className="error">{error}</p> : null}
 
       {!loading ? (
-        <div className="tab-panel onboarding-shell">
-          <div className="panel">
-            <div className="panel-title">{t.languages.title}</div>
-            <p className="muted">{t.languages.hint}</p>
-            <div className="language-grid">
-              <div className="language-card">
-                <div className="language-title">{t.languages.native}</div>
-                <div className="segmented">
-                  <button
-                    type="button"
-                    className={nativeLang === "ru" ? "is-active" : ""}
-                    onClick={() => updateNative("ru")}
-                  >
-                    {t.langRu}
-                  </button>
-                  <button
-                    type="button"
-                    className={nativeLang === "en" ? "is-active" : ""}
-                    onClick={() => updateNative("en")}
-                  >
-                    {t.langEn}
-                  </button>
+        <div className="study-grid onboarding-shell">
+          <div className="study-main">
+            <div className="panel">
+              <div className="panel-header">
+                <div>
+                  <div className="panel-title">{t.languages.title}</div>
+                  <p className="muted">{t.languages.hint}</p>
                 </div>
               </div>
-              <div className="language-card">
-                <div className="language-title">{t.languages.target}</div>
-                <div className="segmented">
-                  <button
-                    type="button"
-                    className={targetLang === "ru" ? "is-active" : ""}
-                    onClick={() => updateTarget("ru")}
-                  >
-                    {t.langRu}
-                  </button>
-                  <button
-                    type="button"
-                    className={targetLang === "en" ? "is-active" : ""}
-                    onClick={() => updateTarget("en")}
-                  >
-                    {t.langEn}
-                  </button>
+              <div className="language-grid">
+                <div className="language-card">
+                  <div className="language-title">{t.languages.native}</div>
+                  <div className="segmented">
+                    <button
+                      type="button"
+                      className={nativeLang === "ru" ? "is-active" : ""}
+                      onClick={() => updateNative("ru")}
+                    >
+                      {t.langRu}
+                    </button>
+                    <button
+                      type="button"
+                      className={nativeLang === "en" ? "is-active" : ""}
+                      onClick={() => updateNative("en")}
+                    >
+                      {t.langEn}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="panel">
-            <div className="panel-title">{t.settings.title}</div>
-            <div className="settings-grid">
-              <div className="setting-card">
-                <div className="setting-title">{t.settings.dailyNew}</div>
-                <div className="setting-desc">{t.settings.dailyNewHint}</div>
-                <div className="stepper">
-                  <button
-                    type="button"
-                    className="button-secondary stepper-button"
-                    onClick={() => adjustValue(setDailyNew, dailyNew, -1, 1, 50)}
-                  >
-                    -
-                  </button>
-                  <input
-                    type="number"
-                    min="1"
-                    max="50"
-                    value={dailyNew}
-                    onChange={(event) => handleInputChange(setDailyNew, event, 1, 50)}
-                  />
-                  <button
-                    type="button"
-                    className="button-secondary stepper-button"
-                    onClick={() => adjustValue(setDailyNew, dailyNew, 1, 1, 50)}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-              <div className="setting-card">
-                <div className="setting-title">{t.settings.batch}</div>
-                <div className="setting-desc">{t.settings.batchHint}</div>
-                <div className="stepper">
-                  <button
-                    type="button"
-                    className="button-secondary stepper-button"
-                    onClick={() => adjustValue(setLearnBatch, learnBatch, -1, 1, 20)}
-                  >
-                    -
-                  </button>
-                  <input
-                    type="number"
-                    min="1"
-                    max="20"
-                    value={learnBatch}
-                    onChange={(event) => handleInputChange(setLearnBatch, event, 1, 20)}
-                  />
-                  <button
-                    type="button"
-                    className="button-secondary stepper-button"
-                    onClick={() => adjustValue(setLearnBatch, learnBatch, 1, 1, 20)}
-                  >
-                    +
-                  </button>
+                <div className="language-card">
+                  <div className="language-title">{t.languages.target}</div>
+                  <div className="segmented">
+                    <button
+                      type="button"
+                      className={targetLang === "ru" ? "is-active" : ""}
+                      onClick={() => updateTarget("ru")}
+                    >
+                      {t.langRu}
+                    </button>
+                    <button
+                      type="button"
+                      className={targetLang === "en" ? "is-active" : ""}
+                      onClick={() => updateTarget("en")}
+                    >
+                      {t.langEn}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="panel">
-            <div className="panel-title">{t.corpora.title}</div>
-            <p className="muted">{t.corpora.hint}</p>
-            {corporaLoading ? <p className="muted">{t.loading}</p> : null}
-            {!corporaLoading && corpora.length === 0 ? (
-              <p className="muted">{t.corpora.empty}</p>
-            ) : null}
-            {corpora.length ? (
-              <>
+            <div className="panel">
+              <div className="panel-header">
+                <div>
+                  <div className="panel-title">{t.settings.title}</div>
+                  <p className="muted">{t.settings.dailyNewHint}</p>
+                </div>
+              </div>
+              <div className="settings-grid">
+                <div className="setting-card">
+                  <div className="setting-title">{t.settings.dailyNew}</div>
+                  <div className="setting-desc">{t.settings.dailyNewHint}</div>
+                  <div className="stepper">
+                    <button
+                      type="button"
+                      className="button-secondary stepper-button"
+                      onClick={() => adjustValue(setDailyNew, dailyNew, -1, 1, 50)}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min="1"
+                      max="50"
+                      value={dailyNew}
+                      onChange={(event) => handleInputChange(setDailyNew, event, 1, 50)}
+                    />
+                    <button
+                      type="button"
+                      className="button-secondary stepper-button"
+                      onClick={() => adjustValue(setDailyNew, dailyNew, 1, 1, 50)}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <div className="setting-card">
+                  <div className="setting-title">{t.settings.batch}</div>
+                  <div className="setting-desc">{t.settings.batchHint}</div>
+                  <div className="stepper">
+                    <button
+                      type="button"
+                      className="button-secondary stepper-button"
+                      onClick={() => adjustValue(setLearnBatch, learnBatch, -1, 1, 20)}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min="1"
+                      max="20"
+                      value={learnBatch}
+                      onChange={(event) => handleInputChange(setLearnBatch, event, 1, 20)}
+                    />
+                    <button
+                      type="button"
+                      className="button-secondary stepper-button"
+                      onClick={() => adjustValue(setLearnBatch, learnBatch, 1, 1, 20)}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <div className="setting-card">
+                  <div className="setting-title">{t.settings.dailyReview}</div>
+                  <div className="setting-desc">{t.settings.dailyReviewHint}</div>
+                  <div className="setting-readonly">{t.settings.dailyReviewValue}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="panel">
+              <div className="panel-header">
+                <div>
+                  <div className="panel-title">{t.corpora.title}</div>
+                  <p className="muted">{t.corpora.hint}</p>
+                </div>
+                <span className="muted">
+                  {t.corpora.selected}: {selectedCount}
+                </span>
+              </div>
+              {corporaLoading ? <p className="muted">{t.loading}</p> : null}
+              {!corporaLoading && corpora.length === 0 ? (
+                <p className="muted">{t.corpora.empty}</p>
+              ) : null}
+              {corpora.length ? (
                 <div className="corpora-grid">
                   {corpora.map((corpus) => {
                     const isSelected = Boolean(selected[corpus.id]);
@@ -762,9 +837,7 @@ export default function OnboardingPage() {
                           <span>
                             {corpus.words_total} {t.corpora.words}
                           </span>
-                          <span>
-                            {languagePair}
-                          </span>
+                          <span>{languagePair}</span>
                         </div>
                         <div
                           className="corpus-actions"
@@ -845,21 +918,37 @@ export default function OnboardingPage() {
                     );
                   })}
                 </div>
-                <div className="onboarding-actions">
-                  <span className="onboarding-hint">
-                    {t.corpora.selected}: {selectedCount}
-                  </span>
-                </div>
-              </>
-            ) : null}
+              ) : null}
+            </div>
           </div>
 
-          <div className="onboarding-actions">
-            <button type="button" onClick={applyOnboarding} disabled={saving}>
-              {saving ? t.actions.saving : t.actions.save}
-            </button>
-            {saveStatus ? <span className="success">{saveStatus}</span> : null}
-            {saveError ? <span className="error">{saveError}</span> : null}
+          <div className="study-side">
+            <div className="panel onboarding-summary">
+              <div className="panel-header">
+                <div>
+                  <div className="panel-title">{t.summary.title}</div>
+                  <p className="muted">{t.summary.hint}</p>
+                </div>
+                <span className={`status-pill ${onboardingDone ? "ok" : "warn"}`}>
+                  {onboardingDone ? t.summary.statusDone : t.summary.statusPending}
+                </span>
+              </div>
+              <div className="summary-list">
+                {summaryRows.map((row) => (
+                  <div key={row.label} className="summary-row">
+                    <span className="summary-label">{row.label}</span>
+                    <strong className="summary-value">{row.value}</strong>
+                  </div>
+                ))}
+              </div>
+              <div className="summary-actions">
+                <button type="button" onClick={applyOnboarding} disabled={saving}>
+                  {saving ? t.actions.saving : t.actions.save}
+                </button>
+                {saveStatus ? <span className="success">{saveStatus}</span> : null}
+                {saveError ? <span className="error">{saveError}</span> : null}
+              </div>
+            </div>
           </div>
         </div>
       ) : null}
