@@ -347,9 +347,9 @@ export default function ReportsPage() {
   return (
     <main>
       <div className="page-header">
-        <div>
-          <h1>{t.title}</h1>
-          <p>{t.tagline}</p>
+        <div className="page-hero-main">
+          <h1 className="page-title">{t.title}</h1>
+          <p className="page-tagline">{t.tagline}</p>
         </div>
         <div className="page-header-actions">
           <button type="button" className="button-secondary" onClick={refresh}>
@@ -362,50 +362,59 @@ export default function ReportsPage() {
       {error ? <p className="error">{error}</p> : null}
 
       {!loading && !error ? (
-        <>
-          <div className="panel">
-            <div className="panel-title">{t.formTitle}</div>
-            <div className="profile-grid">
-              <div className="profile-cell">
-                <label>{t.issueType}</label>
-                <select
-                  value={form.issue_type}
-                  onChange={(event) =>
-                    setForm((prev) => ({ ...prev, issue_type: event.target.value }))
-                  }
-                >
-                  {issueOptions}
-                </select>
+        <div className="study-grid">
+          <div className="study-main">
+            <div className="panel">
+              <div className="panel-header">
+                <div>
+                  <div className="panel-title">{t.formTitle}</div>
+                  <p className="muted">{t.messageHint}</p>
+                </div>
               </div>
-              <div className="profile-cell">
-                <label>{t.source}</label>
-                <select
-                  value={form.source}
-                  onChange={(event) => setForm((prev) => ({ ...prev, source: event.target.value }))}
-                >
-                  {sourceOptions}
-                </select>
-              </div>
-              <div className="profile-cell">
-                <label>{t.word}</label>
-                <input
-                  value={form.word_text}
-                  onChange={(event) => setForm((prev) => ({ ...prev, word_text: event.target.value }))}
-                />
-              </div>
-              <div className="profile-cell">
-                <label>{t.translation}</label>
-                <input
-                  value={form.translation_text}
-                  onChange={(event) =>
-                    setForm((prev) => ({ ...prev, translation_text: event.target.value }))
-                  }
-                />
-              </div>
-              <div className="profile-cell">
-                {!autoCorpus ? (
-                  <>
-                    <label>{t.corpus}</label>
+              <div className="profile-grid profile-grid-top">
+                <label className="profile-cell">
+                  <span className="profile-label">{t.issueType}</span>
+                  <select
+                    value={form.issue_type}
+                    onChange={(event) =>
+                      setForm((prev) => ({ ...prev, issue_type: event.target.value }))
+                    }
+                  >
+                    {issueOptions}
+                  </select>
+                </label>
+                <label className="profile-cell">
+                  <span className="profile-label">{t.source}</span>
+                  <select
+                    value={form.source}
+                    onChange={(event) =>
+                      setForm((prev) => ({ ...prev, source: event.target.value }))
+                    }
+                  >
+                    {sourceOptions}
+                  </select>
+                </label>
+                <label className="profile-cell">
+                  <span className="profile-label">{t.word}</span>
+                  <input
+                    value={form.word_text}
+                    onChange={(event) =>
+                      setForm((prev) => ({ ...prev, word_text: event.target.value }))
+                    }
+                  />
+                </label>
+                <label className="profile-cell">
+                  <span className="profile-label">{t.translation}</span>
+                  <input
+                    value={form.translation_text}
+                    onChange={(event) =>
+                      setForm((prev) => ({ ...prev, translation_text: event.target.value }))
+                    }
+                  />
+                </label>
+                <div className="profile-cell">
+                  <span className="profile-label">{t.corpus}</span>
+                  {!autoCorpus ? (
                     <select
                       value={form.corpus_id}
                       onChange={(event) =>
@@ -419,67 +428,73 @@ export default function ReportsPage() {
                         </option>
                       ))}
                     </select>
-                  </>
-                ) : (
-                  <>
-                    <label>{t.corpus}</label>
+                  ) : (
                     <div className="muted">{t.corpusAuto}</div>
-                  </>
-                )}
-              </div>
-              <div className="profile-cell report-full">
-                <label>{t.message}</label>
-                <textarea
-                  value={form.message}
-                  onChange={(event) => setForm((prev) => ({ ...prev, message: event.target.value }))}
-                />
-                <span className="muted">{t.messageHint}</span>
-              </div>
-              <div className="profile-actions">
-                <button type="button" onClick={submit} disabled={saving}>
-                  {saving ? t.sending : t.submit}
-                </button>
-                {status ? <span className="muted">{status}</span> : null}
-                {saveError ? <span className="error">{saveError}</span> : null}
+                  )}
+                </div>
+                <label className="profile-cell report-full">
+                  <span className="profile-label">{t.message}</span>
+                  <textarea
+                    value={form.message}
+                    onChange={(event) =>
+                      setForm((prev) => ({ ...prev, message: event.target.value }))
+                    }
+                  />
+                </label>
+                <div className="profile-actions full">
+                  <button type="button" onClick={submit} disabled={saving}>
+                    {saving ? t.sending : t.submit}
+                  </button>
+                  {status ? <span className="muted">{status}</span> : null}
+                  {saveError ? <span className="error">{saveError}</span> : null}
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="panel">
-            <div className="panel-title">{t.listTitle}</div>
-            {reports.length === 0 ? <p className="muted">{t.listEmpty}</p> : null}
-            {reports.length ? (
-              <div className="social-list">
-                {reports.map((item) => (
-                  <div key={item.id} className="social-item">
-                    <div>
-                      <strong>{issueLabel(item.issue_type)}</strong>
-                      <div className="social-meta">
-                        {item.word_text || "-"}{" "}
-                        {item.translation_text ? `\u2192 ${item.translation_text}` : ""}
-                      </div>
-                      {item.corpus_name ? (
-                        <div className="social-meta">{item.corpus_name}</div>
-                      ) : null}
-                      {item.message ? <div className="social-meta">{item.message}</div> : null}
-                      {item.admin_note ? (
-                        <div className="social-meta">
-                          {t.adminNote}: {item.admin_note}
-                        </div>
-                      ) : null}
-                      <div className="social-meta">
-                        {t.createdAt}: {formatDateTime(item.created_at, locale)}
-                      </div>
-                    </div>
-                    <span className={`status-pill ${statusTone(item.status)}`}>
-                      {statusLabel(item.status)}
-                    </span>
-                  </div>
-                ))}
+          <div className="study-side">
+            <div className="panel">
+              <div className="panel-header">
+                <div className="panel-title">{t.listTitle}</div>
+                <span className="muted">{reports.length}</span>
               </div>
-            ) : null}
+              {reports.length === 0 ? <p className="muted">{t.listEmpty}</p> : null}
+              {reports.length ? (
+                <div className="social-list">
+                  {reports.map((item) => (
+                    <div key={item.id} className="social-item">
+                      <div>
+                        <strong>{issueLabel(item.issue_type)}</strong>
+                        <div className="social-meta">
+                          {item.word_text || "-"}{" "}
+                          {item.translation_text ? `→ ${item.translation_text}` : ""}
+                        </div>
+                        {item.corpus_name ? (
+                          <div className="social-meta">{item.corpus_name}</div>
+                        ) : null}
+                        <div className="social-meta">
+                          {t.source}: {t.sourceTypes?.[item.source] || item.source}
+                        </div>
+                        {item.message ? <div className="social-meta">{item.message}</div> : null}
+                        {item.admin_note ? (
+                          <div className="social-meta">
+                            {t.adminNote}: {item.admin_note}
+                          </div>
+                        ) : null}
+                        <div className="social-meta">
+                          {t.createdAt}: {formatDateTime(item.created_at, locale)}
+                        </div>
+                      </div>
+                      <span className={`status-pill ${statusTone(item.status)}`}>
+                        {statusLabel(item.status)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
           </div>
-        </>
+        </div>
       ) : null}
     </main>
   );

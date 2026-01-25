@@ -33,18 +33,18 @@ export default function SettingsPage() {
   return (
     <main>
       <div className="page-header">
-        <div>
-          <h1>{t.title}</h1>
-          <p>{t.message}</p>
+        <div className="page-hero-main">
+          <h1 className="page-title">{t.title}</h1>
+          <p className="page-tagline">{t.message}</p>
         </div>
-      </div>
-      <div className="panel">
-        <p className="muted">{t.note}</p>
-        <div className="actions">
+        <div className="page-header-actions">
           <button type="button" onClick={() => (window.location.href = "/profile")}>
             {t.action}
           </button>
         </div>
+      </div>
+      <div className="panel">
+        <div className="panel-title">{t.note}</div>
       </div>
     </main>
   );

@@ -29,7 +29,11 @@ const TEXT = {
     source: "Источник",
     sources: "Источники",
     requested: "Цель",
-    error: "Не удалось собрать текст"
+    error: "Не удалось собрать текст",
+    controlsTitle: "Параметры текста",
+    controlsHint: "Выберите объем текста и период для подбора слов.",
+    textTitle: "Текст для чтения",
+    textHint: "Используйте текст для спокойного повторения и закрепления слов."
   },
   en: {
     title: "Reading practice",
@@ -50,7 +54,11 @@ const TEXT = {
     source: "Source",
     sources: "Sources",
     requested: "Target",
-    error: "Failed to build text"
+    error: "Failed to build text",
+    controlsTitle: "Text settings",
+    controlsHint: "Pick the size and how far back to search.",
+    textTitle: "Reading text",
+    textHint: "Use the passage for calm repetition and consolidation."
   }
 };
 
@@ -203,7 +211,7 @@ export default function ReadingPage() {
     if (!highlightOn || highlightTokens.size === 0) {
       return reading.text;
     }
-    const regex = /(\p{L}+(?:['??T]\p{L}+)*)/gu;
+    const regex = /(\p{L}+(?:['\u2019]\p{L}+)*)/gu;
     const parts = [];
     let lastIndex = 0;
     for (const match of reading.text.matchAll(regex)) {
@@ -233,9 +241,9 @@ export default function ReadingPage() {
   return (
     <main>
       <div className="page-header">
-        <div>
-          <h1>{t.title}</h1>
-          <p>{t.tagline}</p>
+        <div className="page-hero-main">
+          <h1 className="page-title">{t.title}</h1>
+          <p className="page-tagline">{t.tagline}</p>
         </div>
         <div className="page-header-actions">
           <button type="button" className="button-secondary" onClick={goHome}>
@@ -244,92 +252,112 @@ export default function ReadingPage() {
         </div>
       </div>
 
-      <div className="panel reading-panel reading-home">
-        <div className="reading-controls">
-          <label className="reading-control">
-            <span className="reading-label">{t.targetLabel}</span>
-            <input
-              type="number"
-              min="1"
-              max="50"
-              value={targetWords}
-              onChange={(event) => {
-                const next = Number(event.target.value || 1);
-                if (Number.isNaN(next)) {
-                  return;
-                }
-                setTargetWords(Math.max(1, Math.min(50, next)));
-              }}
-            />
-          </label>
-          <label className="reading-control">
-            <span className="reading-label">{t.daysLabel}</span>
-            <select value={days} onChange={(event) => setDays(Number(event.target.value))}>
-              <option value={3}>3</option>
-              <option value={7}>7</option>
-              <option value={14}>14</option>
-            </select>
-          </label>
-        </div>
-        <div className="reading-actions">
-          <button type="button" onClick={() => loadReading(0, true)} disabled={busy}>
-            {loading ? t.loading : t.action}
-          </button>
-          <button
-            type="button"
-            className="button-secondary"
-            onClick={() => loadReading(variant + 1, true)}
-            disabled={busy || !hasReading}
-          >
-            {t.regenerate}
-          </button>
-          <button
-            type="button"
-            className="button-secondary"
-            onClick={() => setHighlightOn((prev) => !prev)}
-            disabled={busy || !hasReading}
-          >
-            {highlightLabel}
-          </button>
-          <button
-            type="button"
-            className="button-danger"
-            onClick={flagReading}
-            disabled={busy || !canFlag}
-          >
-            {badTextLabel}
-          </button>
-        </div>
-        {error ? <div className="error">{error}</div> : null}
-        {reading && reading.text ? (
-          <>
-            <div className="reading-meta muted">
+      <div className="study-grid">
+        <div className="study-main">
+          <div className="panel reading-panel">
+            <div className="panel-header">
+              <div>
+                <div className="panel-title">{t.textTitle}</div>
+                <p className="muted">{t.textHint}</p>
+              </div>
               {requestedLabel ? (
-                <span>
+                <div className="muted">
                   {t.requested}: {requestedLabel}
-                </span>
-              ) : null}
-              {coverageLabel ? (
-                <span>
-                  {t.coverage}: {coverageLabel} ({coveragePct}%)
-                </span>
-              ) : null}
-              {lengthLabel ? (
-                <span>
-                  {t.length}: {lengthLabel}
-                </span>
-              ) : null}
-              {sourceLabel ? (
-                <span>
-                  {sourceLabelText}: {sourceLabel}
-                </span>
+                </div>
               ) : null}
             </div>
-            <div className="reading-text reading-content">{renderHighlightedText()}</div>
-          </>
-        ) : (
-          <div className="muted reading-empty">{reading?.message || t.empty}</div>
-        )}
+            {error ? <div className="error">{error}</div> : null}
+            {reading && reading.text ? (
+              <>
+                <div className="reading-meta muted">
+                  {coverageLabel ? (
+                    <span>
+                      {t.coverage}: {coverageLabel} ({coveragePct}%)
+                    </span>
+                  ) : null}
+                  {lengthLabel ? (
+                    <span>
+                      {t.length}: {lengthLabel}
+                    </span>
+                  ) : null}
+                  {sourceLabel ? (
+                    <span>
+                      {sourceLabelText}: {sourceLabel}
+                    </span>
+                  ) : null}
+                </div>
+                <div className="reading-text reading-content">{renderHighlightedText()}</div>
+              </>
+            ) : (
+              <div className="muted reading-empty">{reading?.message || t.empty}</div>
+            )}
+          </div>
+        </div>
+        <div className="study-side">
+          <div className="panel">
+            <div className="panel-header">
+              <div>
+                <div className="panel-title">{t.controlsTitle}</div>
+                <p className="muted">{t.controlsHint}</p>
+              </div>
+            </div>
+            <div className="reading-controls">
+              <label className="reading-control">
+                <span className="reading-label">{t.targetLabel}</span>
+                <input
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={targetWords}
+                  onChange={(event) => {
+                    const next = Number(event.target.value || 1);
+                    if (Number.isNaN(next)) {
+                      return;
+                    }
+                    setTargetWords(Math.max(1, Math.min(50, next)));
+                  }}
+                />
+              </label>
+              <label className="reading-control">
+                <span className="reading-label">{t.daysLabel}</span>
+                <select value={days} onChange={(event) => setDays(Number(event.target.value))}>
+                  <option value={3}>3</option>
+                  <option value={7}>7</option>
+                  <option value={14}>14</option>
+                </select>
+              </label>
+            </div>
+            <div className="reading-actions">
+              <button type="button" onClick={() => loadReading(0, true)} disabled={busy}>
+                {loading ? t.loading : t.action}
+              </button>
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => loadReading(variant + 1, true)}
+                disabled={busy || !hasReading}
+              >
+                {t.regenerate}
+              </button>
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => setHighlightOn((prev) => !prev)}
+                disabled={busy || !hasReading}
+              >
+                {highlightLabel}
+              </button>
+              <button
+                type="button"
+                className="button-danger"
+                onClick={flagReading}
+                disabled={busy || !canFlag}
+              >
+                {badTextLabel}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   );

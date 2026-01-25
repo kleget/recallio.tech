@@ -17,6 +17,8 @@ const TEXT = {
     refresh: "Обновить",
     total: "Всего",
     shown: "Показано",
+    tableTitle: "Слова по расписанию",
+    tableHint: "План повторений с датой следующего показа.",
     columns: {
       date: "Дата",
       word: "Слово",
@@ -33,6 +35,8 @@ const TEXT = {
     refresh: "Refresh",
     total: "Total",
     shown: "Shown",
+    tableTitle: "Scheduled words",
+    tableHint: "Next review dates for your words.",
     columns: {
       date: "Date",
       word: "Word",
@@ -110,9 +114,9 @@ export default function ReviewPlanPage() {
   return (
     <main>
       <div className="page-header">
-        <div>
-          <h1>{t.title}</h1>
-          <p>{t.tagline}</p>
+        <div className="page-hero-main">
+          <h1 className="page-title">{t.title}</h1>
+          <p className="page-tagline">{t.tagline}</p>
         </div>
         <div className="page-header-actions">
           <button type="button" className="button-secondary" onClick={loadPlan}>
@@ -131,52 +135,62 @@ export default function ReviewPlanPage() {
       ) : null}
 
       {!loading && !error && items.length > 0 ? (
-        <div className="panel">
-          <div className="weak-count schedule-summary">
-            <span>
-              {t.total}: <strong>{total}</strong>
-            </span>
-            <span>
-              {t.shown}: <strong>{items.length}</strong>
-            </span>
+        <>
+          <div className="stats-grid">
+            <div className="stat-card">
+              <div className="stat-label">{t.total}</div>
+              <div className="stat-value">{total}</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">{t.shown}</div>
+              <div className="stat-value">{items.length}</div>
+            </div>
           </div>
-          <div className="schedule-table-wrap">
-            <table className="schedule-table">
-              <thead>
-                <tr>
-                  <th>{t.columns.date}</th>
-                  <th>{t.columns.word}</th>
-                  <th>{t.columns.translation}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => {
-                  const reviewDate = item.next_review_at ? new Date(item.next_review_at) : null;
-                  const isDue = reviewDate ? reviewDate <= now : false;
-                  return (
-                    <tr
-                      key={item.word_id}
-                      className={isDue ? "schedule-row is-due" : "schedule-row"}
-                    >
-                      <td data-label={t.columns.date} className="schedule-date">
-                        {formatDate(item.next_review_at, locale)}
-                        {isDue ? <span className="schedule-due">{t.due}</span> : null}
-                      </td>
-                      <td data-label={t.columns.word} className="schedule-word">
-                        {item.word}
-                      </td>
-                      <td data-label={t.columns.translation} className="schedule-translation">
-                        {item.translations && item.translations.length
-                          ? item.translations.join(", ")
-                          : "-"}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="panel">
+            <div className="panel-header">
+              <div>
+                <div className="panel-title">{t.tableTitle}</div>
+                <p className="muted">{t.tableHint}</p>
+              </div>
+            </div>
+            <div className="schedule-table-wrap">
+              <table className="schedule-table">
+                <thead>
+                  <tr>
+                    <th>{t.columns.date}</th>
+                    <th>{t.columns.word}</th>
+                    <th>{t.columns.translation}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item) => {
+                    const reviewDate = item.next_review_at ? new Date(item.next_review_at) : null;
+                    const isDue = reviewDate ? reviewDate <= now : false;
+                    return (
+                      <tr
+                        key={item.word_id}
+                        className={isDue ? "schedule-row is-due" : "schedule-row"}
+                      >
+                        <td data-label={t.columns.date} className="schedule-date">
+                          {formatDate(item.next_review_at, locale)}
+                          {isDue ? <span className="schedule-due">{t.due}</span> : null}
+                        </td>
+                        <td data-label={t.columns.word} className="schedule-word">
+                          {item.word}
+                        </td>
+                        <td data-label={t.columns.translation} className="schedule-translation">
+                          {item.translations && item.translations.length
+                            ? item.translations.join(", ")
+                            : "-"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        </>
       ) : null}
     </main>
   );
