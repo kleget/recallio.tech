@@ -2519,6 +2519,11 @@ html[data-theme="dark"] .input-status.wrong {
   gap: 16px;
 }
 
+.settings-grid.compact {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+}
+
 .setting-card {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -2527,6 +2532,12 @@ html[data-theme="dark"] .input-status.wrong {
   box-shadow: var(--shadow-sm);
   display: grid;
   gap: 10px;
+}
+
+.setting-card.is-muted {
+  background: var(--panel-strong);
+  border-style: dashed;
+  box-shadow: none;
 }
 
 .setting-title {

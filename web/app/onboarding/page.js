@@ -720,7 +720,7 @@ export default function OnboardingPage() {
                   <p className="muted">{t.settings.dailyNewHint}</p>
                 </div>
               </div>
-              <div className="settings-grid">
+              <div className="settings-grid compact">
                 <div className="setting-card">
                   <div className="setting-title">{t.settings.dailyNew}</div>
                   <div className="setting-desc">{t.settings.dailyNewHint}</div>
@@ -747,6 +747,11 @@ export default function OnboardingPage() {
                       +
                     </button>
                   </div>
+                </div>
+                <div className="setting-card is-muted">
+                  <div className="setting-title">{t.settings.dailyReview}</div>
+                  <div className="setting-desc">{t.settings.dailyReviewHint}</div>
+                  <div className="setting-readonly">{t.settings.dailyReviewValue}</div>
                 </div>
               </div>
             </div>
