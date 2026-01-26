@@ -20,3 +20,9 @@ class AdminTranslationOut(BaseModel):
     word_id: int
     target_lang: str
     translation: str
+
+
+class AdminTranslationCreate(BaseModel):
+    word_id: int
+    target_lang: str
+    translation: str

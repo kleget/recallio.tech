@@ -11,6 +11,7 @@ class AdminCorpusOut(BaseModel):
 class AdminCorpusTranslationOut(BaseModel):
     id: int
     translation: str
+    target_lang: str | None = None
 
 
 class AdminCorpusWordOut(BaseModel):

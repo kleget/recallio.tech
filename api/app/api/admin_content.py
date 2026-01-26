@@ -24,6 +24,7 @@ from app.models import (
     Word,
 )
 from app.schemas.admin_content import (
+    AdminTranslationCreate,
     AdminTranslationOut,
     AdminTranslationUpdate,
     AdminWordOut,
@@ -111,9 +112,9 @@ async def list_corpus_words(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid offset")
 
     source_lang = normalize_lang(source_lang) if source_lang else None
-    target_lang = normalize_lang(target_lang) if target_lang else None
-    if not source_lang or not target_lang:
+    if not source_lang:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Language required")
+    target_lang = normalize_lang(target_lang) if target_lang else None
 
     corpus_result = await db.execute(select(Corpus.id).where(Corpus.id == corpus_id))
     corpus = corpus_result.first()
@@ -138,10 +139,11 @@ async def list_corpus_words(
         translation_match = exists(
             select(1).where(
                 Translation.word_id == Word.id,
-                Translation.target_lang == target_lang,
                 Translation.translation.ilike(like),
             )
         )
+        if target_lang:
+            translation_match = translation_match.where(Translation.target_lang == target_lang)
         stmt = stmt.where(or_(Word.lemma.ilike(like), translation_match))
 
     if sort not in {"rank", "count", "lemma"}:
@@ -172,20 +174,21 @@ async def list_corpus_words(
     if not word_ids:
         return AdminCorpusWordsOut(total=total_count, items=[])
 
-    translations_result = await db.execute(
-        select(Translation.id, Translation.word_id, Translation.translation)
-        .where(
-            Translation.word_id.in_(word_ids),
-            Translation.target_lang == target_lang,
-        )
+    translations_stmt = (
+        select(Translation.id, Translation.word_id, Translation.translation, Translation.target_lang)
+        .where(Translation.word_id.in_(word_ids))
         .order_by(Translation.translation.asc())
     )
+    if target_lang:
+        translations_stmt = translations_stmt.where(Translation.target_lang == target_lang)
+    translations_result = await db.execute(translations_stmt)
     translation_map: dict[int, list[dict]] = {}
     for row in translations_result.fetchall():
         translation_map.setdefault(row.word_id, []).append(
             {
                 "id": row.id,
                 "translation": row.translation,
+                "target_lang": row.target_lang,
             }
         )
 
@@ -638,6 +641,62 @@ async def update_translation(
 
     await log_audit_event(
         "admin.translation.update",
+        user_id=user.id,
+        meta={"translation_id": translation.id},
+        request=request,
+        db=db,
+    )
+    return AdminTranslationOut(
+        id=translation.id,
+        word_id=translation.word_id,
+        target_lang=translation.target_lang,
+        translation=translation.translation,
+    )
+
+
+@router.post("/translations", response_model=AdminTranslationOut)
+async def create_translation(
+    data: AdminTranslationCreate,
+    request: Request,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> AdminTranslationOut:
+    ensure_admin(user)
+    value = (data.translation or "").strip()
+    if not value:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Translation required")
+    target_lang = normalize_lang(data.target_lang)
+
+    word = await db.get(Word, data.word_id)
+    if word is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Word not found")
+
+    existing = await db.execute(
+        select(Translation).where(
+            Translation.word_id == data.word_id,
+            Translation.target_lang == target_lang,
+            Translation.translation == value,
+        )
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Translation already exists")
+
+    translation = Translation(
+        word_id=data.word_id,
+        target_lang=target_lang,
+        translation=value,
+        source="admin",
+    )
+    db.add(translation)
+    try:
+        await db.commit()
+    except IntegrityError as exc:
+        await db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Translation already exists") from exc
+    await db.refresh(translation)
+
+    await log_audit_event(
+        "admin.translation.create",
         user_id=user.id,
         meta={"translation_id": translation.id},
         request=request,

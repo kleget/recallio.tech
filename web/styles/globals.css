@@ -4195,6 +4195,34 @@ html[data-theme="dark"] .input-status.wrong {
   gap: 6px;
 }
 
+.admin-word-edit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.admin-word-inputs {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-word-input-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-inline-button {
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 10px;
+}
+
 .admin-translation-list {
   display: grid;
   gap: 8px;
@@ -4202,9 +4230,29 @@ html[data-theme="dark"] .input-status.wrong {
 
 .admin-translation-row {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: auto 1fr auto auto;
   gap: 8px;
   align-items: center;
+}
+
+.translation-lang,
+.translation-lang-select {
+  min-width: 64px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-strong);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+}
+
+.translation-lang-select {
+  padding: 0 10px;
 }
 
 .admin-pagination {
@@ -4242,8 +4290,21 @@ html[data-theme="dark"] .input-status.wrong {
   }
 
   .admin-translation-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     gap: 6px;
+  }
+
+  .admin-word-input-row {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-word-input-row button {
+    width: 100%;
+  }
+
+  .admin-translation-row .translation-lang,
+  .admin-translation-row .translation-lang-select {
+    width: 100%;
   }
 
   .admin-translation-row input {
