@@ -285,7 +285,7 @@ export default function AdminCorporaPage() {
     () =>
       corpora.map((item) => (
         <option key={item.id} value={item.id}>
-          {item.name} ({sourceLang.toUpperCase()} \u2192 {targetLang.toUpperCase()})
+          {item.name} ({sourceLang.toUpperCase()} {"\u2192"} {targetLang.toUpperCase()})
         </option>
       )),
     [corpora, sourceLang, targetLang]
@@ -462,7 +462,7 @@ export default function AdminCorporaPage() {
       {!loading ? (
         <div className="panel">
           <div className="admin-toolbar">
-            <div className="admin-field">
+            <div className="admin-field admin-field-corpus">
               <label>{t.filters.corpus}</label>
               <select
                 value={selectedCorpus}

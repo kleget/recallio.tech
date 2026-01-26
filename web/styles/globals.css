@@ -4131,6 +4131,11 @@ html[data-theme="dark"] .input-status.wrong {
   flex: 1;
 }
 
+.admin-field-corpus {
+  flex: 2.4;
+  min-width: 280px;
+}
+
 .admin-field-wide {
   flex: 2;
   min-width: 240px;
