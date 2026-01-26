@@ -51,7 +51,7 @@ export default function RootLayout({ children }) {
   const initialLang = langCookie === "en" ? "en" : "ru";
   const themeCookie = cookieStore.get("theme")?.value;
   const initialTheme = themeCookie === "dark" ? "dark" : "light";
-  const initialPalette = "iris";
+  const initialPalette = "graphite";
   const adminCookie = cookieStore.get("is_admin")?.value;
   const initialIsAdmin = adminCookie === "1";
   return (

@@ -10,7 +10,7 @@ export default function ThemeClient() {
     if (storedTheme) {
       document.documentElement.dataset.theme = storedTheme;
     }
-    document.documentElement.dataset.palette = "iris";
+    document.documentElement.dataset.palette = "graphite";
   }, []);
 
   return null;
