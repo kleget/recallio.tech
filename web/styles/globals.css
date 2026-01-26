@@ -721,12 +721,112 @@ main {
 
 .auth-page {
   display: grid;
-  gap: 16px;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 24px;
+  align-items: stretch;
+  min-height: calc(100vh - 200px);
+}
+
+.auth-hero {
+  position: relative;
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  display: grid;
+  gap: 18px;
+  overflow: hidden;
+}
+
+.auth-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(420px 320px at 12% 8%, var(--accent-soft), transparent 60%),
+    radial-gradient(480px 340px at 92% 10%, rgba(79, 141, 255, 0.16), transparent 62%);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.auth-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.auth-hero-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.auth-hero-mark {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--accent-strong);
+}
+
+.auth-hero-chip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.auth-hero-title {
+  font-size: clamp(26px, 2.6vw, 36px);
+  line-height: 1.2;
+  margin: 0;
+}
+
+.auth-hero-subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+  max-width: 520px;
+}
+
+.auth-hero-list {
+  display: grid;
+  gap: 10px;
+}
+
+.auth-hero-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.auth-hero-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  margin-top: 6px;
+  box-shadow: 0 0 0 4px var(--accent-soft);
+  flex-shrink: 0;
 }
 
 .auth-panel {
-  max-width: 560px;
-  margin: 0 auto;
+  margin: 0;
+  width: 100%;
+  align-self: center;
+  padding: 28px;
+  display: grid;
+  gap: 18px;
+}
+
+.auth-panel-head {
+  display: grid;
+  gap: 6px;
 }
 
 .auth-panel form {
@@ -735,6 +835,34 @@ main {
   padding: 0;
   box-shadow: none;
   max-width: none;
+  display: grid;
+  gap: 14px;
+}
+
+.auth-field {
+  display: grid;
+  gap: 6px;
+}
+
+.auth-links {
+  margin-top: -4px;
+}
+
+@media (max-width: 960px) {
+  .auth-page {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-panel {
+    max-width: 520px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .auth-hero {
+    max-width: 720px;
+    margin: 0 auto;
+  }
 }
 
 .landing-page {

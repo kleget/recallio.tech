@@ -13,6 +13,15 @@ const TEXT = {
     titleRegister: "Регистрация",
     subtitleLogin: "Войдите, чтобы продолжить обучение.",
     subtitleRegister: "Создайте аккаунт, чтобы начать обучение.",
+    heroChip: "Фокус и ритм",
+    heroTitle: "Умный словарь по сферам с регулярными повторениями.",
+    heroSubtitle:
+      "Выбирай сферы, добавляй свои слова и повторяй вовремя. Никакого лишнего — только то, что нужно.",
+    heroPoints: [
+      "Сферы, свои слова и известные слова",
+      "Повторы без лимитов и без пропусков",
+      "Экспорт в Quizlet и удобные карточки"
+    ],
     email: "Email",
     password: "Пароль",
     login: "Войти",
@@ -27,6 +36,15 @@ const TEXT = {
     titleRegister: "Register",
     subtitleLogin: "Sign in to continue learning.",
     subtitleRegister: "Create an account to start learning.",
+    heroChip: "Focus and rhythm",
+    heroTitle: "Smart domain vocabulary with scheduled repeats.",
+    heroSubtitle:
+      "Pick domains, add your own words, and repeat on time. No noise — just what you need.",
+    heroPoints: [
+      "Domains, custom words, and known words",
+      "Unlimited repeats without skipping",
+      "Quizlet export and clean flashcards"
+    ],
     email: "Email",
     password: "Password",
     login: "Login",
@@ -132,12 +150,31 @@ export default function AuthForm({ mode = "login" }) {
 
   return (
     <main className="auth-page">
-      <section className="panel auth-panel">
-        <h1>{title}</h1>
-        <p>{subtitle}</p>
+      <section className="auth-hero">
+        <div className="auth-hero-top">
+          <div className="auth-hero-mark">Recallio</div>
+          <span className="auth-hero-chip">{t.heroChip}</span>
+        </div>
+        <h1 className="auth-hero-title">{t.heroTitle}</h1>
+        <p className="auth-hero-subtitle">{t.heroSubtitle}</p>
+        <div className="auth-hero-list">
+          {(t.heroPoints || []).map((point) => (
+            <div key={point} className="auth-hero-item">
+              <span className="auth-hero-dot" />
+              <span>{point}</span>
+            </div>
+          ))}
+        </div>
+      </section>
 
-        <form onSubmit={submit}>
-          <div>
+      <section className="panel auth-panel">
+        <div className="auth-panel-head">
+          <h1>{title}</h1>
+          <p className="muted">{subtitle}</p>
+        </div>
+
+        <form onSubmit={submit} className="auth-form">
+          <div className="auth-field">
             <label>{t.email}</label>
             <input
               type="email"
@@ -146,7 +183,7 @@ export default function AuthForm({ mode = "login" }) {
               required
             />
           </div>
-          <div>
+          <div className="auth-field">
             <label>{t.password}</label>
             <input
               type="password"
@@ -163,7 +200,7 @@ export default function AuthForm({ mode = "login" }) {
         {error ? <p className="error">{error}</p> : null}
 
         {isLogin ? (
-          <div className="section">
+          <div className="section auth-links">
             <a href="/auth/forgot">{t.forgot}</a>
           </div>
         ) : null}
