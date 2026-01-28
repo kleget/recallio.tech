@@ -196,7 +196,7 @@ export default function ReportsPage() {
   };
 
   const loadCorpora = async () => {
-    const data = await getJson("/corpora");
+    const data = await getJson(`/corpora?ui_lang=${uiLang}`);
     setCorpora(Array.isArray(data) ? data : []);
   };
 

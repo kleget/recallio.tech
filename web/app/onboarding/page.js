@@ -244,6 +244,9 @@ function normalizeCorpusKey(corpus) {
 }
 
 function getCorpusLabel(corpus, uiLang) {
+  if (corpus?.name) {
+    return corpus.name;
+  }
   const key = normalizeCorpusKey(corpus);
   const entry = key ? CORPUS_NAME_MAP[key] : null;
   if (entry) {
@@ -388,7 +391,10 @@ export default function OnboardingPage() {
     }
     setCorporaLoading(true);
     setError("");
-    getJson(`/corpora?source_lang=${nativeLang}&target_lang=${targetLang}`, token)
+    getJson(
+      `/corpora?source_lang=${nativeLang}&target_lang=${targetLang}&ui_lang=${uiLang}`,
+      token
+    )
       .then((data) => {
         setCorpora(Array.isArray(data) ? data : []);
       })

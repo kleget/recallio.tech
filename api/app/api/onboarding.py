@@ -49,6 +49,14 @@ def normalize_lang(value: str | None) -> str | None:
     return normalized
 
 
+def resolve_corpus_name(corpus: Corpus, ui_lang: str | None) -> str:
+    if ui_lang == "ru" and getattr(corpus, "name_ru", None):
+        return corpus.name_ru
+    if ui_lang == "en" and getattr(corpus, "name_en", None):
+        return corpus.name_en
+    return corpus.name
+
+
 def chunked(items: list[str], size: int) -> list[list[str]]:
     return [items[i : i + size] for i in range(0, len(items), size)]
 
@@ -205,21 +213,25 @@ async def preview_corpus(
 async def list_corpora(
     source_lang: str | None = None,
     target_lang: str | None = None,
+    ui_lang: str | None = None,
     db: AsyncSession = Depends(get_db),
 ) -> list[CorpusOut]:
     source_lang = normalize_lang(source_lang) if source_lang else None
     _ = normalize_lang(target_lang) if target_lang else None
+    ui_lang = normalize_lang(ui_lang) if ui_lang else None
 
     stmt = (
         select(
             Corpus.id,
             Corpus.slug,
             Corpus.name,
+            Corpus.name_ru,
+            Corpus.name_en,
             func.count(CorpusEntry.id).label("words_total"),
         )
         .select_from(Corpus)
         .join(CorpusEntry, CorpusEntry.corpus_id == Corpus.id, isouter=True)
-        .group_by(Corpus.id, Corpus.slug, Corpus.name)
+        .group_by(Corpus.id, Corpus.slug, Corpus.name, Corpus.name_ru, Corpus.name_en)
         .order_by(Corpus.name)
     )
 
@@ -228,7 +240,7 @@ async def list_corpora(
         CorpusOut(
             id=row.id,
             slug=row.slug,
-            name=row.name,
+            name=resolve_corpus_name(row, ui_lang),
             words_total=row.words_total,
         )
         for row in result.fetchall()

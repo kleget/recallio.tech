@@ -247,6 +247,7 @@ export default function AdminCorporaPage() {
     if (sourceLang) {
       params.set("source_lang", sourceLang);
     }
+    params.set("ui_lang", uiLang);
     const data = await getJson(`/admin/content/corpora?${params.toString()}`, token);
     const list = Array.isArray(data) ? data : [];
     setCorpora(list);
