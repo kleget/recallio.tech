@@ -442,6 +442,38 @@ class CorpusWordStat(Base):
     rank: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
 
+class CorpusEntry(Base):
+    __tablename__ = "corpus_entries"
+    __table_args__ = (Index("ix_corpus_entries_corpus", "corpus_id"),)
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    corpus_id: Mapped[int] = mapped_column(
+        ForeignKey("corpora.id", ondelete="CASCADE"),
+    )
+    count: Mapped[int] = mapped_column(Integer)
+    rank: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+
+class CorpusEntryTerm(Base):
+    __tablename__ = "corpus_entry_terms"
+    __table_args__ = (
+        UniqueConstraint("entry_id", "word_id", name="uq_corpus_entry_terms_entry_word"),
+        Index("ix_corpus_entry_terms_entry_lang", "entry_id", "lang"),
+        Index("ix_corpus_entry_terms_word", "word_id"),
+        Index("ix_corpus_entry_terms_lang", "lang"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    entry_id: Mapped[int] = mapped_column(
+        ForeignKey("corpus_entries.id", ondelete="CASCADE"),
+    )
+    word_id: Mapped[int] = mapped_column(
+        ForeignKey("words.id", ondelete="CASCADE"),
+    )
+    lang: Mapped[str] = mapped_column(String(2))
+    is_primary: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
 class Translation(Base):
     __tablename__ = "translations"
     __table_args__ = (

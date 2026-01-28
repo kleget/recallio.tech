@@ -6,20 +6,21 @@ from difflib import SequenceMatcher
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, exists, func, or_, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
 
 from app.api.auth import get_active_learning_profile, get_current_user
 from app.db.session import get_db
 from app.core.audit import log_audit_event
 from app.models import (
     Corpus,
-    CorpusWordStat,
+    CorpusEntry,
+    CorpusEntryTerm,
     LearningProfile,
     ReviewEvent,
     StudySession,
-    Translation,
     UserWordTranslation,
     User,
     UserCorpus,
@@ -473,17 +474,18 @@ async def build_reading_block(
     if not word_ids:
         return None
     result = await db.execute(
-        select(Corpus.slug, Corpus.name, func.count(CorpusWordStat.word_id).label("hits"))
-        .select_from(CorpusWordStat)
-        .join(UserCorpus, UserCorpus.corpus_id == CorpusWordStat.corpus_id)
-        .join(Corpus, Corpus.id == CorpusWordStat.corpus_id)
+        select(Corpus.slug, Corpus.name, func.count(CorpusEntryTerm.word_id).label("hits"))
+        .select_from(CorpusEntryTerm)
+        .join(CorpusEntry, CorpusEntry.id == CorpusEntryTerm.entry_id)
+        .join(UserCorpus, UserCorpus.corpus_id == CorpusEntry.corpus_id)
+        .join(Corpus, Corpus.id == CorpusEntry.corpus_id)
         .where(
             UserCorpus.profile_id == profile_id,
             UserCorpus.enabled.is_(True),
-            CorpusWordStat.word_id.in_(word_ids),
+            CorpusEntryTerm.word_id.in_(word_ids),
         )
         .group_by(Corpus.slug, Corpus.name)
-        .order_by(func.count(CorpusWordStat.word_id).desc(), Corpus.name)
+        .order_by(func.count(CorpusEntryTerm.word_id).desc(), Corpus.name)
         .limit(1)
     )
     row = result.first()
@@ -569,39 +571,49 @@ async def fetch_corpus_words(
 ) -> list[LearnWordOut]:
     if limit <= 0:
         return []
+    source_term = aliased(CorpusEntryTerm)
+    source_word = aliased(Word)
     stmt = (
         select(
-            Word.id.label("word_id"),
-            Word.lemma.label("lemma"),
-            func.min(CorpusWordStat.rank).label("rank"),
-            func.max(CorpusWordStat.count).label("count"),
+            source_term.word_id.label("word_id"),
+            source_word.lemma.label("lemma"),
+            CorpusEntry.rank.label("rank"),
+            CorpusEntry.count.label("count"),
         )
-        .select_from(CorpusWordStat)
-        .join(UserCorpus, UserCorpus.corpus_id == CorpusWordStat.corpus_id)
-        .join(Word, Word.id == CorpusWordStat.word_id)
+        .select_from(CorpusEntry)
+        .join(UserCorpus, UserCorpus.corpus_id == CorpusEntry.corpus_id)
         .join(
-            Translation,
-            and_(Translation.word_id == Word.id, Translation.target_lang == target_lang),
+            source_term,
+            (source_term.entry_id == CorpusEntry.id)
+            & (source_term.lang == source_lang)
+            & (source_term.is_primary.is_(True)),
         )
+        .join(source_word, source_word.id == source_term.word_id)
         .outerjoin(
             UserWord,
-            and_(UserWord.profile_id == profile_id, UserWord.word_id == Word.id),
+            and_(UserWord.profile_id == profile_id, UserWord.word_id == source_term.word_id),
         )
         .where(UserCorpus.profile_id == profile_id, UserCorpus.enabled.is_(True))
-        .where(Word.lang == source_lang)
+        .where(
+            exists(
+                select(1).where(
+                    CorpusEntryTerm.entry_id == CorpusEntry.id,
+                    CorpusEntryTerm.lang == target_lang,
+                )
+            )
+        )
         .where(
             or_(
                 UserCorpus.target_word_limit == 0,
-                CorpusWordStat.rank <= UserCorpus.target_word_limit,
+                CorpusEntry.rank <= UserCorpus.target_word_limit,
             )
         )
         .where(UserWord.word_id.is_(None))
-        .group_by(Word.id, Word.lemma)
-        .order_by(func.min(CorpusWordStat.rank).nulls_last(), Word.id)
+        .order_by(CorpusEntry.rank.nulls_last(), source_term.word_id)
         .limit(limit)
     )
     if exclude_word_ids:
-        stmt = stmt.where(Word.id.notin_(exclude_word_ids))
+        stmt = stmt.where(source_term.word_id.notin_(exclude_word_ids))
     result = await db.execute(stmt)
     rows = result.fetchall()
     word_ids = [row.word_id for row in rows]
@@ -862,13 +874,26 @@ async def fetch_user_translation_map(
     for word_id, translation in custom_result.fetchall():
         add_translation(word_id, translation)
 
+    source_term = aliased(CorpusEntryTerm)
+    target_term = aliased(CorpusEntryTerm)
+    target_word = aliased(Word)
     result = await db.execute(
-        select(Translation.word_id, Translation.translation)
-        .where(
-            Translation.word_id.in_(word_ids),
-            Translation.target_lang == target_lang,
+        select(source_term.word_id, target_word.lemma)
+        .select_from(source_term)
+        .join(CorpusEntry, CorpusEntry.id == source_term.entry_id)
+        .join(UserCorpus, UserCorpus.corpus_id == CorpusEntry.corpus_id)
+        .join(
+            target_term,
+            (target_term.entry_id == source_term.entry_id)
+            & (target_term.lang == target_lang),
         )
-        .order_by(Translation.word_id, Translation.id)
+        .join(target_word, target_word.id == target_term.word_id)
+        .where(
+            source_term.word_id.in_(word_ids),
+            UserCorpus.profile_id == profile_id,
+            UserCorpus.enabled.is_(True),
+        )
+        .order_by(source_term.word_id, target_word.lemma.asc())
     )
     for word_id, translation in result.fetchall():
         add_translation(word_id, translation)
@@ -960,23 +985,38 @@ async def seed_review_words(
     limit: int,
     db: AsyncSession,
 ) -> int:
+    source_term = aliased(CorpusEntryTerm)
     stmt = (
-        select(Word.id)
-        .select_from(CorpusWordStat)
-        .join(UserCorpus, UserCorpus.corpus_id == CorpusWordStat.corpus_id)
-        .join(Word, Word.id == CorpusWordStat.word_id)
-        .outerjoin(UserWord, and_(UserWord.profile_id == profile_id, UserWord.word_id == Word.id))
+        select(source_term.word_id)
+        .select_from(CorpusEntry)
+        .join(UserCorpus, UserCorpus.corpus_id == CorpusEntry.corpus_id)
+        .join(
+            source_term,
+            (source_term.entry_id == CorpusEntry.id)
+            & (source_term.lang == source_lang)
+            & (source_term.is_primary.is_(True)),
+        )
+        .outerjoin(
+            UserWord,
+            and_(UserWord.profile_id == profile_id, UserWord.word_id == source_term.word_id),
+        )
         .where(UserCorpus.profile_id == profile_id, UserCorpus.enabled.is_(True))
-        .where(Word.lang == source_lang)
+        .where(
+            exists(
+                select(1).where(
+                    CorpusEntryTerm.entry_id == CorpusEntry.id,
+                    CorpusEntryTerm.lang == target_lang,
+                )
+            )
+        )
         .where(
             or_(
                 UserCorpus.target_word_limit == 0,
-                CorpusWordStat.rank <= UserCorpus.target_word_limit,
+                CorpusEntry.rank <= UserCorpus.target_word_limit,
             )
         )
         .where(UserWord.word_id.is_(None))
-        .group_by(Word.id)
-        .order_by(func.min(CorpusWordStat.rank).nulls_last(), Word.id)
+        .order_by(CorpusEntry.rank.nulls_last(), source_term.word_id)
         .limit(limit)
     )
     result = await db.execute(stmt)

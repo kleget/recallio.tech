@@ -6,13 +6,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import and_, exists, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
 
 from app.api.auth import get_active_learning_profile, get_current_user
 from app.db.session import get_db
 from app.models import (
-    CorpusWordStat,
+    CorpusEntry,
+    CorpusEntryTerm,
     DashboardCache,
-    Translation,
     User,
     UserCorpus,
     UserCustomWord,
@@ -72,31 +73,37 @@ async def count_available_new_words(
     target_lang: str,
     db: AsyncSession,
 ) -> int:
-    has_translation = exists(
-        select(1).where(
-            Translation.word_id == CorpusWordStat.word_id,
-            Translation.target_lang == target_lang,
-        )
-    )
+    source_term = aliased(CorpusEntryTerm)
     corpora_subq = (
-        select(CorpusWordStat.word_id.label("word_id"))
-        .select_from(CorpusWordStat)
-        .join(UserCorpus, UserCorpus.corpus_id == CorpusWordStat.corpus_id)
-        .join(Word, Word.id == CorpusWordStat.word_id)
+        select(source_term.word_id.label("word_id"))
+        .select_from(CorpusEntry)
+        .join(UserCorpus, UserCorpus.corpus_id == CorpusEntry.corpus_id)
+        .join(
+            source_term,
+            (source_term.entry_id == CorpusEntry.id)
+            & (source_term.lang == source_lang)
+            & (source_term.is_primary.is_(True)),
+        )
         .outerjoin(
             UserWord,
-            and_(UserWord.profile_id == profile_id, UserWord.word_id == CorpusWordStat.word_id),
+            and_(UserWord.profile_id == profile_id, UserWord.word_id == source_term.word_id),
         )
         .where(UserCorpus.profile_id == profile_id, UserCorpus.enabled.is_(True))
-        .where(Word.lang == source_lang)
+        .where(
+            exists(
+                select(1).where(
+                    CorpusEntryTerm.entry_id == CorpusEntry.id,
+                    CorpusEntryTerm.lang == target_lang,
+                )
+            )
+        )
         .where(
             or_(
                 UserCorpus.target_word_limit == 0,
-                CorpusWordStat.rank <= UserCorpus.target_word_limit,
+                CorpusEntry.rank <= UserCorpus.target_word_limit,
             )
         )
         .where(UserWord.word_id.is_(None))
-        .where(has_translation)
     )
     custom_subq = (
         select(UserCustomWord.word_id.label("word_id"))
@@ -192,11 +199,22 @@ async def get_dashboard(
         )
         .subquery()
     )
+    source_term = aliased(CorpusEntryTerm)
+    target_term = aliased(CorpusEntryTerm)
     translation_subq = (
-        select(Translation.word_id)
+        select(source_term.word_id)
+        .select_from(source_term)
+        .join(CorpusEntry, CorpusEntry.id == source_term.entry_id)
+        .join(UserCorpus, UserCorpus.corpus_id == CorpusEntry.corpus_id)
+        .join(
+            target_term,
+            (target_term.entry_id == source_term.entry_id)
+            & (target_term.lang == learning_profile.native_lang),
+        )
         .where(
-            Translation.word_id.in_(select(due_words_subq.c.word_id)),
-            Translation.target_lang == learning_profile.native_lang,
+            source_term.word_id.in_(select(due_words_subq.c.word_id)),
+            UserCorpus.profile_id == learning_profile.id,
+            UserCorpus.enabled.is_(True),
         )
     )
     user_translation_subq = (

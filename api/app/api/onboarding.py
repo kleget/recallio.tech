@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, exists, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,7 +13,8 @@ from app.api.study import REVIEW_INTERVALS_DAYS
 from app.db.session import get_db
 from app.models import (
     Corpus,
-    CorpusWordStat,
+    CorpusEntry,
+    CorpusEntryTerm,
     LearningProfile,
     User,
     UserCorpus,
@@ -21,7 +22,6 @@ from app.models import (
     UserSettings,
     UserWord,
     Word,
-    Translation,
 )
 from app.schemas.onboarding import (
     CorpusOut,
@@ -134,45 +134,68 @@ async def preview_corpus(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Corpus not found")
 
     stats_result = await db.execute(
-        select(CorpusWordStat.word_id, CorpusWordStat.count, CorpusWordStat.rank)
-        .select_from(CorpusWordStat)
-        .join(Word, Word.id == CorpusWordStat.word_id)
-        .where(CorpusWordStat.corpus_id == corpus_id, Word.lang == source_lang)
-        .order_by(CorpusWordStat.rank.asc().nulls_last(), CorpusWordStat.count.desc())
+        select(
+            CorpusEntry.id.label("entry_id"),
+            CorpusEntry.count,
+            CorpusEntry.rank,
+            CorpusEntryTerm.word_id.label("word_id"),
+            Word.lemma.label("lemma"),
+        )
+        .select_from(CorpusEntry)
+        .join(
+            CorpusEntryTerm,
+            (CorpusEntryTerm.entry_id == CorpusEntry.id)
+            & (CorpusEntryTerm.lang == source_lang)
+            & (CorpusEntryTerm.is_primary.is_(True)),
+        )
+        .join(Word, Word.id == CorpusEntryTerm.word_id)
+        .where(CorpusEntry.corpus_id == corpus_id)
+        .where(
+            exists(
+                select(1).where(
+                    CorpusEntryTerm.entry_id == CorpusEntry.id,
+                    CorpusEntryTerm.lang == target_lang,
+                )
+            )
+        )
+        .order_by(CorpusEntry.rank.asc().nulls_last(), CorpusEntry.count.desc())
         .limit(limit)
     )
     stats_rows = stats_result.fetchall()
-    word_ids = [row.word_id for row in stats_rows]
-    if not word_ids:
+    entry_ids = [row.entry_id for row in stats_rows]
+    if not entry_ids:
         return CorpusPreviewOut(corpus_id=corpus_id, words=[])
 
-    word_result = await db.execute(select(Word.id, Word.lemma).where(Word.id.in_(word_ids)))
-    word_map = {row.id: row.lemma for row in word_result.fetchall()}
-
     translation_result = await db.execute(
-        select(Translation.word_id, Translation.translation).where(
-            Translation.word_id.in_(word_ids),
-            Translation.target_lang == target_lang,
+        select(
+            CorpusEntryTerm.entry_id,
+            Word.lemma,
         )
+        .select_from(CorpusEntryTerm)
+        .join(Word, Word.id == CorpusEntryTerm.word_id)
+        .where(
+            CorpusEntryTerm.entry_id.in_(entry_ids),
+            CorpusEntryTerm.lang == target_lang,
+        )
+        .order_by(CorpusEntryTerm.entry_id, Word.lemma.asc())
     )
     translation_map: dict[int, list[str]] = defaultdict(list)
     seen: dict[int, set[str]] = defaultdict(set)
-    for row in translation_result.fetchall():
-        if row.translation in seen[row.word_id]:
+    for entry_id, lemma in translation_result.fetchall():
+        if lemma in seen[entry_id]:
             continue
-        seen[row.word_id].add(row.translation)
-        translation_map[row.word_id].append(row.translation)
+        seen[entry_id].add(lemma)
+        translation_map[entry_id].append(lemma)
 
     words = [
         CorpusPreviewWordOut(
             word_id=row.word_id,
-            lemma=word_map.get(row.word_id, ""),
-            translations=translation_map.get(row.word_id, []),
+            lemma=row.lemma,
+            translations=translation_map.get(row.entry_id, []),
             count=row.count,
             rank=row.rank,
         )
         for row in stats_rows
-        if row.word_id in word_map
     ]
 
     return CorpusPreviewOut(corpus_id=corpus_id, words=words)
@@ -192,16 +215,13 @@ async def list_corpora(
             Corpus.id,
             Corpus.slug,
             Corpus.name,
-            func.count(CorpusWordStat.word_id).label("words_total"),
+            func.count(CorpusEntry.id).label("words_total"),
         )
         .select_from(Corpus)
-        .join(CorpusWordStat, CorpusWordStat.corpus_id == Corpus.id, isouter=True)
-        .join(Word, Word.id == CorpusWordStat.word_id, isouter=True)
+        .join(CorpusEntry, CorpusEntry.corpus_id == Corpus.id, isouter=True)
         .group_by(Corpus.id, Corpus.slug, Corpus.name)
         .order_by(Corpus.name)
     )
-    if source_lang:
-        stmt = stmt.where(Word.lang == source_lang)
 
     result = await db.execute(stmt)
     return [

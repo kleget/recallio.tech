@@ -26,3 +26,14 @@ class AdminTranslationCreate(BaseModel):
     word_id: int
     target_lang: str
     translation: str
+
+
+class AdminEntryTermCreate(BaseModel):
+    lemma: str
+    lang: str
+    is_primary: bool | None = None
+
+
+class AdminEntryTermUpdate(BaseModel):
+    lemma: str | None = None
+    is_primary: bool | None = None

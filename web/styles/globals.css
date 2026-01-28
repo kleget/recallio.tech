@@ -4230,9 +4230,20 @@ html[data-theme="dark"] .input-status.wrong {
 
 .admin-translation-row {
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: auto 1fr auto auto auto;
   gap: 8px;
   align-items: center;
+}
+
+.admin-primary-badge {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .translation-lang,
@@ -4312,6 +4323,10 @@ html[data-theme="dark"] .input-status.wrong {
   }
 
   .admin-translation-row button {
+    width: 100%;
+  }
+
+  .admin-primary-badge {
     width: 100%;
   }
 }

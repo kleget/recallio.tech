@@ -8,21 +8,21 @@ class AdminCorpusOut(BaseModel):
     words_total: int
 
 
-class AdminCorpusTranslationOut(BaseModel):
+class AdminCorpusEntryTermOut(BaseModel):
     id: int
-    translation: str
-    target_lang: str | None = None
-
-
-class AdminCorpusWordOut(BaseModel):
     word_id: int
     lemma: str
     lang: str
+    is_primary: bool
+
+
+class AdminCorpusEntryOut(BaseModel):
+    entry_id: int
     count: int
     rank: int | None
-    translations: list[AdminCorpusTranslationOut]
+    terms: list[AdminCorpusEntryTermOut]
 
 
-class AdminCorpusWordsOut(BaseModel):
+class AdminCorpusEntriesOut(BaseModel):
     total: int
-    items: list[AdminCorpusWordOut]
+    items: list[AdminCorpusEntryOut]

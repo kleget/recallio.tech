@@ -49,16 +49,18 @@ const TEXT = {
       save: "\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u0441\u043b\u043e\u0432\u043e",
       delete: "\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0441\u043b\u043e\u0432\u043e",
       confirmDelete: "\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0441\u043b\u043e\u0432\u043e \u0438 \u0432\u0441\u0435 \u0435\u0433\u043e \u043f\u0435\u0440\u0435\u0432\u043e\u0434\u044b?",
-      saveTranslation: "\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u043f\u0435\u0440\u0435\u0432\u043e\u0434",
-      deleteTranslation: "\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u043f\u0435\u0440\u0435\u0432\u043e\u0434",
-      confirmDeleteTranslation: "\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0442\u043e\u043b\u044c\u043a\u043e \u044d\u0442\u043e\u0442 \u043f\u0435\u0440\u0435\u0432\u043e\u0434?",
+      saveTranslation: "\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u0442\u0435\u0440\u043c\u0438\u043d",
+      deleteTranslation: "\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0442\u0435\u0440\u043c\u0438\u043d",
+      confirmDeleteTranslation: "\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u044d\u0442\u043e\u0442 \u0442\u0435\u0440\u043c\u0438\u043d?",
       noTranslations: "\u041d\u0435\u0442 \u043f\u0435\u0440\u0435\u0432\u043e\u0434\u043e\u0432",
       addTranslation: "\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043f\u0435\u0440\u0435\u0432\u043e\u0434",
       addValue: "\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0435",
       removeValue: "\u0423\u0431\u0440\u0430\u0442\u044c",
       removeDraft: "\u0423\u0431\u0440\u0430\u0442\u044c",
       wordPlaceholder: "\u041d\u043e\u0432\u043e\u0435 \u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0435 \u0441\u043b\u043e\u0432\u0430",
-      translationPlaceholder: "\u041d\u043e\u0432\u044b\u0439 \u043f\u0435\u0440\u0435\u0432\u043e\u0434"
+      translationPlaceholder: "\u041d\u043e\u0432\u044b\u0439 \u0442\u0435\u0440\u043c\u0438\u043d",
+      setPrimary: "\u0421\u0434\u0435\u043b\u0430\u0442\u044c \u043e\u0441\u043d\u043e\u0432\u043d\u044b\u043c",
+      primary: "\u041e\u0441\u043d\u043e\u0432\u043d\u043e\u0435"
     },
     paging: {
       prev: "\u041d\u0430\u0437\u0430\u0434",
@@ -105,16 +107,18 @@ const TEXT = {
       save: "Save word",
       delete: "Delete word",
       confirmDelete: "Delete the word and all its translations?",
-      saveTranslation: "Save translation",
-      deleteTranslation: "Delete translation",
-      confirmDeleteTranslation: "Delete only this translation?",
+      saveTranslation: "Save term",
+      deleteTranslation: "Delete term",
+      confirmDeleteTranslation: "Delete this term?",
       noTranslations: "No translations",
       addTranslation: "Add translation",
       addValue: "Add value",
       removeValue: "Remove",
       removeDraft: "Remove",
       wordPlaceholder: "Word value",
-      translationPlaceholder: "New translation"
+      translationPlaceholder: "New term",
+      setPrimary: "Set primary",
+      primary: "Primary"
     },
     paging: {
       prev: "Previous",
@@ -227,13 +231,10 @@ export default function AdminCorporaPage() {
   const [page, setPage] = useState(0);
   const [sourceLang, setSourceLang] = useState("ru");
   const [targetLang, setTargetLang] = useState("all");
-  const [savingWordId, setSavingWordId] = useState(null);
-  const [savingTranslationId, setSavingTranslationId] = useState(null);
-  const [deletingWordId, setDeletingWordId] = useState(null);
-  const [deletingTranslationId, setDeletingTranslationId] = useState(null);
-  const [translationMap, setTranslationMap] = useState({});
-  const [wordPartsMap, setWordPartsMap] = useState({});
-  const [newTranslationMap, setNewTranslationMap] = useState({});
+  const [savingTermId, setSavingTermId] = useState(null);
+  const [deletingTermId, setDeletingTermId] = useState(null);
+  const [termValueMap, setTermValueMap] = useState({});
+  const [draftTermMap, setDraftTermMap] = useState({});
 
   const loadCorpora = async (token) => {
     const me = await getJson("/auth/me", token);
@@ -364,167 +365,120 @@ export default function AdminCorporaPage() {
     }
   };
 
-  const splitWordParts = (value) =>
-    String(value || "")
-      .split("/")
-      .map((part) => part.trim())
-      .filter((part) => part.length > 0);
+  const getDraftTerms = (entryId) => draftTermMap[entryId] || [];
 
-  const getWordParts = (item) => {
-    const existing = wordPartsMap[item.word_id];
-    if (Array.isArray(existing)) {
-      return existing.length ? existing : [""];
-    }
-    const parts = splitWordParts(item.lemma);
-    return parts.length ? parts : [""];
-  };
-
-  const setWordParts = (wordId, nextParts) => {
-    setWordPartsMap((prev) => ({ ...prev, [wordId]: nextParts }));
-  };
-
-  const addWordPart = (wordId, currentParts) => {
-    const next = [...currentParts, ""];
-    setWordParts(wordId, next);
-  };
-
-  const removeWordPart = (wordId, currentParts, index) => {
-    if (currentParts.length <= 1) {
-      return;
-    }
-    const next = currentParts.filter((_, idx) => idx !== index);
-    setWordParts(wordId, next);
-  };
-
-  const getNewTranslations = (wordId) => newTranslationMap[wordId] || [];
-
-  const addNewTranslation = (wordId) => {
-    const defaultLang = targetLang !== "all" ? targetLang : sourceLang === "ru" ? "en" : "ru";
-    setNewTranslationMap((prev) => {
-      const current = prev[wordId] || [];
+  const addDraftTerm = (entryId, lang) => {
+    const resolvedLang = lang || (sourceLang === "ru" ? "en" : "ru");
+    setDraftTermMap((prev) => {
+      const current = prev[entryId] || [];
       const nextItem = {
-        id: `${wordId}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        id: `${entryId}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
         value: "",
-        lang: defaultLang
+        lang: resolvedLang
       };
-      return { ...prev, [wordId]: [...current, nextItem] };
+      return { ...prev, [entryId]: [...current, nextItem] };
     });
   };
 
-  const updateNewTranslation = (wordId, localId, patch) => {
-    setNewTranslationMap((prev) => {
-      const current = prev[wordId] || [];
+  const updateDraftTerm = (entryId, localId, patch) => {
+    setDraftTermMap((prev) => {
+      const current = prev[entryId] || [];
       const next = current.map((item) => (item.id === localId ? { ...item, ...patch } : item));
-      return { ...prev, [wordId]: next };
+      return { ...prev, [entryId]: next };
     });
   };
 
-  const removeNewTranslation = (wordId, localId) => {
-    setNewTranslationMap((prev) => {
-      const current = prev[wordId] || [];
+  const removeDraftTerm = (entryId, localId) => {
+    setDraftTermMap((prev) => {
+      const current = prev[entryId] || [];
       const next = current.filter((item) => item.id !== localId);
       if (!next.length) {
         const copy = { ...prev };
-        delete copy[wordId];
+        delete copy[entryId];
         return copy;
       }
-      return { ...prev, [wordId]: next };
+      return { ...prev, [entryId]: next };
     });
   };
 
-  const saveWord = async (item) => {
+  const saveTerm = async (entryId, term) => {
     const token = getCookie("token");
     if (!token) {
       window.location.href = "/auth";
       return;
     }
-    const parts = wordPartsMap[item.word_id] ?? [];
-    const rawParts = parts.length ? parts : (item.lemma || "").split("/");
-    const cleaned = rawParts.map((part) => String(part || "").trim()).filter(Boolean);
-    const value = cleaned.join(" / ");
+    const value = (termValueMap[term.id] ?? term.lemma ?? "").trim();
     if (!value) {
       setError(t.error);
       return;
     }
-    setSavingWordId(item.word_id);
-    try {
-      const data = await patchJson(`/admin/content/words/${item.word_id}`, { lemma: value }, token);
-      setWordPartsMap((prev) => ({ ...prev, [item.word_id]: splitWordParts(data.lemma) }));
-      if (data.id !== item.word_id) {
-        await loadWords(token, selectedCorpus, page);
-      } else {
-        setWords((prev) =>
-          prev.map((word) =>
-            word.word_id === item.word_id ? { ...word, lemma: data.lemma } : word
-          )
-        );
-      }
-    } catch (err) {
-      setError(err.message || t.error);
-    } finally {
-      setSavingWordId(null);
-    }
-  };
-
-  const deleteWord = async (item) => {
-    if (!window.confirm(t.word.confirmDelete)) {
-      return;
-    }
-    const token = getCookie("token");
-    if (!token) {
-      window.location.href = "/auth";
-      return;
-    }
-    setDeletingWordId(item.word_id);
-    try {
-      await deleteJson(`/admin/content/words/${item.word_id}`, token);
-      await loadWords(token, selectedCorpus, page);
-    } catch (err) {
-      setError(err.message || t.error);
-    } finally {
-      setDeletingWordId(null);
-    }
-  };
-
-  const saveTranslation = async (translation, wordId) => {
-    const token = getCookie("token");
-    if (!token) {
-      window.location.href = "/auth";
-      return;
-    }
-    const value = (translationMap[translation.id] ?? translation.translation ?? "").trim();
-    if (!value) {
-      setError(t.error);
-      return;
-    }
-    setSavingTranslationId(translation.id);
+    setSavingTermId(term.id);
     try {
       const data = await patchJson(
-        `/admin/content/translations/${translation.id}`,
-        { translation: value },
+        `/admin/content/entries/${entryId}/terms/${term.id}`,
+        { lemma: value },
         token
       );
-      setTranslationMap((prev) => ({ ...prev, [translation.id]: data.translation }));
+      setTermValueMap((prev) => ({ ...prev, [term.id]: data.lemma }));
       setWords((prev) =>
-        prev.map((word) =>
-          word.word_id === wordId
-            ? {
-                ...word,
-                translations: word.translations.map((item) =>
-                  item.id === translation.id ? { ...item, translation: data.translation } : item
-                )
-              }
-            : word
-        )
+        prev.map((entry) => {
+          if (entry.entry_id !== entryId) {
+            return entry;
+          }
+          const nextTerms = (entry.terms || []).map((item) => {
+            if (item.id === term.id) {
+              return { ...item, ...data };
+            }
+            if (data.is_primary && item.lang === data.lang) {
+              return { ...item, is_primary: false };
+            }
+            return item;
+          });
+          return { ...entry, terms: nextTerms };
+        })
       );
     } catch (err) {
       setError(err.message || t.error);
     } finally {
-      setSavingTranslationId(null);
+      setSavingTermId(null);
     }
   };
 
-  const deleteTranslation = async (translation, wordId) => {
+  const setPrimaryTerm = async (entryId, term) => {
+    const token = getCookie("token");
+    if (!token) {
+      window.location.href = "/auth";
+      return;
+    }
+    setSavingTermId(term.id);
+    try {
+      const data = await patchJson(
+        `/admin/content/entries/${entryId}/terms/${term.id}`,
+        { is_primary: true },
+        token
+      );
+      setWords((prev) =>
+        prev.map((entry) => {
+          if (entry.entry_id !== entryId) {
+            return entry;
+          }
+          const nextTerms = (entry.terms || []).map((item) => {
+            if (item.lang === data.lang) {
+              return { ...item, is_primary: item.id === data.id };
+            }
+            return item;
+          });
+          return { ...entry, terms: nextTerms };
+        })
+      );
+    } catch (err) {
+      setError(err.message || t.error);
+    } finally {
+      setSavingTermId(null);
+    }
+  };
+
+  const deleteTerm = async (entryId, term) => {
     if (!window.confirm(t.word.confirmDeleteTranslation)) {
       return;
     }
@@ -533,32 +487,18 @@ export default function AdminCorporaPage() {
       window.location.href = "/auth";
       return;
     }
-    setDeletingTranslationId(translation.id);
+    setDeletingTermId(term.id);
     try {
-      await deleteJson(`/admin/content/translations/${translation.id}`, token);
-      setWords((prev) =>
-        prev.map((word) =>
-          word.word_id === wordId
-            ? {
-                ...word,
-                translations: word.translations.filter((item) => item.id !== translation.id)
-              }
-            : word
-        )
-      );
-      setTranslationMap((prev) => {
-        const next = { ...prev };
-        delete next[translation.id];
-        return next;
-      });
+      await deleteJson(`/admin/content/entries/${entryId}/terms/${term.id}`, token);
+      await loadWords(token, selectedCorpus, page);
     } catch (err) {
       setError(err.message || t.error);
     } finally {
-      setDeletingTranslationId(null);
+      setDeletingTermId(null);
     }
   };
 
-  const saveNewTranslation = async (wordId, draft) => {
+  const saveDraftTerm = async (entryId, draft) => {
     const token = getCookie("token");
     if (!token) {
       window.location.href = "/auth";
@@ -571,29 +511,35 @@ export default function AdminCorporaPage() {
     }
     const lang =
       draft.lang || (targetLang !== "all" ? targetLang : sourceLang === "ru" ? "en" : "ru");
-    setSavingTranslationId(draft.id);
+    setSavingTermId(draft.id);
     try {
       const data = await postJson(
-        "/admin/content/translations",
+        `/admin/content/entries/${entryId}/terms`,
         {
-          word_id: wordId,
-          target_lang: lang,
-          translation: value
+          lemma: value,
+          lang
         },
         token
       );
       setWords((prev) =>
-        prev.map((word) =>
-          word.word_id === wordId
-            ? { ...word, translations: [...(word.translations || []), data] }
-            : word
-        )
+        prev.map((entry) => {
+          if (entry.entry_id !== entryId) {
+            return entry;
+          }
+          const nextTerms = [...(entry.terms || []), data].map((item) => {
+            if (data.is_primary && item.lang === data.lang) {
+              return { ...item, is_primary: item.id === data.id };
+            }
+            return item;
+          });
+          return { ...entry, terms: nextTerms };
+        })
       );
-      removeNewTranslation(wordId, draft.id);
+      removeDraftTerm(entryId, draft.id);
     } catch (err) {
       setError(err.message || t.error);
     } finally {
-      setSavingTranslationId(null);
+      setSavingTermId(null);
     }
   };
 
@@ -742,131 +688,185 @@ export default function AdminCorporaPage() {
           {loadingWords ? <p className="muted">{t.loading}</p> : null}
           {!loadingWords && !words.length ? <p className="muted">{t.empty}</p> : null}
           <div className="admin-word-list">
-            {words.map((item) => {
-              const wordParts = getWordParts(item);
-              const draftTranslations = getNewTranslations(item.word_id);
-              const translations = item.translations || [];
-              const hasTranslations = translations.length + draftTranslations.length > 0;
+            {words.map((entry) => {
+              const terms = entry.terms || [];
+              const sourceTerms = terms.filter((item) => item.lang === sourceLang);
+              const translationTerms = terms.filter(
+                (item) => item.lang !== sourceLang && (targetLang === "all" || item.lang === targetLang)
+              );
+              const draftTerms = getDraftTerms(entry.entry_id);
+              const sourceDrafts = draftTerms.filter((item) => item.lang === sourceLang);
+              const translationDrafts = draftTerms.filter(
+                (item) => item.lang !== sourceLang && (targetLang === "all" || item.lang === targetLang)
+              );
+              const hasTranslations = translationTerms.length + translationDrafts.length > 0;
 
               return (
-                <div key={item.word_id} className="admin-word-card">
+                <div key={entry.entry_id} className="admin-word-card">
                   <div className="admin-word-header">
                     <div className="admin-word-meta">
                       <span>
-                        {t.word.count}: {item.count}
+                        {t.word.count}: {entry.count}
                       </span>
-                      {item.rank !== null && item.rank !== undefined ? (
+                      {entry.rank !== null && entry.rank !== undefined ? (
                         <span>
-                          {t.word.rank}: {item.rank}
+                          {t.word.rank}: {entry.rank}
                         </span>
                       ) : null}
-                    </div>
-                    <div className="admin-word-actions">
-                      <button
-                        type="button"
-                        onClick={() => saveWord(item)}
-                        disabled={savingWordId === item.word_id}
-                      >
-                        {t.word.save}
-                      </button>
-                      <button
-                        type="button"
-                        className="button-danger"
-                        onClick={() => deleteWord(item)}
-                        disabled={deletingWordId === item.word_id}
-                      >
-                        {t.word.delete}
-                      </button>
                     </div>
                   </div>
                   <div className="admin-word-edit">
                     <div className="admin-word-edit-header">
-                      <span>{t.word.title}</span>
+                      <span>
+                        {t.word.title} ({langLabel(sourceLang)})
+                      </span>
                       <button
                         type="button"
                         className="button-secondary admin-inline-button"
-                        onClick={() => addWordPart(item.word_id, wordParts)}
+                        onClick={() => addDraftTerm(entry.entry_id, sourceLang)}
                       >
                         {t.word.addValue}
                       </button>
                     </div>
-                    <div className="admin-word-inputs">
-                      {wordParts.map((part, index) => (
-                        <div key={`${item.word_id}-${index}`} className="admin-word-input-row">
+                    <div className="admin-translation-list">
+                      {sourceTerms.map((term) => (
+                        <div key={term.id} className="admin-translation-row">
+                          <span className="translation-lang">{langBadge(term.lang)}</span>
                           <input
-                            value={part}
+                            value={termValueMap[term.id] ?? term.lemma}
                             placeholder={t.word.wordPlaceholder}
-                            onChange={(event) => {
-                              const next = [...wordParts];
-                              next[index] = event.target.value;
-                              setWordParts(item.word_id, next);
-                            }}
+                            onChange={(event) =>
+                              setTermValueMap((prev) => ({
+                                ...prev,
+                                [term.id]: event.target.value
+                              }))
+                            }
                           />
-                          {wordParts.length > 1 ? (
+                          <button
+                            type="button"
+                            onClick={() => saveTerm(entry.entry_id, term)}
+                            disabled={savingTermId === term.id}
+                          >
+                            {t.word.saveTranslation}
+                          </button>
+                          <button
+                            type="button"
+                            className="button-danger"
+                            onClick={() => deleteTerm(entry.entry_id, term)}
+                            disabled={deletingTermId === term.id}
+                          >
+                            {t.word.deleteTranslation}
+                          </button>
+                          {term.is_primary ? (
+                            <span className="admin-primary-badge">{t.word.primary}</span>
+                          ) : (
                             <button
                               type="button"
                               className="button-secondary admin-inline-button"
-                              onClick={() => removeWordPart(item.word_id, wordParts, index)}
+                              onClick={() => setPrimaryTerm(entry.entry_id, term)}
                             >
-                              {t.word.removeValue}
+                              {t.word.setPrimary}
                             </button>
-                          ) : null}
+                          )}
+                        </div>
+                      ))}
+                      {sourceDrafts.map((draft) => (
+                        <div key={draft.id} className="admin-translation-row">
+                          <span className="translation-lang">{langBadge(sourceLang)}</span>
+                          <input
+                            value={draft.value}
+                            placeholder={t.word.wordPlaceholder}
+                            onChange={(event) =>
+                              updateDraftTerm(entry.entry_id, draft.id, { value: event.target.value })
+                            }
+                          />
+                          <button
+                            type="button"
+                            onClick={() => saveDraftTerm(entry.entry_id, draft)}
+                            disabled={savingTermId === draft.id}
+                          >
+                            {t.word.saveTranslation}
+                          </button>
+                          <button
+                            type="button"
+                            className="button-secondary"
+                            onClick={() => removeDraftTerm(entry.entry_id, draft.id)}
+                          >
+                            {t.word.removeDraft}
+                          </button>
                         </div>
                       ))}
                     </div>
                   </div>
                   <div className="admin-word-edit">
                     <div className="admin-word-edit-header">
-                      <span>{t.word.translations}</span>
+                      <span>
+                        {t.word.translations} ({targetLang === "all" ? t.langAll : langLabel(targetLang)})
+                      </span>
                       <button
                         type="button"
                         className="button-secondary admin-inline-button"
-                        onClick={() => addNewTranslation(item.word_id)}
+                        onClick={() =>
+                          addDraftTerm(
+                            entry.entry_id,
+                            targetLang === "all" ? null : targetLang
+                          )
+                        }
                       >
                         {t.word.addTranslation}
                       </button>
                     </div>
                     {hasTranslations ? (
                       <div className="admin-translation-list">
-                        {translations.map((translation) => (
-                          <div key={translation.id} className="admin-translation-row">
-                            <span className="translation-lang">
-                              {langBadge(translation.target_lang || targetLang)}
-                            </span>
+                        {translationTerms.map((term) => (
+                          <div key={term.id} className="admin-translation-row">
+                            <span className="translation-lang">{langBadge(term.lang)}</span>
                             <input
-                              value={translationMap[translation.id] ?? translation.translation}
+                              value={termValueMap[term.id] ?? term.lemma}
+                              placeholder={t.word.translationPlaceholder}
                               onChange={(event) =>
-                                setTranslationMap((prev) => ({
+                                setTermValueMap((prev) => ({
                                   ...prev,
-                                  [translation.id]: event.target.value
+                                  [term.id]: event.target.value
                                 }))
                               }
                             />
                             <button
                               type="button"
-                              onClick={() => saveTranslation(translation, item.word_id)}
-                              disabled={savingTranslationId === translation.id}
+                              onClick={() => saveTerm(entry.entry_id, term)}
+                              disabled={savingTermId === term.id}
                             >
                               {t.word.saveTranslation}
                             </button>
                             <button
                               type="button"
                               className="button-danger"
-                              onClick={() => deleteTranslation(translation, item.word_id)}
-                              disabled={deletingTranslationId === translation.id}
+                              onClick={() => deleteTerm(entry.entry_id, term)}
+                              disabled={deletingTermId === term.id}
                             >
                               {t.word.deleteTranslation}
                             </button>
+                            {term.is_primary ? (
+                              <span className="admin-primary-badge">{t.word.primary}</span>
+                            ) : (
+                              <button
+                                type="button"
+                                className="button-secondary admin-inline-button"
+                                onClick={() => setPrimaryTerm(entry.entry_id, term)}
+                              >
+                                {t.word.setPrimary}
+                              </button>
+                            )}
                           </div>
                         ))}
-                        {draftTranslations.map((draft) => (
+                        {translationDrafts.map((draft) => (
                           <div key={draft.id} className="admin-translation-row">
                             {targetLang === "all" ? (
                               <select
                                 className="translation-lang-select"
                                 value={draft.lang}
                                 onChange={(event) =>
-                                  updateNewTranslation(item.word_id, draft.id, {
+                                  updateDraftTerm(entry.entry_id, draft.id, {
                                     lang: event.target.value
                                   })
                                 }
@@ -875,30 +875,26 @@ export default function AdminCorporaPage() {
                                 <option value="en">{langBadge("en")}</option>
                               </select>
                             ) : (
-                              <span className="translation-lang">
-                                {langBadge(draft.lang || targetLang)}
-                              </span>
+                              <span className="translation-lang">{langBadge(draft.lang)}</span>
                             )}
                             <input
                               value={draft.value}
                               placeholder={t.word.translationPlaceholder}
                               onChange={(event) =>
-                                updateNewTranslation(item.word_id, draft.id, {
-                                  value: event.target.value
-                                })
+                                updateDraftTerm(entry.entry_id, draft.id, { value: event.target.value })
                               }
                             />
                             <button
                               type="button"
-                              onClick={() => saveNewTranslation(item.word_id, draft)}
-                              disabled={savingTranslationId === draft.id}
+                              onClick={() => saveDraftTerm(entry.entry_id, draft)}
+                              disabled={savingTermId === draft.id}
                             >
                               {t.word.saveTranslation}
                             </button>
                             <button
                               type="button"
                               className="button-secondary"
-                              onClick={() => removeNewTranslation(item.word_id, draft.id)}
+                              onClick={() => removeDraftTerm(entry.entry_id, draft.id)}
                             >
                               {t.word.removeDraft}
                             </button>

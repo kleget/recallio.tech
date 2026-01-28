@@ -14,6 +14,8 @@ from app.db.session import get_db
 from app.models import (
     ContentReport,
     Corpus,
+    CorpusEntry,
+    CorpusEntryTerm,
     CorpusWordStat,
     ReviewEvent,
     Translation,
@@ -24,6 +26,8 @@ from app.models import (
     Word,
 )
 from app.schemas.admin_content import (
+    AdminEntryTermCreate,
+    AdminEntryTermUpdate,
     AdminTranslationCreate,
     AdminTranslationOut,
     AdminTranslationUpdate,
@@ -32,9 +36,9 @@ from app.schemas.admin_content import (
 )
 from app.schemas.admin_corpora import (
     AdminCorpusOut,
-    AdminCorpusTranslationOut,
-    AdminCorpusWordOut,
-    AdminCorpusWordsOut,
+    AdminCorpusEntryOut,
+    AdminCorpusEntryTermOut,
+    AdminCorpusEntriesOut,
 )
 
 router = APIRouter(prefix="/admin/content", tags=["admin"])
@@ -70,16 +74,13 @@ async def list_corpora(
             Corpus.id,
             Corpus.slug,
             Corpus.name,
-            func.count(CorpusWordStat.word_id).label("words_total"),
+            func.count(CorpusEntry.id).label("words_total"),
         )
         .select_from(Corpus)
-        .join(CorpusWordStat, CorpusWordStat.corpus_id == Corpus.id, isouter=True)
-        .join(Word, Word.id == CorpusWordStat.word_id, isouter=True)
+        .join(CorpusEntry, CorpusEntry.corpus_id == Corpus.id, isouter=True)
         .group_by(Corpus.id, Corpus.slug, Corpus.name)
         .order_by(Corpus.name)
     )
-    if source_lang:
-        stmt = stmt.where(Word.lang == source_lang)
     result = await db.execute(stmt)
     return [
         AdminCorpusOut(
@@ -92,7 +93,7 @@ async def list_corpora(
     ]
 
 
-@router.get("/corpora/{corpus_id}/words", response_model=AdminCorpusWordsOut)
+@router.get("/corpora/{corpus_id}/words", response_model=AdminCorpusEntriesOut)
 async def list_corpus_words(
     corpus_id: int,
     query: str | None = None,
@@ -104,7 +105,7 @@ async def list_corpus_words(
     target_lang: str | None = None,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> AdminCorpusWordsOut:
+) -> AdminCorpusEntriesOut:
     ensure_admin(user)
     if limit < 1 or limit > 200:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid limit")
@@ -121,30 +122,29 @@ async def list_corpus_words(
     if not corpus:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Corpus not found")
 
+    source_term = aliased(CorpusEntryTerm)
+    source_word = aliased(Word)
     stmt = (
         select(
-            Word.id.label("word_id"),
-            Word.lemma,
-            Word.lang,
-            CorpusWordStat.count,
-            CorpusWordStat.rank,
+            CorpusEntry.id.label("entry_id"),
+            CorpusEntry.count,
+            CorpusEntry.rank,
         )
-        .select_from(CorpusWordStat)
-        .join(Word, Word.id == CorpusWordStat.word_id)
-        .where(CorpusWordStat.corpus_id == corpus_id, Word.lang == source_lang)
+        .select_from(CorpusEntry)
+        .where(CorpusEntry.corpus_id == corpus_id)
     )
 
     if query and query.strip():
         like = f"%{query.strip()}%"
-        translation_match = exists(
-            select(1).where(
-                Translation.word_id == Word.id,
-                Translation.translation.ilike(like),
-            )
+        term_alias = aliased(CorpusEntryTerm)
+        word_alias = aliased(Word)
+        term_match = exists(
+            select(1)
+            .select_from(term_alias)
+            .join(word_alias, word_alias.id == term_alias.word_id)
+            .where(term_alias.entry_id == CorpusEntry.id, word_alias.lemma.ilike(like))
         )
-        if target_lang:
-            translation_match = translation_match.where(Translation.target_lang == target_lang)
-        stmt = stmt.where(or_(Word.lemma.ilike(like), translation_match))
+        stmt = stmt.where(term_match)
 
     if sort not in {"rank", "count", "lemma"}:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid sort")
@@ -153,59 +153,88 @@ async def list_corpus_words(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid order")
 
     if sort == "count":
-        sort_col = CorpusWordStat.count
+        sort_col = CorpusEntry.count
     elif sort == "lemma":
-        sort_col = Word.lemma
+        stmt = stmt.join(
+            source_term,
+            (source_term.entry_id == CorpusEntry.id)
+            & (source_term.lang == source_lang)
+            & (source_term.is_primary.is_(True)),
+            isouter=True,
+        ).join(source_word, source_word.id == source_term.word_id, isouter=True)
+        sort_col = source_word.lemma
     else:
-        sort_col = CorpusWordStat.rank
+        sort_col = CorpusEntry.rank
 
     order_expr = sort_col.desc() if order_dir == "desc" else sort_col.asc()
-    if sort == "rank":
+    if sort in {"rank", "lemma"}:
         order_expr = order_expr.nulls_last()
 
-    stmt = stmt.order_by(order_expr, CorpusWordStat.count.desc(), Word.lemma.asc())
+    stmt = stmt.order_by(order_expr, CorpusEntry.count.desc(), CorpusEntry.id.asc())
 
-    total_result = await db.execute(select(func.count()).select_from(stmt.subquery()))
+    count_stmt = select(func.count()).select_from(CorpusEntry).where(CorpusEntry.corpus_id == corpus_id)
+    if query and query.strip():
+        like = f"%{query.strip()}%"
+        term_alias = aliased(CorpusEntryTerm)
+        word_alias = aliased(Word)
+        count_stmt = count_stmt.where(
+            exists(
+                select(1)
+                .select_from(term_alias)
+                .join(word_alias, word_alias.id == term_alias.word_id)
+                .where(term_alias.entry_id == CorpusEntry.id, word_alias.lemma.ilike(like))
+            )
+        )
+    total_result = await db.execute(count_stmt)
     total_count = int(total_result.scalar_one() or 0)
 
     rows = await db.execute(stmt.limit(limit).offset(offset))
     items = rows.fetchall()
-    word_ids = [row.word_id for row in items]
-    if not word_ids:
-        return AdminCorpusWordsOut(total=total_count, items=[])
+    entry_ids = [row.entry_id for row in items]
+    if not entry_ids:
+        return AdminCorpusEntriesOut(total=total_count, items=[])
 
-    translations_stmt = (
-        select(Translation.id, Translation.word_id, Translation.translation, Translation.target_lang)
-        .where(Translation.word_id.in_(word_ids))
-        .order_by(Translation.translation.asc())
+    terms_result = await db.execute(
+        select(
+            CorpusEntryTerm.id,
+            CorpusEntryTerm.entry_id,
+            CorpusEntryTerm.word_id,
+            CorpusEntryTerm.lang,
+            CorpusEntryTerm.is_primary,
+            Word.lemma,
+        )
+        .select_from(CorpusEntryTerm)
+        .join(Word, Word.id == CorpusEntryTerm.word_id)
+        .where(CorpusEntryTerm.entry_id.in_(entry_ids))
+        .order_by(
+            CorpusEntryTerm.entry_id,
+            CorpusEntryTerm.lang,
+            CorpusEntryTerm.is_primary.desc(),
+            Word.lemma.asc(),
+        )
     )
-    if target_lang:
-        translations_stmt = translations_stmt.where(Translation.target_lang == target_lang)
-    translations_result = await db.execute(translations_stmt)
-    translation_map: dict[int, list[dict]] = {}
-    for row in translations_result.fetchall():
-        translation_map.setdefault(row.word_id, []).append(
-            {
-                "id": row.id,
-                "translation": row.translation,
-                "target_lang": row.target_lang,
-            }
+    term_map: dict[int, list[AdminCorpusEntryTermOut]] = {}
+    for row in terms_result.fetchall():
+        term_map.setdefault(row.entry_id, []).append(
+            AdminCorpusEntryTermOut(
+                id=row.id,
+                word_id=row.word_id,
+                lemma=row.lemma,
+                lang=row.lang,
+                is_primary=row.is_primary,
+            )
         )
 
     payload = [
-        AdminCorpusWordOut(
-            word_id=row.word_id,
-            lemma=row.lemma,
-            lang=row.lang,
+        AdminCorpusEntryOut(
+            entry_id=row.entry_id,
             count=row.count,
             rank=row.rank,
-            translations=[
-                AdminCorpusTranslationOut(**item) for item in translation_map.get(row.word_id, [])
-            ],
+            terms=term_map.get(row.entry_id, []),
         )
         for row in items
     ]
-    return AdminCorpusWordsOut(total=total_count, items=payload)
+    return AdminCorpusEntriesOut(total=total_count, items=payload)
 
 
 STATUS_PRIORITY = {"known": 3, "learned": 2, "new": 1}
@@ -253,7 +282,12 @@ async def word_has_user_data(db: AsyncSession, word_id: int) -> bool:
 
 
 async def word_has_corpora(db: AsyncSession, word_id: int) -> bool:
-    stmt = select(exists(select(1).where(CorpusWordStat.word_id == word_id)))
+    stmt = select(
+        or_(
+            exists(select(1).where(CorpusWordStat.word_id == word_id)),
+            exists(select(1).where(CorpusEntryTerm.word_id == word_id)),
+        )
+    )
     return bool(await db.scalar(stmt))
 
 
@@ -276,8 +310,20 @@ async def missing_user_translations(db: AsyncSession, word_id: int, target_lang:
 
 
 async def detach_word_from_corpora(db: AsyncSession, word_id: int) -> int:
-    result = await db.execute(delete(CorpusWordStat).where(CorpusWordStat.word_id == word_id))
-    return int(result.rowcount or 0)
+    removed_stats = await db.execute(delete(CorpusWordStat).where(CorpusWordStat.word_id == word_id))
+    entry_ids = await db.execute(
+        select(CorpusEntryTerm.entry_id).where(CorpusEntryTerm.word_id == word_id)
+    )
+    ids = [row[0] for row in entry_ids.fetchall()]
+    removed_terms = await db.execute(delete(CorpusEntryTerm).where(CorpusEntryTerm.word_id == word_id))
+    if ids:
+        await db.execute(
+            delete(CorpusEntry).where(
+                CorpusEntry.id.in_(ids),
+                ~exists(select(1).where(CorpusEntryTerm.entry_id == CorpusEntry.id)),
+            )
+        )
+    return int((removed_stats.rowcount or 0) + (removed_terms.rowcount or 0))
 
 
 async def copy_translations(db: AsyncSession, source_id: int, target_id: int) -> None:
@@ -335,6 +381,39 @@ async def move_corpus_stats(db: AsyncSession, source_id: int, target_id: int) ->
         if source_row.rank is not None:
             if target_row.rank is None or source_row.rank < target_row.rank:
                 target_row.rank = source_row.rank
+        await db.delete(source_row)
+
+    await move_entry_terms(db, source_id, target_id)
+
+
+async def move_entry_terms(db: AsyncSession, source_id: int, target_id: int) -> None:
+    term_target = aliased(CorpusEntryTerm)
+    await db.execute(
+        update(CorpusEntryTerm)
+        .where(CorpusEntryTerm.word_id == source_id)
+        .where(
+            ~exists(
+                select(1).where(
+                    (term_target.entry_id == CorpusEntryTerm.entry_id)
+                    & (term_target.word_id == target_id)
+                )
+            )
+        )
+        .values(word_id=target_id)
+    )
+    term_target = aliased(CorpusEntryTerm)
+    dup_rows = await db.execute(
+        select(CorpusEntryTerm, term_target)
+        .join(
+            term_target,
+            (term_target.entry_id == CorpusEntryTerm.entry_id)
+            & (term_target.word_id == target_id),
+        )
+        .where(CorpusEntryTerm.word_id == source_id)
+    )
+    for source_row, target_row in dup_rows.all():
+        if source_row.is_primary and not target_row.is_primary:
+            target_row.is_primary = True
         await db.delete(source_row)
 
 
@@ -535,6 +614,7 @@ async def update_word(
         if in_use:
             await copy_translations(db, word.id, existing_word.id)
             await move_corpus_stats(db, word.id, existing_word.id)
+            await move_entry_terms(db, word.id, existing_word.id)
             await db.commit()
             await log_audit_event(
                 "admin.word.corpus_reassign",
@@ -568,6 +648,7 @@ async def update_word(
         await db.flush()
         await copy_translations(db, word.id, new_word.id)
         await move_corpus_stats(db, word.id, new_word.id)
+        await move_entry_terms(db, word.id, new_word.id)
         await db.commit()
         await log_audit_event(
             "admin.word.clone",
@@ -596,6 +677,252 @@ async def update_word(
         db=db,
     )
     return AdminWordOut(id=word.id, lemma=word.lemma, lang=word.lang)
+
+
+@router.post("/entries/{entry_id}/terms", response_model=AdminCorpusEntryTermOut)
+async def create_entry_term(
+    entry_id: int,
+    data: AdminEntryTermCreate,
+    request: Request,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> AdminCorpusEntryTermOut:
+    ensure_admin(user)
+    lemma = (data.lemma or "").strip()
+    if not lemma:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Lemma required")
+    if len(lemma) > 255:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Lemma too long")
+
+    lang = normalize_lang(data.lang)
+
+    entry = await db.get(CorpusEntry, entry_id)
+    if entry is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Entry not found")
+
+    word_result = await db.execute(select(Word).where(Word.lemma == lemma, Word.lang == lang))
+    word = word_result.scalar_one_or_none()
+    if word is None:
+        word = Word(lemma=lemma, lang=lang)
+        db.add(word)
+        await db.flush()
+
+    existing = await db.execute(
+        select(CorpusEntryTerm).where(
+            CorpusEntryTerm.entry_id == entry_id,
+            CorpusEntryTerm.word_id == word.id,
+        )
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Term already exists")
+
+    is_primary = bool(data.is_primary) if data.is_primary is not None else False
+    if not is_primary:
+        has_primary = await db.scalar(
+            select(exists())
+            .select_from(CorpusEntryTerm)
+            .where(
+                CorpusEntryTerm.entry_id == entry_id,
+                CorpusEntryTerm.lang == lang,
+                CorpusEntryTerm.is_primary.is_(True),
+            )
+        )
+        if not has_primary:
+            is_primary = True
+
+    term = CorpusEntryTerm(
+        entry_id=entry_id,
+        word_id=word.id,
+        lang=lang,
+        is_primary=is_primary,
+    )
+    db.add(term)
+
+    if is_primary:
+        await db.execute(
+            update(CorpusEntryTerm)
+            .where(
+                CorpusEntryTerm.entry_id == entry_id,
+                CorpusEntryTerm.lang == lang,
+                CorpusEntryTerm.id != term.id,
+            )
+            .values(is_primary=False)
+        )
+
+    await db.commit()
+    await db.refresh(term)
+
+    await log_audit_event(
+        "admin.entry_term.create",
+        user_id=user.id,
+        meta={"entry_id": entry_id, "term_id": term.id},
+        request=request,
+        db=db,
+    )
+
+    return AdminCorpusEntryTermOut(
+        id=term.id,
+        word_id=term.word_id,
+        lemma=word.lemma,
+        lang=term.lang,
+        is_primary=term.is_primary,
+    )
+
+
+@router.patch("/entries/{entry_id}/terms/{term_id}", response_model=AdminCorpusEntryTermOut)
+async def update_entry_term(
+    entry_id: int,
+    term_id: int,
+    data: AdminEntryTermUpdate,
+    request: Request,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> AdminCorpusEntryTermOut:
+    ensure_admin(user)
+    term = await db.get(CorpusEntryTerm, term_id)
+    if term is None or term.entry_id != entry_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Term not found")
+
+    word = await db.get(Word, term.word_id)
+    if word is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Word not found")
+
+    if data.lemma is not None:
+        lemma = data.lemma.strip()
+        if not lemma:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Lemma required")
+        if len(lemma) > 255:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Lemma too long")
+
+        existing = await db.execute(select(Word).where(Word.lemma == lemma, Word.lang == term.lang))
+        next_word = existing.scalar_one_or_none()
+        if next_word is None:
+            next_word = Word(lemma=lemma, lang=term.lang)
+            db.add(next_word)
+            await db.flush()
+
+        if next_word.id != term.word_id:
+            duplicate = await db.execute(
+                select(CorpusEntryTerm).where(
+                    CorpusEntryTerm.entry_id == entry_id,
+                    CorpusEntryTerm.word_id == next_word.id,
+                )
+            )
+            if duplicate.scalar_one_or_none():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Term already exists",
+                )
+            term.word_id = next_word.id
+            word = next_word
+
+    if data.is_primary is not None:
+        term.is_primary = bool(data.is_primary)
+        if term.is_primary:
+            await db.execute(
+                update(CorpusEntryTerm)
+                .where(
+                    CorpusEntryTerm.entry_id == entry_id,
+                    CorpusEntryTerm.lang == term.lang,
+                    CorpusEntryTerm.id != term.id,
+                )
+                .values(is_primary=False)
+            )
+
+    await db.commit()
+    await db.refresh(term)
+
+    if data.is_primary is False:
+        has_primary = await db.scalar(
+            select(exists())
+            .select_from(CorpusEntryTerm)
+            .where(
+                CorpusEntryTerm.entry_id == entry_id,
+                CorpusEntryTerm.lang == term.lang,
+                CorpusEntryTerm.is_primary.is_(True),
+            )
+        )
+        if not has_primary:
+            replacement = await db.execute(
+                select(CorpusEntryTerm)
+                .where(
+                    CorpusEntryTerm.entry_id == entry_id,
+                    CorpusEntryTerm.lang == term.lang,
+                )
+                .order_by(CorpusEntryTerm.id.asc())
+                .limit(1)
+            )
+            fallback = replacement.scalar_one_or_none()
+            if fallback:
+                fallback.is_primary = True
+                await db.commit()
+                term = fallback
+                word = await db.get(Word, term.word_id)
+
+    await log_audit_event(
+        "admin.entry_term.update",
+        user_id=user.id,
+        meta={"entry_id": entry_id, "term_id": term.id},
+        request=request,
+        db=db,
+    )
+
+    return AdminCorpusEntryTermOut(
+        id=term.id,
+        word_id=term.word_id,
+        lemma=word.lemma if word else "",
+        lang=term.lang,
+        is_primary=term.is_primary,
+    )
+
+
+@router.delete("/entries/{entry_id}/terms/{term_id}")
+async def delete_entry_term(
+    entry_id: int,
+    term_id: int,
+    request: Request,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    ensure_admin(user)
+    term = await db.get(CorpusEntryTerm, term_id)
+    if term is None or term.entry_id != entry_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Term not found")
+
+    was_primary = term.is_primary
+    lang = term.lang
+    await db.delete(term)
+    await db.flush()
+
+    if was_primary:
+        replacement = await db.execute(
+            select(CorpusEntryTerm)
+            .where(CorpusEntryTerm.entry_id == entry_id, CorpusEntryTerm.lang == lang)
+            .order_by(CorpusEntryTerm.id.asc())
+            .limit(1)
+        )
+        fallback = replacement.scalar_one_or_none()
+        if fallback:
+            fallback.is_primary = True
+
+    remaining = await db.scalar(
+        select(func.count()).select_from(CorpusEntryTerm).where(CorpusEntryTerm.entry_id == entry_id)
+    )
+    if remaining == 0:
+        entry = await db.get(CorpusEntry, entry_id)
+        if entry:
+            await db.delete(entry)
+
+    await db.commit()
+
+    await log_audit_event(
+        "admin.entry_term.delete",
+        user_id=user.id,
+        meta={"entry_id": entry_id, "term_id": term_id},
+        request=request,
+        db=db,
+    )
+    return {"status": "ok"}
 
 
 @router.patch("/translations/{translation_id}", response_model=AdminTranslationOut)

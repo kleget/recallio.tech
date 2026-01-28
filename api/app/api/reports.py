@@ -14,7 +14,8 @@ from app.models import (
     BackgroundJob,
     ContentReport,
     Corpus,
-    CorpusWordStat,
+    CorpusEntry,
+    CorpusEntryTerm,
     Translation,
     User,
     UserCorpus,
@@ -171,15 +172,16 @@ async def resolve_corpus_id(
 ) -> int | None:
     if profile_id is not None:
         stmt = (
-            select(CorpusWordStat.corpus_id)
-            .select_from(CorpusWordStat)
-            .join(UserCorpus, UserCorpus.corpus_id == CorpusWordStat.corpus_id)
+            select(CorpusEntry.corpus_id)
+            .select_from(CorpusEntryTerm)
+            .join(CorpusEntry, CorpusEntry.id == CorpusEntryTerm.entry_id)
+            .join(UserCorpus, UserCorpus.corpus_id == CorpusEntry.corpus_id)
             .where(
                 UserCorpus.profile_id == profile_id,
                 UserCorpus.enabled.is_(True),
-                CorpusWordStat.word_id == word_id,
+                CorpusEntryTerm.word_id == word_id,
             )
-            .order_by(CorpusWordStat.rank.asc().nulls_last(), CorpusWordStat.count.desc())
+            .order_by(CorpusEntry.rank.asc().nulls_last(), CorpusEntry.count.desc())
             .limit(1)
         )
         result = await db.execute(stmt)
@@ -188,9 +190,11 @@ async def resolve_corpus_id(
             return corpus_id
 
     stmt = (
-        select(CorpusWordStat.corpus_id)
-        .where(CorpusWordStat.word_id == word_id)
-        .order_by(CorpusWordStat.count.desc())
+        select(CorpusEntry.corpus_id)
+        .select_from(CorpusEntryTerm)
+        .join(CorpusEntry, CorpusEntry.id == CorpusEntryTerm.entry_id)
+        .where(CorpusEntryTerm.word_id == word_id)
+        .order_by(CorpusEntry.count.desc())
         .limit(1)
     )
     result = await db.execute(stmt)
