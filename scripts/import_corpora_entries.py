@@ -1,4 +1,4 @@
-"""Import entry-based corpora SQLite into Postgres."""
+﻿"""Import entry-based corpora SQLite into Postgres."""
 
 from __future__ import annotations
 
@@ -147,7 +147,7 @@ async def set_sequence(session, table: str, column: str) -> None:
     try:
         await session.execute(
             text(
-                f\"SELECT setval(:seq, COALESCE((SELECT MAX({column}) FROM {table}), 1), true)\"
+                f"SELECT setval(:seq, COALESCE((SELECT MAX({column}) FROM {table}), 1), true)"
             ),
             {"seq": seq_name},
         )
