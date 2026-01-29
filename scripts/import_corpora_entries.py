@@ -156,7 +156,7 @@ async def set_sequence(session, table: str, column: str) -> None:
         pass
 
 
-async def run(db_path: Path, apply: bool, drop_missing: bool) -> None:
+async def run(db_path: Path, apply: bool, drop_missing: bool, replace_all: bool) -> None:
     corpora_rows, entries_rows, terms_rows = load_sqlite(db_path)
 
     if not corpora_rows:
@@ -193,19 +193,24 @@ async def run(db_path: Path, apply: bool, drop_missing: bool) -> None:
         await session.commit()
         word_id_map = await fetch_word_ids(session, word_pairs)
 
-        # delete old data per corpus
         corpus_slugs = {row["slug"] for row in corpora_rows}
-        corpus_ids = [corpora_map[slug] for slug in corpus_slugs if slug in corpora_map]
-        for corpus_id in corpus_ids:
-            await session.execute(
-                delete(CorpusEntryTerm).where(
-                    CorpusEntryTerm.entry_id.in_(
-                        select(CorpusEntry.id).where(CorpusEntry.corpus_id == corpus_id)
+        if replace_all:
+            await session.execute(delete(CorpusEntryTerm))
+            await session.execute(delete(CorpusEntry))
+            await session.execute(delete(CorpusWordStat))
+        else:
+            # delete old data per corpus
+            corpus_ids = [corpora_map[slug] for slug in corpus_slugs if slug in corpora_map]
+            for corpus_id in corpus_ids:
+                await session.execute(
+                    delete(CorpusEntryTerm).where(
+                        CorpusEntryTerm.entry_id.in_(
+                            select(CorpusEntry.id).where(CorpusEntry.corpus_id == corpus_id)
+                        )
                     )
                 )
-            )
-            await session.execute(delete(CorpusEntry).where(CorpusEntry.corpus_id == corpus_id))
-            await session.execute(delete(CorpusWordStat).where(CorpusWordStat.corpus_id == corpus_id))
+                await session.execute(delete(CorpusEntry).where(CorpusEntry.corpus_id == corpus_id))
+                await session.execute(delete(CorpusWordStat).where(CorpusWordStat.corpus_id == corpus_id))
 
         if drop_missing:
             await session.execute(delete(Corpus).where(~Corpus.slug.in_(corpus_slugs)))
@@ -273,8 +278,13 @@ def main() -> None:
         action="store_true",
         help="Remove corpora not present in SQLite.",
     )
+    parser.add_argument(
+        "--replace-all",
+        action="store_true",
+        help="Delete all corpus entries/terms/stats before import.",
+    )
     args = parser.parse_args()
-    asyncio.run(run(args.db, args.apply, args.drop_missing))
+    asyncio.run(run(args.db, args.apply, args.drop_missing, args.replace_all))
 
 
 if __name__ == "__main__":
