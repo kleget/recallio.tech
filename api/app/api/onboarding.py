@@ -160,7 +160,9 @@ async def preview_corpus(
         .where(CorpusEntry.corpus_id == corpus_id)
         .where(
             exists(
-                select(1).where(
+                select(1)
+                .select_from(CorpusEntryTerm)
+                .where(
                     CorpusEntryTerm.entry_id == CorpusEntry.id,
                     CorpusEntryTerm.lang == target_lang,
                 )
