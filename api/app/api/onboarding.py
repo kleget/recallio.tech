@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import delete, exists, func, select
+from sqlalchemy.orm import aliased
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -141,6 +142,7 @@ async def preview_corpus(
     if not corpus:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Corpus not found")
 
+    target_term = aliased(CorpusEntryTerm)
     stats_result = await db.execute(
         select(
             CorpusEntry.id.label("entry_id"),
@@ -161,10 +163,10 @@ async def preview_corpus(
         .where(
             exists(
                 select(1)
-                .select_from(CorpusEntryTerm)
+                .select_from(target_term)
                 .where(
-                    CorpusEntryTerm.entry_id == CorpusEntry.id,
-                    CorpusEntryTerm.lang == target_lang,
+                    target_term.entry_id == CorpusEntry.id,
+                    target_term.lang == target_lang,
                 )
             )
         )
