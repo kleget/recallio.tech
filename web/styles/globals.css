@@ -3609,6 +3609,16 @@ html[data-theme="dark"] .input-status.wrong {
   font-size: 13px;
 }
 
+.table-input {
+  width: 100%;
+  min-width: 140px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
 .schedule-due {
   display: inline-flex;
   margin-left: 8px;

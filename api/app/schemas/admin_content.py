@@ -11,6 +11,20 @@ class AdminWordOut(BaseModel):
     lang: str
 
 
+class AdminWordListItem(BaseModel):
+    id: int
+    lemma: str
+    lang: str
+    in_corpus: bool
+    in_custom: bool
+    in_user_words: bool
+
+
+class AdminWordListOut(BaseModel):
+    total: int
+    items: list[AdminWordListItem]
+
+
 class AdminTranslationUpdate(BaseModel):
     translation: str
 

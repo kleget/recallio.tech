@@ -31,6 +31,8 @@ from app.schemas.admin_content import (
     AdminTranslationCreate,
     AdminTranslationOut,
     AdminTranslationUpdate,
+    AdminWordListItem,
+    AdminWordListOut,
     AdminWordOut,
     AdminWordUpdate,
 )
@@ -247,6 +249,76 @@ async def list_corpus_words(
         for row in items
     ]
     return AdminCorpusEntriesOut(total=total_count, items=payload)
+
+
+@router.get("/words", response_model=AdminWordListOut)
+async def list_words(
+    query: str | None = None,
+    lang: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+    orphan_only: bool = False,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> AdminWordListOut:
+    ensure_admin(user)
+    if limit < 1 or limit > 200:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid limit")
+    if offset < 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid offset")
+
+    lang = normalize_lang(lang) if lang else None
+    like = f"%{query.strip()}%" if query and query.strip() else None
+
+    corpus_exists = exists(
+        select(1).select_from(CorpusEntryTerm).where(CorpusEntryTerm.word_id == Word.id)
+    )
+    custom_exists = exists(
+        select(1).select_from(UserCustomWord).where(UserCustomWord.word_id == Word.id)
+    )
+    user_exists = exists(select(1).select_from(UserWord).where(UserWord.word_id == Word.id))
+
+    stmt = select(
+        Word.id,
+        Word.lemma,
+        Word.lang,
+        corpus_exists.label("in_corpus"),
+        custom_exists.label("in_custom"),
+        user_exists.label("in_user_words"),
+    )
+    if lang:
+        stmt = stmt.where(Word.lang == lang)
+    if like:
+        stmt = stmt.where(Word.lemma.ilike(like))
+    if orphan_only:
+        stmt = stmt.where(user_exists, ~corpus_exists, ~custom_exists)
+
+    count_stmt = select(func.count()).select_from(Word)
+    if lang:
+        count_stmt = count_stmt.where(Word.lang == lang)
+    if like:
+        count_stmt = count_stmt.where(Word.lemma.ilike(like))
+    if orphan_only:
+        count_stmt = count_stmt.where(user_exists, ~corpus_exists, ~custom_exists)
+
+    total_result = await db.execute(count_stmt)
+    total_count = int(total_result.scalar_one() or 0)
+
+    rows = await db.execute(
+        stmt.order_by(Word.lemma.asc(), Word.id.asc()).limit(limit).offset(offset)
+    )
+    items = [
+        AdminWordListItem(
+            id=row.id,
+            lemma=row.lemma,
+            lang=row.lang,
+            in_corpus=bool(row.in_corpus),
+            in_custom=bool(row.in_custom),
+            in_user_words=bool(row.in_user_words),
+        )
+        for row in rows.fetchall()
+    ]
+    return AdminWordListOut(total=total_count, items=items)
 
 
 STATUS_PRIORITY = {"known": 3, "learned": 2, "new": 1}
