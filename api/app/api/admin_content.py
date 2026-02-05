@@ -809,23 +809,24 @@ async def update_entry_term(
         existing = await db.execute(select(Word).where(Word.lemma == lemma, Word.lang == term.lang))
         next_word = existing.scalar_one_or_none()
         if next_word is None:
-            next_word = Word(lemma=lemma, lang=term.lang)
-            db.add(next_word)
-            await db.flush()
-
-        if next_word.id != term.word_id:
-            duplicate = await db.execute(
-                select(CorpusEntryTerm).where(
-                    CorpusEntryTerm.entry_id == entry_id,
-                    CorpusEntryTerm.word_id == next_word.id,
+            word.lemma = lemma
+            await db.commit()
+        elif next_word.id != term.word_id:
+            await merge_words(db, term.word_id, next_word.id)
+            await db.commit()
+            term = await db.get(CorpusEntryTerm, term_id)
+            if term is None:
+                replacement = await db.execute(
+                    select(CorpusEntryTerm)
+                    .where(
+                        CorpusEntryTerm.entry_id == entry_id,
+                        CorpusEntryTerm.word_id == next_word.id,
+                    )
+                    .limit(1)
                 )
-            )
-            if duplicate.scalar_one_or_none():
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Term already exists",
-                )
-            term.word_id = next_word.id
+                term = replacement.scalar_one_or_none()
+            if term is None:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Term not found")
             word = next_word
 
     if data.is_primary is not None:

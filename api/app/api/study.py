@@ -850,18 +850,6 @@ async def fetch_user_translation_map(
         bucket.add(key)
         mapping.setdefault(word_id, []).append(cleaned)
 
-    user_result = await db.execute(
-        select(UserWordTranslation.word_id, UserWordTranslation.translation)
-        .where(
-            UserWordTranslation.profile_id == profile_id,
-            UserWordTranslation.word_id.in_(word_ids),
-            UserWordTranslation.target_lang == target_lang,
-        )
-        .order_by(UserWordTranslation.word_id, UserWordTranslation.created_at)
-    )
-    for word_id, translation in user_result.fetchall():
-        add_translation(word_id, translation)
-
     custom_result = await db.execute(
         select(UserCustomWord.word_id, UserCustomWord.translation)
         .where(
@@ -896,6 +884,20 @@ async def fetch_user_translation_map(
         .order_by(source_term.word_id, target_word.lemma.asc())
     )
     for word_id, translation in result.fetchall():
+        add_translation(word_id, translation)
+
+    user_result = await db.execute(
+        select(UserWordTranslation.word_id, UserWordTranslation.translation)
+        .where(
+            UserWordTranslation.profile_id == profile_id,
+            UserWordTranslation.word_id.in_(word_ids),
+            UserWordTranslation.target_lang == target_lang,
+        )
+        .order_by(UserWordTranslation.word_id, UserWordTranslation.created_at)
+    )
+    for word_id, translation in user_result.fetchall():
+        if word_id in mapping:
+            continue
         add_translation(word_id, translation)
     return mapping
 
