@@ -33,6 +33,7 @@ const TEXT = {
       orphan: "Осиротевшее"
     },
     save: "Сохранить",
+    delete: "Удалить",
     saved: "Сохранено",
     error: "Ошибка",
     forbidden: "Нет доступа."
@@ -61,6 +62,7 @@ const TEXT = {
       orphan: "Orphaned"
     },
     save: "Save",
+    delete: "Delete",
     saved: "Saved",
     error: "Error",
     forbidden: "Access denied."
@@ -94,6 +96,27 @@ async function patchJson(path, payload, token) {
     method: "PATCH",
     headers,
     body: JSON.stringify(payload)
+  });
+  if (!response.ok) {
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      const data = await response.json();
+      throw new Error(data.detail || "Request failed");
+    }
+    const message = await response.text();
+    throw new Error(message || "Request failed");
+  }
+  return response.json();
+}
+
+async function deleteJson(path, token) {
+  const headers = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  const response = await fetch(`${API_BASE}${path}`, {
+    method: "DELETE",
+    headers
   });
   if (!response.ok) {
     const contentType = response.headers.get("content-type") || "";
@@ -202,6 +225,28 @@ export default function AdminWordsPage() {
     }
   };
 
+  const handleDelete = async (itemId, value) => {
+    const token = getCookie("token");
+    if (!token) {
+      window.location.href = "/auth";
+      return;
+    }
+    const confirmed = window.confirm(
+      uiLang === "ru"
+        ? `Удалить слово "${value}" везде? Это удалит его из корпусов, повторений и моих слов.`
+        : `Delete "${value}" everywhere? This will remove it from corpora, reviews, and custom words.`
+    );
+    if (!confirmed) {
+      return;
+    }
+    try {
+      await deleteJson(`/admin/content/words/${itemId}/purge`, token);
+      setItems((prev) => prev.filter((item) => item.id !== itemId));
+    } catch (err) {
+      setError(err.message || t.error);
+    }
+  };
+
   return (
     <main>
       <div className="page-header">
@@ -270,7 +315,13 @@ export default function AdminWordsPage() {
               </thead>
               <tbody>
                 {rows.map((item) => (
-                  <WordRow key={item.id} item={item} onSave={handleSave} t={t} />
+                  <WordRow
+                    key={item.id}
+                    item={item}
+                    onSave={handleSave}
+                    onDelete={handleDelete}
+                    t={t}
+                  />
                 ))}
               </tbody>
             </table>
@@ -281,10 +332,11 @@ export default function AdminWordsPage() {
   );
 }
 
-function WordRow({ item, onSave, t }) {
+function WordRow({ item, onSave, onDelete, t }) {
   const [value, setValue] = useState(item.lemma);
   const [status, setStatus] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     setValue(item.lemma);
@@ -304,6 +356,18 @@ function WordRow({ item, onSave, t }) {
       setStatus(err.message || t.error);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    setStatus("");
+    try {
+      await onDelete(item.id, value);
+    } catch (err) {
+      setStatus(err.message || t.error);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -328,6 +392,14 @@ function WordRow({ item, onSave, t }) {
           disabled={saving}
         >
           {t.save}
+        </button>
+        <button
+          type="button"
+          className="button-danger"
+          onClick={handleDelete}
+          disabled={deleting}
+        >
+          {t.delete}
         </button>
         {status ? <span className="muted">{status}</span> : null}
       </td>

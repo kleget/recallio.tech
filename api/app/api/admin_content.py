@@ -410,6 +410,56 @@ async def detach_word_from_corpora(db: AsyncSession, word_id: int) -> int:
     return int((removed_stats.rowcount or 0) + (removed_terms.rowcount or 0))
 
 
+async def purge_word_everywhere(db: AsyncSession, word_id: int) -> dict[str, int]:
+    removed = {
+        "user_words": 0,
+        "user_translations": 0,
+        "custom_words": 0,
+        "review_events": 0,
+        "corpus_terms": 0,
+        "corpus_stats": 0,
+        "corpus_entries": 0,
+        "translations": 0,
+    }
+
+    result = await db.execute(delete(UserWordTranslation).where(UserWordTranslation.word_id == word_id))
+    removed["user_translations"] = int(result.rowcount or 0)
+
+    result = await db.execute(delete(UserCustomWord).where(UserCustomWord.word_id == word_id))
+    removed["custom_words"] = int(result.rowcount or 0)
+
+    result = await db.execute(delete(ReviewEvent).where(ReviewEvent.word_id == word_id))
+    removed["review_events"] = int(result.rowcount or 0)
+
+    result = await db.execute(delete(UserWord).where(UserWord.word_id == word_id))
+    removed["user_words"] = int(result.rowcount or 0)
+
+    removed["corpus_terms"] = int((await db.execute(
+        delete(CorpusEntryTerm).where(CorpusEntryTerm.word_id == word_id)
+    )).rowcount or 0)
+
+    removed["corpus_stats"] = int((await db.execute(
+        delete(CorpusWordStat).where(CorpusWordStat.word_id == word_id)
+    )).rowcount or 0)
+
+    entry_ids = await db.execute(
+        select(CorpusEntry.id).where(
+            ~exists(select(1).where(CorpusEntryTerm.entry_id == CorpusEntry.id))
+        )
+    )
+    ids = [row[0] for row in entry_ids.fetchall()]
+    if ids:
+        removed["corpus_entries"] = int((await db.execute(
+            delete(CorpusEntry).where(CorpusEntry.id.in_(ids))
+        )).rowcount or 0)
+
+    removed["translations"] = int((await db.execute(
+        delete(Translation).where(Translation.word_id == word_id)
+    )).rowcount or 0)
+
+    return removed
+
+
 async def copy_translations(db: AsyncSession, source_id: int, target_id: int) -> None:
     rows = await db.execute(
         select(Translation.translation, Translation.target_lang, Translation.source).where(
@@ -1157,6 +1207,33 @@ async def delete_word(
         db=db,
     )
     return {"status": "ok"}
+
+
+@router.delete("/words/{word_id}/purge")
+async def purge_word(
+    word_id: int,
+    request: Request,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    ensure_admin(user)
+    word = await db.get(Word, word_id)
+    if word is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Word not found")
+
+    removed = await purge_word_everywhere(db, word_id)
+    await db.flush()
+    await db.delete(word)
+    await db.commit()
+
+    await log_audit_event(
+        "admin.word.purge",
+        user_id=user.id,
+        meta={"word_id": word_id, "removed": removed},
+        request=request,
+        db=db,
+    )
+    return {"status": "purged", "removed": removed}
 
 
 @router.delete("/translations/{translation_id}")
