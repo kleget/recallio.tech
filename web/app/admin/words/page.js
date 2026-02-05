@@ -14,12 +14,15 @@ const TEXT = {
     tagline: "Поиск и правка слов во всей базе.",
     loading: "Загрузка...",
     search: "Поиск по слову",
+    apply: "Применить",
     language: "Язык",
     all: "Все",
     onlyOrphan: "Только осиротевшие",
     refresh: "Обновить",
     total: "Всего",
     shown: "Показано",
+    page: "Страница",
+    perPage: "На странице",
     columns: {
       word: "Слово",
       lang: "Язык",
@@ -45,12 +48,15 @@ const TEXT = {
     tagline: "Search and edit words across the database.",
     loading: "Loading...",
     search: "Search word",
+    apply: "Apply",
     language: "Language",
     all: "All",
     onlyOrphan: "Orphans only",
     refresh: "Refresh",
     total: "Total",
     shown: "Shown",
+    page: "Page",
+    perPage: "Per page",
     columns: {
       word: "Word",
       lang: "Lang",
@@ -167,8 +173,10 @@ export default function AdminWordsPage() {
   const [query, setQuery] = useState("");
   const [langFilter, setLangFilter] = useState("");
   const [orphanOnly, setOrphanOnly] = useState(false);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(50);
 
-  const loadWords = async () => {
+  const loadWords = async (nextPage = page, nextSize = pageSize) => {
     const token = getCookie("token");
     if (!token) {
       window.location.href = "/auth";
@@ -187,6 +195,8 @@ export default function AdminWordsPage() {
       if (orphanOnly) {
         params.set("orphan_only", "true");
       }
+      params.set("limit", String(nextSize));
+      params.set("offset", String(nextPage * nextSize));
       const data = await getJson(`/admin/content/words?${params.toString()}`, token);
       setItems(Array.isArray(data?.items) ? data.items : []);
       setTotal(Number.isFinite(data?.total) ? data.total : 0);
@@ -206,6 +216,10 @@ export default function AdminWordsPage() {
     loadWords();
   }, []);
 
+  useEffect(() => {
+    loadWords(page, pageSize);
+  }, [page, pageSize]);
+
   const rows = useMemo(
     () =>
       items.map((item) => ({
@@ -214,6 +228,14 @@ export default function AdminWordsPage() {
       })),
     [items, t]
   );
+
+  const totalPages = pageSize > 0 ? Math.max(Math.ceil(total / pageSize), 1) : 1;
+  const currentPage = Math.min(page + 1, totalPages);
+
+  const applyFilters = () => {
+    setPage(0);
+    loadWords(0, pageSize);
+  };
 
   const handleSave = async (itemId, value) => {
     const token = getCookie("token");
@@ -295,7 +317,21 @@ export default function AdminWordsPage() {
               {t.onlyOrphan}
             </label>
           </div>
+          <div className="profile-cell">
+            <label>{t.perPage}</label>
+            <select
+              value={pageSize}
+              onChange={(event) => setPageSize(Number(event.target.value))}
+            >
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+              <option value={200}>200</option>
+            </select>
+          </div>
           <div className="profile-actions full">
+            <button type="button" onClick={applyFilters}>
+              {t.apply}
+            </button>
             <button type="button" onClick={loadWords}>
               {t.refresh}
             </button>
@@ -303,6 +339,30 @@ export default function AdminWordsPage() {
               {t.total}: {total} · {t.shown}: {items.length}
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="panel">
+        <div className="profile-actions full">
+          <button
+            type="button"
+            className="button-secondary"
+            onClick={() => setPage(Math.max(page - 1, 0))}
+            disabled={page <= 0}
+          >
+            ◀
+          </button>
+          <span className="muted">
+            {t.page} {currentPage} / {totalPages}
+          </span>
+          <button
+            type="button"
+            className="button-secondary"
+            onClick={() => setPage(Math.min(page + 1, totalPages - 1))}
+            disabled={page + 1 >= totalPages}
+          >
+            ▶
+          </button>
         </div>
       </div>
 
