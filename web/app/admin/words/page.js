@@ -409,66 +409,68 @@ function WordRow({ item, onSave, onDelete, uiLang, t }) {
   };
 
   return (
-    <tr>
-      <td data-label={t.columns.word}>
-        <input
-          value={value}
-          onChange={(event) => setValue(event.target.value)}
-          className="table-input"
-        />
-      </td>
-      <td data-label={t.columns.lang}>{item.lang}</td>
-      <td data-label={t.columns.sources} className="schedule-translation">
-        {item.labelSources || "-"}
-      </td>
-      <td data-label={t.columns.actions}>
-        <button
-          type="button"
-          className="button-secondary"
-          onClick={handleSave}
-          disabled={saving}
-        >
-          {t.save}
-        </button>
-        <button
-          type="button"
-          className="button-secondary"
-          onClick={toggleDetails}
-          disabled={distLoading}
-        >
-          {expanded ? t.hide : t.details}
-        </button>
-        <button
-          type="button"
-          className="button-danger"
-          onClick={handleDelete}
-          disabled={deleting}
-        >
-          {t.delete}
-        </button>
-        {status ? <span className="muted">{status}</span> : null}
-      </td>
-    </tr>
-    {expanded ? (
-      <tr className="schedule-row">
-        <td colSpan={4} className="schedule-translation">
-          {distLoading ? (
-            <span className="muted">{t.loading}</span>
-          ) : distribution.length ? (
-            <div className="stacked-list">
-              {distribution.map((item) => (
-                <div key={item.corpus_id} className="stacked-row">
-                  <span className="stacked-title">{item.corpus_name}</span>
-                  <span className="muted">{item.count}</span>
-                  <span className="muted">{item.percent}%</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <span className="muted">-</span>
-          )}
+    <>
+      <tr>
+        <td data-label={t.columns.word}>
+          <input
+            value={value}
+            onChange={(event) => setValue(event.target.value)}
+            className="table-input"
+          />
+        </td>
+        <td data-label={t.columns.lang}>{item.lang}</td>
+        <td data-label={t.columns.sources} className="schedule-translation">
+          {item.labelSources || "-"}
+        </td>
+        <td data-label={t.columns.actions}>
+          <button
+            type="button"
+            className="button-secondary"
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {t.save}
+          </button>
+          <button
+            type="button"
+            className="button-secondary"
+            onClick={toggleDetails}
+            disabled={distLoading}
+          >
+            {expanded ? t.hide : t.details}
+          </button>
+          <button
+            type="button"
+            className="button-danger"
+            onClick={handleDelete}
+            disabled={deleting}
+          >
+            {t.delete}
+          </button>
+          {status ? <span className="muted">{status}</span> : null}
         </td>
       </tr>
-    ) : null}
+      {expanded ? (
+        <tr className="schedule-row">
+          <td colSpan={4} className="schedule-translation">
+            {distLoading ? (
+              <span className="muted">{t.loading}</span>
+            ) : distribution.length ? (
+              <div className="stacked-list">
+                {distribution.map((item) => (
+                  <div key={item.corpus_id} className="stacked-row">
+                    <span className="stacked-title">{item.corpus_name}</span>
+                    <span className="muted">{item.count}</span>
+                    <span className="muted">{item.percent}%</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <span className="muted">-</span>
+            )}
+          </td>
+        </tr>
+      ) : null}
+    </>
   );
 }
