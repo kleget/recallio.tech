@@ -22,9 +22,15 @@ const TEXT = {
     columns: {
       date: "Дата",
       word: "Слово",
-      translation: "Перевод"
+      translation: "Перевод",
+      source: "Источник"
     },
-    due: "Надо сегодня"
+    due: "Надо сегодня",
+    sources: {
+      custom: "Мои слова",
+      corpus: "Корпус: {name}",
+      unknown: "Другой источник"
+    }
   },
   en: {
     title: "Review plan",
@@ -40,9 +46,15 @@ const TEXT = {
     columns: {
       date: "Date",
       word: "Word",
-      translation: "Translation"
+      translation: "Translation",
+      source: "Source"
     },
-    due: "Due today"
+    due: "Due today",
+    sources: {
+      custom: "My words",
+      corpus: "Corpus: {name}",
+      unknown: "Other source"
+    }
   }
 };
 
@@ -75,6 +87,23 @@ async function getJson(path, token) {
   return response.json();
 }
 
+function renderSources(sources, t) {
+  if (!Array.isArray(sources) || sources.length === 0) {
+    return "-";
+  }
+  const labels = sources.map((source) => {
+    if (source.type === "custom") {
+      return t.sources.custom;
+    }
+    if (source.type === "corpus") {
+      const name = source.name || "-";
+      return t.sources.corpus.replace("{name}", name);
+    }
+    return t.sources.unknown;
+  });
+  return labels.join(", ");
+}
+
 export default function ReviewPlanPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -94,7 +123,7 @@ export default function ReviewPlanPage() {
       return;
     }
     try {
-      const data = await getJson("/stats/review-plan", token);
+      const data = await getJson(`/stats/review-plan?ui_lang=${uiLang}`, token);
       const list = Array.isArray(data?.items) ? data.items : [];
       setItems(list);
       setTotal(Number.isFinite(data?.total) ? data.total : list.length);
@@ -160,6 +189,7 @@ export default function ReviewPlanPage() {
                     <th>{t.columns.date}</th>
                     <th>{t.columns.word}</th>
                     <th>{t.columns.translation}</th>
+                    <th>{t.columns.source}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -182,6 +212,9 @@ export default function ReviewPlanPage() {
                           {item.translations && item.translations.length
                             ? item.translations.join(", ")
                             : "-"}
+                        </td>
+                        <td data-label={t.columns.source} className="schedule-source">
+                          {renderSources(item.sources, t)}
                         </td>
                       </tr>
                     );
