@@ -25,6 +25,18 @@ class AdminWordListOut(BaseModel):
     items: list[AdminWordListItem]
 
 
+class AdminWordDistributionItem(BaseModel):
+    corpus_id: int
+    corpus_name: str
+    count: int
+    percent: float
+
+
+class AdminWordDistributionOut(BaseModel):
+    total: int
+    items: list[AdminWordDistributionItem]
+
+
 class AdminTranslationUpdate(BaseModel):
     translation: str
 

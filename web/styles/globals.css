@@ -3619,6 +3619,27 @@ html[data-theme="dark"] .input-status.wrong {
   color: var(--text);
 }
 
+.stacked-list {
+  display: grid;
+  gap: 6px;
+}
+
+.stacked-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--border);
+}
+
+.stacked-row:last-child {
+  border-bottom: none;
+}
+
+.stacked-title {
+  font-weight: 600;
+}
+
 .schedule-due {
   display: inline-flex;
   margin-left: 8px;

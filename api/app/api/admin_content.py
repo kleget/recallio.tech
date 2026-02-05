@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+import re
 from sqlalchemy import delete, exists, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import DataError, IntegrityError
@@ -31,6 +32,8 @@ from app.schemas.admin_content import (
     AdminTranslationCreate,
     AdminTranslationOut,
     AdminTranslationUpdate,
+    AdminWordDistributionItem,
+    AdminWordDistributionOut,
     AdminWordListItem,
     AdminWordListOut,
     AdminWordOut,
@@ -44,6 +47,7 @@ from app.schemas.admin_corpora import (
 )
 
 router = APIRouter(prefix="/admin/content", tags=["admin"])
+SLUG_RE = re.compile(r"_(ru|en)_(ru|en)$", re.IGNORECASE)
 
 
 def ensure_admin(user: User) -> None:
@@ -319,6 +323,76 @@ async def list_words(
         for row in rows.fetchall()
     ]
     return AdminWordListOut(total=total_count, items=items)
+
+
+@router.get("/words/{word_id}/distribution", response_model=AdminWordDistributionOut)
+async def word_distribution(
+    word_id: int,
+    ui_lang: str | None = None,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> AdminWordDistributionOut:
+    ensure_admin(user)
+    ui_lang = normalize_lang(ui_lang) if ui_lang else "ru"
+
+    word = await db.get(Word, word_id)
+    if word is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Word not found")
+
+    rows = await db.execute(
+        select(
+            Corpus.id,
+            Corpus.slug,
+            Corpus.name,
+            Corpus.name_ru,
+            Corpus.name_en,
+            CorpusEntry.count,
+        )
+        .select_from(CorpusEntryTerm)
+        .join(CorpusEntry, CorpusEntry.id == CorpusEntryTerm.entry_id)
+        .join(Corpus, Corpus.id == CorpusEntry.corpus_id)
+        .where(
+            CorpusEntryTerm.word_id == word_id,
+            CorpusEntryTerm.is_primary.is_(True),
+        )
+    )
+
+    items_raw = []
+    for corpus_id, slug, name, name_ru, name_en, count in rows.fetchall():
+        source_lang = None
+        match = SLUG_RE.search(slug or "")
+        if match:
+            source_lang = match.group(1).lower()
+        if source_lang and source_lang != word.lang:
+            continue
+        if ui_lang == "ru" and name_ru:
+            corpus_name = name_ru
+        elif ui_lang == "en" and name_en:
+            corpus_name = name_en
+        else:
+            corpus_name = name or slug or ""
+        items_raw.append(
+            {
+                "corpus_id": corpus_id,
+                "corpus_name": corpus_name,
+                "count": int(count or 0),
+            }
+        )
+
+    total = sum(item["count"] for item in items_raw)
+    items = []
+    for item in sorted(items_raw, key=lambda x: x["count"], reverse=True):
+        percent = round((item["count"] / total) * 100, 2) if total else 0.0
+        items.append(
+            AdminWordDistributionItem(
+                corpus_id=item["corpus_id"],
+                corpus_name=item["corpus_name"],
+                count=item["count"],
+                percent=percent,
+            )
+        )
+
+    return AdminWordDistributionOut(total=total, items=items)
 
 
 STATUS_PRIORITY = {"known": 3, "learned": 2, "new": 1}

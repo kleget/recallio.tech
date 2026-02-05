@@ -34,6 +34,8 @@ const TEXT = {
     },
     save: "Сохранить",
     delete: "Удалить",
+    details: "Источники",
+    hide: "Скрыть",
     saved: "Сохранено",
     error: "Ошибка",
     forbidden: "Нет доступа."
@@ -63,6 +65,8 @@ const TEXT = {
     },
     save: "Save",
     delete: "Delete",
+    details: "Sources",
+    hide: "Hide",
     saved: "Saved",
     error: "Error",
     forbidden: "Access denied."
@@ -128,6 +132,10 @@ async function deleteJson(path, token) {
     throw new Error(message || "Request failed");
   }
   return response.json();
+}
+
+async function getDistribution(wordId, uiLang, token) {
+  return getJson(`/admin/content/words/${wordId}/distribution?ui_lang=${uiLang}`, token);
 }
 
 function buildSourceLabels(item, t) {
@@ -320,6 +328,7 @@ export default function AdminWordsPage() {
                     item={item}
                     onSave={handleSave}
                     onDelete={handleDelete}
+                    uiLang={uiLang}
                     t={t}
                   />
                 ))}
@@ -332,11 +341,14 @@ export default function AdminWordsPage() {
   );
 }
 
-function WordRow({ item, onSave, onDelete, t }) {
+function WordRow({ item, onSave, onDelete, uiLang, t }) {
   const [value, setValue] = useState(item.lemma);
   const [status, setStatus] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [distLoading, setDistLoading] = useState(false);
+  const [distribution, setDistribution] = useState([]);
 
   useEffect(() => {
     setValue(item.lemma);
@@ -371,6 +383,31 @@ function WordRow({ item, onSave, onDelete, t }) {
     }
   };
 
+  const toggleDetails = async () => {
+    if (expanded) {
+      setExpanded(false);
+      return;
+    }
+    setExpanded(true);
+    if (distribution.length) {
+      return;
+    }
+    const token = getCookie("token");
+    if (!token) {
+      window.location.href = "/auth";
+      return;
+    }
+    setDistLoading(true);
+    try {
+      const data = await getDistribution(item.id, uiLang, token);
+      setDistribution(Array.isArray(data?.items) ? data.items : []);
+    } catch (err) {
+      setStatus(err.message || t.error);
+    } finally {
+      setDistLoading(false);
+    }
+  };
+
   return (
     <tr>
       <td data-label={t.columns.word}>
@@ -395,6 +432,14 @@ function WordRow({ item, onSave, onDelete, t }) {
         </button>
         <button
           type="button"
+          className="button-secondary"
+          onClick={toggleDetails}
+          disabled={distLoading}
+        >
+          {expanded ? t.hide : t.details}
+        </button>
+        <button
+          type="button"
           className="button-danger"
           onClick={handleDelete}
           disabled={deleting}
@@ -404,5 +449,26 @@ function WordRow({ item, onSave, onDelete, t }) {
         {status ? <span className="muted">{status}</span> : null}
       </td>
     </tr>
+    {expanded ? (
+      <tr className="schedule-row">
+        <td colSpan={4} className="schedule-translation">
+          {distLoading ? (
+            <span className="muted">{t.loading}</span>
+          ) : distribution.length ? (
+            <div className="stacked-list">
+              {distribution.map((item) => (
+                <div key={item.corpus_id} className="stacked-row">
+                  <span className="stacked-title">{item.corpus_name}</span>
+                  <span className="muted">{item.count}</span>
+                  <span className="muted">{item.percent}%</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <span className="muted">-</span>
+          )}
+        </td>
+      </tr>
+    ) : null}
   );
 }
